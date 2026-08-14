@@ -8,22 +8,17 @@ export class Renderer {
     this.ctx = canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = false;
 
-    // Posição da Câmera
     this.cameraX = 0;
     this.cameraY = 0;
-
-    // Configuração de exibições
     this.showGridOverlay = false;
   }
 
-  // Ajusta a resolução do Canvas para corresponder ao tamanho da janela
   resize() {
     this.canvas.width = this.canvas.parentElement.clientWidth;
     this.canvas.height = this.canvas.parentElement.clientHeight;
     this.ctx.imageSmoothingEnabled = false;
   }
 
-  // Atualiza a posição da câmera centralizando no jogador local com travamento nas bordas do mapa
   updateCamera(player) {
     const tileSize = CONFIG.TILE_SIZE;
     const mapPixelWidth = CONFIG.GRID_WIDTH * tileSize;
@@ -40,11 +35,11 @@ export class Renderer {
   }
 
   // Loop Principal de Renderização
-  render(gameMap, localPlayer, remotePlayersMap) {
+  render(gameMap, localPlayer, remotePlayersMap, monsterManager) {
     const ctx = this.ctx;
     const tileSize = CONFIG.TILE_SIZE;
 
-    // 1. Limpar tela com fundo preto
+    // 1. Limpar fundo
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -56,17 +51,14 @@ export class Renderer {
     const startRow = Math.max(0, Math.floor(this.cameraY / tileSize));
     const endRow = Math.min(CONFIG.GRID_HEIGHT - 1, Math.ceil((this.cameraY + this.canvas.height) / tileSize));
 
-    // PASSO 1: Terrenos Base (Grama, Cobblestone, Água, Portal)
+    // PASSO 1: Terrenos Base
     for (let y = startRow; y <= endRow; y++) {
       for (let x = startCol; x <= endCol; x++) {
         const tile = gameMap.getTile(x, y);
         if (!tile) continue;
 
-        const drawX = x * tileSize;
-        const drawY = y * tileSize;
-
         const tileImg = spriteGen.get(tile.spriteKey);
-        ctx.drawImage(tileImg, drawX, drawY, tileSize, tileSize);
+        ctx.drawImage(tileImg, x * tileSize, y * tileSize, tileSize, tileSize);
       }
     }
 
@@ -81,7 +73,16 @@ export class Renderer {
       }
     }
 
-    // PASSO 3: Entidades (Jogador Local + Outros Jogadores ordenados por Y)
+    // PASSO 3: Monstros (Rats)
+    if (monsterManager) {
+      monsterManager.monsters.forEach(rat => {
+        if (!rat.isDead) {
+          this.renderMonster(rat);
+        }
+      });
+    }
+
+    // PASSO 4: Entidades (Jogadores)
     const allEntities = [
       { player: localPlayer, isLocal: true },
       ...Array.from(remotePlayersMap.values()).map(p => ({ player: p, isLocal: false }))
@@ -92,7 +93,7 @@ export class Renderer {
       this.renderPlayer(item.player, item.isLocal);
     });
 
-    // PASSO 4: Copas das Árvores (Z-index elevado)
+    // PASSO 5: Copas das Árvores
     const canopyImg = spriteGen.get('tree_canopy');
     const canopySize = tileSize * 1.6;
     const canopyOffset = (canopySize - tileSize) / 2;
@@ -112,15 +113,59 @@ export class Renderer {
       }
     }
 
+    // PASSO 6: Textos Flutuantes de Dano (ex: -14, +20 XP)
+    if (monsterManager) {
+      monsterManager.floatingTexts.forEach(ft => {
+        ctx.save();
+        ctx.globalAlpha = ft.opacity;
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillStyle = '#000000';
+        ctx.fillText(ft.text, ft.x + 1, ft.y + 1); // Sombra do texto
+        ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+      });
+    }
+
     ctx.restore();
   }
 
-  // Renderiza um personagem com destaque de aura para jogadores remotos
+  // Renderiza um Monstro (Rat) com Barra de Vida e Nome
+  renderMonster(rat) {
+    const ctx = this.ctx;
+    const tileSize = CONFIG.TILE_SIZE;
+
+    const ratImg = spriteGen.get('rat');
+    ctx.drawImage(ratImg, Math.floor(rat.renderX), Math.floor(rat.renderY), tileSize, tileSize);
+
+    const cx = rat.renderX + tileSize / 2;
+    const headY = rat.renderY - 8;
+
+    // Barra de HP do Monstro
+    const barWidth = 30;
+    const barHeight = 4;
+    const hpRatio = Math.max(0, Math.min(1, rat.hp / rat.maxHp));
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(cx - barWidth / 2, headY, barWidth, barHeight);
+
+    ctx.fillStyle = '#e53e3e';
+    ctx.fillRect(cx - barWidth / 2, headY, barWidth * hpRatio, barHeight);
+
+    // Nome do Monstro
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#000';
+    ctx.fillText(`Lvl.${rat.level} ${rat.name}`, cx + 1, headY - 2);
+    ctx.fillStyle = '#fc8181';
+    ctx.fillText(`Lvl.${rat.level} ${rat.name}`, cx, headY - 3);
+  }
+
+  // Renderiza um Personagem
   renderPlayer(player, isLocal = false) {
     const ctx = this.ctx;
     const tileSize = CONFIG.TILE_SIZE;
 
-    // Se for jogador remoto, desenhar aura de destaque nos pés
     if (!isLocal) {
       const cx = player.renderX + tileSize / 2;
       const cy = player.renderY + tileSize / 2 + 10;
@@ -149,7 +194,6 @@ export class Renderer {
     const cx = player.renderX + tileSize / 2;
     const headY = player.renderY - 14;
 
-    // Barra de Vida
     const barWidth = 36;
     const barHeight = 4;
     const hpRatio = Math.max(0, Math.min(1, player.hp / player.maxHp));
@@ -160,22 +204,19 @@ export class Renderer {
     ctx.fillStyle = hpRatio > 0.5 ? '#48bb78' : hpRatio > 0.25 ? '#ecc94b' : '#f56565';
     ctx.fillRect(cx - barWidth / 2, headY, barWidth * hpRatio, barHeight);
 
-    // Texto do Nome (Destaque em verde claro se for outro jogador)
     ctx.font = 'bold 11px monospace';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#000';
     ctx.fillText(`Lvl.${player.level} ${player.name}`, cx + 1, headY - 3);
 
-    ctx.fillStyle = isLocal ? '#ffffff' : '#68d391'; // Verde radiante para jogadores remotos!
+    ctx.fillStyle = isLocal ? '#ffffff' : '#68d391';
     ctx.fillText(`Lvl.${player.level} ${player.name}`, cx, headY - 4);
 
-    // Balão de Chat se houver mensagem
     if (player.chatBubble) {
       this.renderChatBubble(player.chatBubble, cx, headY - 18);
     }
   }
 
-  // Renderiza um Balão de Fala Mágico sobre a cabeça do personagem
   renderChatBubble(text, x, y) {
     const ctx = this.ctx;
     ctx.font = '12px sans-serif';
@@ -193,14 +234,6 @@ export class Renderer {
     ctx.roundRect(bx, by, bubbleWidth, bubbleHeight, 6);
     ctx.fill();
     ctx.stroke();
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.beginPath();
-    ctx.moveTo(x - 4, by + bubbleHeight);
-    ctx.lineTo(x + 4, by + bubbleHeight);
-    ctx.lineTo(x, by + bubbleHeight + 5);
-    ctx.closePath();
-    ctx.fill();
 
     ctx.fillStyle = '#1a202c';
     ctx.textAlign = 'center';

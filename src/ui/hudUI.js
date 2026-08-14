@@ -1,11 +1,12 @@
-// Interface do Jogo (HUD, Chat em Tempo Real, Minimapa Radar e Painel Online)
+// Interface do Jogo (HUD, Chat em Tempo Real, XP e Minimapa Radar)
 import { CONFIG } from '../config.js';
 
 export class HudUI {
-  constructor(localPlayer, onSendChat, onToggleGrid) {
+  constructor(localPlayer, onSendChat, onToggleGrid, onAttack) {
     this.localPlayer = localPlayer;
     this.onSendChat = onSendChat;
     this.onToggleGrid = onToggleGrid;
+    this.onAttack = onAttack;
 
     this.container = document.getElementById('hud-container');
     this.remotePlayersMap = new Map();
@@ -22,13 +23,22 @@ export class HudUI {
             <span id="hud-player-name">--</span>
             <span class="badge-lvl" id="hud-player-lvl">Lvl.1</span>
           </div>
+          
+          <!-- Barra de HP -->
           <div class="hp-bar-container">
             <div class="hp-bar-fill" id="hud-hp-fill" style="width: 100%;"></div>
             <span class="hp-text" id="hud-hp-text">100 / 100</span>
           </div>
+
+          <!-- Barra de EXP -->
+          <div class="xp-bar-container">
+            <div class="xp-bar-fill" id="hud-xp-fill" style="width: 0%;"></div>
+            <span class="xp-text" id="hud-xp-text">XP: 0 / 50</span>
+          </div>
+
           <div class="coords-info">
-            <span>📍 Coord: X:<strong id="hud-coord-x">16</strong> Y:<strong id="hud-coord-y">16</strong></span>
-            <span class="net-status-pill" id="net-status">🟢 Mundo 1 (Online)</span>
+            <span>📍 X:<strong id="hud-coord-x">16</strong> Y:<strong id="hud-coord-y">16</strong></span>
+            <button id="btn-attack-action" class="btn-attack-sm">⚔️ Atacar (ESPAÇO)</button>
           </div>
         </div>
       </div>
@@ -40,7 +50,6 @@ export class HudUI {
           <button id="btn-toggle-grid" class="btn-sm">📐 Grade</button>
         </div>
         
-        <!-- Minimapa Radar (32x32 Grid) -->
         <div class="minimap-container">
           <canvas id="minimap-canvas" width="128" height="128"></canvas>
         </div>
@@ -53,7 +62,7 @@ export class HudUI {
       <!-- Bottom Left: Chat Global em Tempo Real -->
       <div class="hud-card chat-card">
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-msg system">🎮 Bem-vindo ao MMORPG! Mova-se usando WASD ou as Setas do teclado.</div>
+          <div class="chat-msg system">🎮 Encontre os <strong>Rats</strong> nos 4 cantos do mapa e pressione <strong>ESPAÇO</strong> para batalhar!</div>
         </div>
         <form class="chat-input-form" id="chat-form">
           <input type="text" id="chat-input" placeholder="Digite uma mensagem..." maxlength="80" autocomplete="off" />
@@ -74,7 +83,6 @@ export class HudUI {
 
     this.attachEvents();
     this.updatePlayerStats();
-    this.renderMinimap();
   }
 
   attachEvents() {
@@ -94,6 +102,13 @@ export class HudUI {
     toggleGridBtn.addEventListener('click', () => {
       this.onToggleGrid();
     });
+
+    const attackBtn = this.container.querySelector('#btn-attack-action');
+    if (attackBtn) {
+      attackBtn.addEventListener('click', () => {
+        this.onAttack();
+      });
+    }
 
     const bindTouchDir = (id, key) => {
       const btn = this.container.querySelector(id);
@@ -117,6 +132,8 @@ export class HudUI {
     const lvlEl = this.container.querySelector('#hud-player-lvl');
     const hpFill = this.container.querySelector('#hud-hp-fill');
     const hpText = this.container.querySelector('#hud-hp-text');
+    const xpFill = this.container.querySelector('#hud-xp-fill');
+    const xpText = this.container.querySelector('#hud-xp-text');
     const coordX = this.container.querySelector('#hud-coord-x');
     const coordY = this.container.querySelector('#hud-coord-y');
 
@@ -129,6 +146,12 @@ export class HudUI {
       const ratio = Math.max(0, Math.min(1, this.localPlayer.hp / this.localPlayer.maxHp));
       hpFill.style.width = `${ratio * 100}%`;
       hpText.textContent = `${this.localPlayer.hp} / ${this.localPlayer.maxHp}`;
+    }
+
+    if (xpFill && xpText) {
+      const xpRatio = Math.max(0, Math.min(1, this.localPlayer.xp / this.localPlayer.maxXp));
+      xpFill.style.width = `${xpRatio * 100}%`;
+      xpText.textContent = `XP: ${this.localPlayer.xp} / ${this.localPlayer.maxXp}`;
     }
 
     this.renderMinimap();
@@ -168,7 +191,6 @@ export class HudUI {
       li.style.color = '#68d391';
       li.style.fontWeight = 'bold';
 
-      // Calcular distância para o jogador remoto
       const dist = Math.round(Math.hypot(p.gridX - this.localPlayer.gridX, p.gridY - this.localPlayer.gridY));
       li.textContent = `🟢 ${p.name} (X:${p.gridX}, Y:${p.gridY}) [${dist} tiles]`;
       listEl.appendChild(li);
@@ -177,7 +199,6 @@ export class HudUI {
     this.renderMinimap();
   }
 
-  // Renderiza o Minimapa Radar (32x32) com posições relativas de todos os jogadores
   renderMinimap() {
     const canvas = this.container.querySelector('#minimap-canvas');
     if (!canvas) return;
@@ -185,33 +206,21 @@ export class HudUI {
 
     const width = canvas.width;
     const height = canvas.height;
-    const scale = width / CONFIG.GRID_WIDTH; // 128 / 32 = 4px por tile
+    const scale = width / CONFIG.GRID_WIDTH;
 
-    // Fundo do minimapa
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(0, 0, width, height);
 
-    // Borda da praça central
     ctx.fillStyle = '#334155';
     ctx.fillRect(12 * scale, 12 * scale, 8 * scale, 8 * scale);
 
-    // Jogadores remotos (Pontos verdes pulsantes)
     this.remotePlayersMap.forEach(p => {
-      const px = p.gridX * scale;
-      const py = p.gridY * scale;
-
       ctx.fillStyle = '#48bb78';
       ctx.beginPath();
-      ctx.arc(px + scale / 2, py + scale / 2, 4, 0, Math.PI * 2);
+      ctx.arc(p.gridX * scale + scale / 2, p.gridY * scale + scale / 2, 4, 0, Math.PI * 2);
       ctx.fill();
-
-      // Anel verde
-      ctx.strokeStyle = '#68d391';
-      ctx.lineWidth = 1;
-      ctx.stroke();
     });
 
-    // Jogador local (Ponto amarelo em destaque)
     const lx = this.localPlayer.gridX * scale;
     const ly = this.localPlayer.gridY * scale;
 
@@ -219,7 +228,6 @@ export class HudUI {
     ctx.beginPath();
     ctx.arc(lx + scale / 2, ly + scale / 2, 5, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.5;
     ctx.stroke();

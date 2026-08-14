@@ -8,6 +8,7 @@
   --text-main: #edf2f7;
   --text-muted: #a0aec0;
   --hp-green: #48bb78;
+  --xp-purple: #9f7aea;
   --font-retro: 'Press Start 2P', monospace;
   --font-title: 'Cinzel', serif;
   --font-body: 'Inter', sans-serif;
@@ -199,7 +200,7 @@ html, body {
   pointer-events: none;
   z-index: 10;
   display: grid;
-  grid-template-columns: 320px 1fr 240px;
+  grid-template-columns: 340px 1fr 240px;
   grid-template-rows: auto 1fr auto;
   padding: 16px;
   gap: 16px;
@@ -238,7 +239,7 @@ html, body {
 .player-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   flex: 1;
 }
 
@@ -259,10 +260,11 @@ html, body {
   font-family: var(--font-retro);
 }
 
+/* Barra de HP */
 .hp-bar-container {
   position: relative;
   width: 100%;
-  height: 14px;
+  height: 12px;
   background: #1a202c;
   border-radius: 4px;
   overflow: hidden;
@@ -283,7 +285,38 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+
+/* Barra de EXP */
+.xp-bar-container {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background: #1a202c;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #805ad5, #9f7aea);
+  transition: width 0.3s ease;
+}
+
+.xp-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
   font-weight: 700;
   color: #fff;
   text-shadow: 0 1px 2px #000;
@@ -297,13 +330,20 @@ html, body {
   color: var(--text-muted);
 }
 
-.net-status-pill {
-  color: #68d391;
-  background: rgba(72, 187, 120, 0.15);
-  padding: 2px 6px;
+.btn-attack-sm {
+  background: #e53e3e;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
   border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-attack-sm:hover {
+  background: #c53030;
 }
 
 /* Jogadores Online (Top Right) & Minimapa */

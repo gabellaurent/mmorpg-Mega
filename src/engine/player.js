@@ -1,4 +1,4 @@
-// Representação do Jogador Local e Jogadores Remotos (Multiplayer)
+// Representação do Jogador Local e Jogadores Remotos (Multiplayer & XP)
 import { CONFIG } from '../config.js';
 
 export class Player {
@@ -7,43 +7,55 @@ export class Player {
     this.name = data.name || 'Heroi';
     this.spriteId = data.spriteId || 'knight';
     
-    // Posição no Grid (inteiros 0..31)
+    // Posição no Grid
     this.gridX = data.x !== undefined ? data.x : 16;
     this.gridY = data.y !== undefined ? data.y : 16;
 
-    // Posição de Renderização (em pixels para interpolação suave)
+    // Posição de Renderização (em pixels para interpolação)
     this.renderX = this.gridX * CONFIG.TILE_SIZE;
     this.renderY = this.gridY * CONFIG.TILE_SIZE;
 
-    // Origem e Destino da Interpolação
     this.startX = this.renderX;
     this.startY = this.renderY;
     this.targetX = this.renderX;
     this.targetY = this.renderY;
 
-    // Estado de Movimento e Direção
-    this.direction = data.direction || 'south'; // south, north, east, west
+    this.direction = data.direction || 'south';
     this.isMoving = false;
     this.moveStartTime = 0;
     
-    // Animação de Pernas
     this.animFrame = 0;
     this.lastAnimTime = 0;
 
-    // Status do Personagem
+    // Status do Personagem & XP
     this.level = data.level || 1;
     this.hp = data.hp || 100;
     this.maxHp = data.maxHp || 100;
 
-    // Balão de Chat Movel sobre a cabeça
+    this.xp = data.xp || 0;
+    this.maxXp = this.level * 50; // XP necessária para subir de nível
+
     this.chatBubble = null;
     this.chatBubbleTimer = null;
   }
 
-  // Inicia a movimentação para um novo tile (gridX, gridY)
+  // Adiciona XP e verifica se subiu de nível (Level Up!)
+  addXp(amount) {
+    this.xp += amount;
+    if (this.xp >= this.maxXp) {
+      this.level += 1;
+      this.xp -= this.maxXp;
+      this.maxXp = this.level * 50;
+      this.maxHp += 20;
+      this.hp = this.maxHp; // Cura ao subir de nível!
+      return true; // Subiu de nível!
+    }
+    return false;
+  }
+
+  // Inicia a movimentação para um novo tile
   moveTo(newGridX, newGridY, direction) {
     this.direction = direction;
-
     this.startX = this.renderX;
     this.startY = this.renderY;
     
@@ -57,19 +69,16 @@ export class Player {
     this.moveStartTime = performance.now();
   }
 
-  // Atualiza a posição de renderização (LERP) a cada frame (60 FPS)
   update(now) {
     if (this.isMoving) {
       const elapsed = now - this.moveStartTime;
       const progress = Math.min(1, elapsed / CONFIG.STEP_DURATION_MS);
 
-      // Interpolação linear (LERP)
       this.renderX = this.startX + (this.targetX - this.startX) * progress;
       this.renderY = this.startY + (this.targetY - this.startY) * progress;
 
-      // Animação de pernas ao andar
       if (now - this.lastAnimTime > CONFIG.ANIMATION_FRAME_MS) {
-        this.animFrame = (this.animFrame + 1) % 2 + 1; // Alterna entre frame 1 e 2
+        this.animFrame = (this.animFrame + 1) % 2 + 1;
         this.lastAnimTime = now;
       }
 
@@ -77,14 +86,13 @@ export class Player {
         this.renderX = this.targetX;
         this.renderY = this.targetY;
         this.isMoving = false;
-        this.animFrame = 0; // Idle
+        this.animFrame = 0;
       }
     } else {
       this.animFrame = 0;
     }
   }
 
-  // Exibe um balão de fala sobre o personagem
   setChatBubble(text) {
     this.chatBubble = text;
     if (this.chatBubbleTimer) clearTimeout(this.chatBubbleTimer);

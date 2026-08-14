@@ -3,6 +3,7 @@ import { spriteGen } from './engine/spriteGenerator.js';
 import { GameMap } from './engine/map.js';
 import { Player } from './engine/player.js';
 import { Renderer } from './engine/renderer.js';
+import { MonsterManager } from './engine/monsterManager.js';
 import { NetworkManager } from './services/networkManager.js';
 import { AuthUI } from './ui/authUI.js';
 import { HudUI } from './ui/hudUI.js';
@@ -13,32 +14,29 @@ class GameEngine {
     this.canvas = document.getElementById('game-canvas');
     this.renderer = new Renderer(this.canvas);
     this.gameMap = new GameMap();
+    this.monsterManager = new MonsterManager(this.gameMap);
     
     this.localPlayer = null;
-    this.remotePlayers = new Map(); // id -> Player
+    this.remotePlayers = new Map();
     this.network = null;
     this.hud = null;
 
     this.keysPressed = {};
     this.lastStepTime = 0;
+    this.lastAttackTime = 0;
 
     this.init();
   }
 
   init() {
-    // 1. Inicializar gerador procedural de sprites pixel-art
     spriteGen.init();
-
-    // 2. Redimensionar Canvas
     this.renderer.resize();
     window.addEventListener('resize', () => this.renderer.resize());
 
-    // 3. Exibir Modal de Login / Criação de Personagem
     new AuthUI((characterData) => this.startGame(characterData));
   }
 
   startGame(characterData) {
-    // 1. Instanciar o Jogador Local
     this.localPlayer = new Player({
       name: characterData.name,
       spriteId: characterData.spriteId,
@@ -49,7 +47,6 @@ class GameEngine {
       maxHp: 100
     });
 
-    // 2. Inicializar Rede Realtime
     this.network = new NetworkManager(
       this.localPlayer,
       (remoteData) => this.handleRemotePlayerUpdate(remoteData),
@@ -58,7 +55,6 @@ class GameEngine {
     );
     this.network.connect('map-1');
 
-    // 3. Inicializar HUD
     this.hud = new HudUI(
       this.localPlayer,
       (text) => {
@@ -67,19 +63,72 @@ class GameEngine {
       },
       () => {
         this.renderer.showGridOverlay = !this.renderer.showGridOverlay;
+      },
+      () => {
+        this.performAttack();
       }
     );
 
-    // 4. Configurar Captura de Teclado
     this.setupControls();
-
-    // 5. Iniciar Loop de Animação 60FPS
     requestAnimationFrame((now) => this.gameLoop(now));
 
-    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! Mova-se usando as setas ou WASD.', true);
+    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! Mova-se com WASD e aperte <strong>ESPAÇO</strong> para atacar os Rats nos 4 cantos do mapa!', true);
   }
 
-  // Tratamento de atualização de jogador remoto via Realtime
+  // Realiza um ataque físico contra qualquer Rat adjacente (1 tile de distância)
+  performAttack() {
+    if (!this.localPlayer) return;
+    const now = performance.now();
+    if (now - this.lastAttackTime < 500) return; // Cooldown de 500ms
+    this.lastAttackTime = now;
+
+    let targetRat = null;
+    let minDistance = 999;
+
+    // Buscar monstro vivo mais próximo em até 1 tile
+    this.monsterManager.monsters.forEach(rat => {
+      if (rat.isDead) return;
+      const dist = Math.max(Math.abs(rat.gridX - this.localPlayer.gridX), Math.abs(rat.gridY - this.localPlayer.gridY));
+      if (dist <= 1 && dist < minDistance) {
+        minDistance = dist;
+        targetRat = rat;
+      }
+    });
+
+    if (targetRat) {
+      // Dano do Ataque do Jogador (8 a 16 HP)
+      const dmg = Math.floor(Math.random() * 9) + 8;
+      const died = targetRat.takeDamage(dmg);
+
+      // Mostrar número de dano flutuante em vermelho sobre o Rat
+      this.monsterManager.addFloatingText(`-${dmg}`, targetRat.gridX, targetRat.gridY, '#f56565');
+
+      if (died) {
+        // Monstro Derrotado! Conceder EXP
+        const gainedXp = 25;
+        const leveledUp = this.localPlayer.addXp(gainedXp);
+        this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
+
+        if (leveledUp) {
+          this.hud.addChatMessage('Sistema', `✨ <strong>LEVEL UP!</strong> Você alcançou o Nível ${this.localPlayer.level}! Sua vida foi restaurada!`, true);
+        } else {
+          this.hud.addChatMessage('Sistema', `⚔️ Você derrotou o <strong>${targetRat.name}</strong> e ganhou +${gainedXp} EXP!`, true);
+        }
+
+        // Agendar Respawn do Rat em 8 segundos
+        setTimeout(() => {
+          targetRat.respawn();
+          this.hud.addChatMessage('Sistema', `⚠️ Um <strong>${targetRat.name}</strong> renasceu nos cantos do mapa!`, true);
+        }, 8000);
+      }
+
+      this.hud.updatePlayerStats();
+    } else {
+      // Golpe no ar se não houver monstro perto
+      this.monsterManager.addFloatingText(`miss`, this.localPlayer.gridX, this.localPlayer.gridY, '#a0aec0');
+    }
+  }
+
   handleRemotePlayerUpdate(data) {
     if (data.id === this.localPlayer.id) return;
 
@@ -99,7 +148,6 @@ class GameEngine {
         this.hud.addChatMessage('Sistema', `👋 <strong>${data.name}</strong> entrou no mapa!`, true);
       }
     } else {
-      // Se o jogador remoto se moveu para uma nova casa
       if (rPlayer.gridX !== data.x || rPlayer.gridY !== data.y) {
         rPlayer.moveTo(data.x, data.y, data.direction || rPlayer.direction);
       } else {
@@ -112,7 +160,6 @@ class GameEngine {
     }
   }
 
-  // Remoção de jogador desconectado
   handleRemotePlayerLeave(id) {
     const rPlayer = this.remotePlayers.get(id);
     if (rPlayer) {
@@ -126,7 +173,6 @@ class GameEngine {
     }
   }
 
-  // Recebimento de mensagens de chat
   handleChatMessage(payload) {
     if (payload.id === this.localPlayer.id) {
       this.hud.addChatMessage(payload.sender, payload.text);
@@ -142,25 +188,28 @@ class GameEngine {
     }
   }
 
-  // Captura de controles no teclado
   setupControls() {
     window.addEventListener('keydown', (e) => {
-      // Não mover o personagem se o usuário estiver digitando no Chat
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
 
-      this.keysPressed[e.key] = true;
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        this.performAttack();
+      } else {
+        this.keysPressed[e.key] = true;
+      }
     });
 
     window.addEventListener('keyup', (e) => {
-      this.keysPressed[e.key] = false;
+      if (e.key !== ' ' && e.code !== 'Space') {
+        this.keysPressed[e.key] = false;
+      }
     });
   }
 
-  // Processamento de Input por cada passo no Grid (Estilo Tibia)
   processInput(now) {
     if (!this.localPlayer || this.localPlayer.isMoving) return;
 
-    // Throttle do próximo passo conforme CONFIG.STEP_DURATION_MS
     if (now - this.lastStepTime < CONFIG.STEP_DURATION_MS - 20) return;
 
     let dx = 0;
@@ -185,30 +234,22 @@ class GameEngine {
       const nextX = this.localPlayer.gridX + dx;
       const nextY = this.localPlayer.gridY + dy;
 
-      // Validação de Colisão com Terreno / Obstáculos
       if (this.gameMap.isWalkable(nextX, nextY)) {
         this.localPlayer.moveTo(nextX, nextY, dir);
         this.lastStepTime = now;
 
-        // Transmitir novo movimento para a rede em tempo real
         this.network.sendMove(nextX, nextY, dir);
-
-        // Atualizar coordenadas no HUD
         this.hud.updatePlayerStats();
       } else {
-        // Se houver colisão, apenas vira a direção do personagem
         this.localPlayer.direction = dir;
         this.network.sendMove(this.localPlayer.gridX, this.localPlayer.gridY, dir);
       }
     }
   }
 
-  // Loop de Animação e Renderização 60 FPS
   gameLoop(now) {
-    // 1. Processar Teclado e Movimento do Jogador Local
     this.processInput(now);
 
-    // 2. Atualizar animações e LERP de Posições
     if (this.localPlayer) {
       this.localPlayer.update(now);
     }
@@ -217,17 +258,29 @@ class GameEngine {
       rp.update(now);
     });
 
-    // 3. Atualizar Câmera e Renderizar
+    // Atualizar Monstros (IA, Dano ao Jogador)
+    if (this.monsterManager && this.localPlayer) {
+      this.monsterManager.update(now, this.localPlayer, (damageTaken) => {
+        this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
+        this.hud.updatePlayerStats();
+        if (this.localPlayer.hp <= 0) {
+          this.localPlayer.hp = this.localPlayer.maxHp; // Renascer se morrer
+          this.localPlayer.gridX = 16;
+          this.localPlayer.gridY = 16;
+          this.hud.addChatMessage('Sistema', '☠️ Você caiu em batalha! Renascendo na praça central...', true);
+        }
+      });
+    }
+
     if (this.localPlayer) {
       this.renderer.updateCamera(this.localPlayer);
-      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers);
+      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager);
     }
 
     requestAnimationFrame((n) => this.gameLoop(n));
   }
 }
 
-// Inicializar a Engine do Jogo
 window.addEventListener('DOMContentLoaded', () => {
   new GameEngine();
 });
