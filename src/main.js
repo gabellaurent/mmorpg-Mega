@@ -1,4 +1,5 @@
 // Arquivo Principal - Orquestrador do MMORPG
+import '../style.css';
 import { spriteGen } from './engine/spriteGenerator.js';
 import { GameMap } from './engine/map.js';
 import { Player } from './engine/player.js';
@@ -75,17 +76,15 @@ class GameEngine {
     this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! Mova-se com WASD e aperte <strong>ESPAÇO</strong> para atacar os Rats nos 4 cantos do mapa!', true);
   }
 
-  // Realiza um ataque físico contra qualquer Rat adjacente (1 tile de distância)
   performAttack() {
     if (!this.localPlayer) return;
     const now = performance.now();
-    if (now - this.lastAttackTime < 500) return; // Cooldown de 500ms
+    if (now - this.lastAttackTime < 500) return;
     this.lastAttackTime = now;
 
     let targetRat = null;
     let minDistance = 999;
 
-    // Buscar monstro vivo mais próximo em até 1 tile
     this.monsterManager.monsters.forEach(rat => {
       if (rat.isDead) return;
       const dist = Math.max(Math.abs(rat.gridX - this.localPlayer.gridX), Math.abs(rat.gridY - this.localPlayer.gridY));
@@ -96,15 +95,12 @@ class GameEngine {
     });
 
     if (targetRat) {
-      // Dano do Ataque do Jogador (8 a 16 HP)
       const dmg = Math.floor(Math.random() * 9) + 8;
       const died = targetRat.takeDamage(dmg);
 
-      // Mostrar número de dano flutuante em vermelho sobre o Rat
       this.monsterManager.addFloatingText(`-${dmg}`, targetRat.gridX, targetRat.gridY, '#f56565');
 
       if (died) {
-        // Monstro Derrotado! Conceder EXP
         const gainedXp = 25;
         const leveledUp = this.localPlayer.addXp(gainedXp);
         this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
@@ -115,7 +111,6 @@ class GameEngine {
           this.hud.addChatMessage('Sistema', `⚔️ Você derrotou o <strong>${targetRat.name}</strong> e ganhou +${gainedXp} EXP!`, true);
         }
 
-        // Agendar Respawn do Rat em 8 segundos
         setTimeout(() => {
           targetRat.respawn();
           this.hud.addChatMessage('Sistema', `⚠️ Um <strong>${targetRat.name}</strong> renasceu nos cantos do mapa!`, true);
@@ -124,7 +119,6 @@ class GameEngine {
 
       this.hud.updatePlayerStats();
     } else {
-      // Golpe no ar se não houver monstro perto
       this.monsterManager.addFloatingText(`miss`, this.localPlayer.gridX, this.localPlayer.gridY, '#a0aec0');
     }
   }
@@ -258,13 +252,12 @@ class GameEngine {
       rp.update(now);
     });
 
-    // Atualizar Monstros (IA, Dano ao Jogador)
     if (this.monsterManager && this.localPlayer) {
       this.monsterManager.update(now, this.localPlayer, (damageTaken) => {
         this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
         this.hud.updatePlayerStats();
         if (this.localPlayer.hp <= 0) {
-          this.localPlayer.hp = this.localPlayer.maxHp; // Renascer se morrer
+          this.localPlayer.hp = this.localPlayer.maxHp;
           this.localPlayer.gridX = 16;
           this.localPlayer.gridY = 16;
           this.hud.addChatMessage('Sistema', '☠️ Você caiu em batalha! Renascendo na praça central...', true);
