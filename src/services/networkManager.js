@@ -2,45 +2,38 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 
 export class NetworkManager {
-  constructor(localPlayer, onRemotePlayerUpdate, onRemotePlayerLeave, onChatMessage) {
+  constructor(localPlayer, onRemotePlayerUpdate, onRemotePlayerLeave, onChatMessage, onMonsterHit, onMonsterRespawn) {
     this.localPlayer = localPlayer;
     this.onRemotePlayerUpdate = onRemotePlayerUpdate;
     this.onRemotePlayerLeave = onRemotePlayerLeave;
     this.onChatMessage = onChatMessage;
+    this.onMonsterHit = onMonsterHit;
+    this.onMonsterRespawn = onMonsterRespawn;
 
     this.supabaseChannel = null;
     this.localChannel = null;
     this.useSupabase = false;
     this.isSupabaseSubscribed = false;
 
-    this.lastSeenMap = new Map(); // id -> timestamp
+    this.lastSeenMap = new Map();
     this.heartbeatTimer = null;
     this.cleanupTimer = null;
     this.autoSaveTimer = null;
   }
 
-  // Conecta ao canal de comunicação (Supabase Realtime ou BroadcastChannel Local)
   connect(mapId = 'map-1') {
-    // 1. Sempre ativa o BroadcastChannel local para sincronização instantânea entre abas
     this.connectLocalBroadcast(mapId);
 
-    // 2. Conecta ao Supabase Realtime se configurado
     if (isSupabaseConfigured && supabase) {
       this.useSupabase = true;
       this.connectSupabase(mapId);
     }
 
-    // Heartbeat de estabilidade (a cada 2 segundos)
     this.startHeartbeat();
-
-    // Limpeza de inativos (apenas se passar > 20s sem sinal)
     this.startCleanupTask();
-
-    // Auto-Save no PostgreSQL
     this.setupAutoSave();
   }
 
-  // Conexão Local Multi-Aba via BroadcastChannel
   connectLocalBroadcast(mapId) {
     try {
       this.localChannel = new BroadcastChannel(`mmorpg-map-${mapId}`);
@@ -53,15 +46,12 @@ export class NetworkManager {
       };
 
       console.log('⚡ Conectado via BroadcastChannel Local.');
-      
-      // Anunciar entrada imediata
       this.sendBroadcast('player_join', this.getPlayerDataPayload());
     } catch (err) {
       console.warn('Erro no BroadcastChannel local:', err);
     }
   }
 
-  // Conexão via Supabase Realtime WebSockets
   connectSupabase(mapId) {
     const roomName = `map:${mapId}`;
     this.supabaseChannel = supabase.channel(roomName, {
@@ -71,7 +61,6 @@ export class NetworkManager {
       }
     });
 
-    // Eventos de Broadcast do Supabase Realtime
     this.supabaseChannel.on('broadcast', { event: 'player_move' }, ({ payload }) => {
       this.handleMessage('player_move', payload);
     });
@@ -88,7 +77,15 @@ export class NetworkManager {
       this.handleMessage('player_leave', payload);
     });
 
-    // Inscrever no canal do Supabase
+    // Eventos de Monstros em Tempo Real
+    this.supabaseChannel.on('broadcast', { event: 'monster_hit' }, ({ payload }) => {
+      this.handleMessage('monster_hit', payload);
+    });
+
+    this.supabaseChannel.on('broadcast', { event: 'monster_respawn' }, ({ payload }) => {
+      this.handleMessage('monster_respawn', payload);
+    });
+
     this.supabaseChannel.subscribe((status) => {
       console.log('📡 Status Supabase Realtime:', status);
       if (status === 'SUBSCRIBED') {
@@ -100,11 +97,15 @@ export class NetworkManager {
     });
   }
 
-  // Processa mensagens recebidas com estabilidade total
   handleMessage(type, payload) {
-    if (!payload || payload.id === this.localPlayer.id) return;
+    if (!payload) return;
 
-    this.lastSeenMap.set(payload.id, Date.now());
+    // Ignorar eventos do próprio jogador local para evitar duplicação de ataques
+    if (payload.id === this.localPlayer.id && type !== 'monster_hit' && type !== 'monster_respawn') return;
+
+    if (payload.id && payload.id !== this.localPlayer.id) {
+      this.lastSeenMap.set(payload.id, Date.now());
+    }
 
     if (type === 'player_move' || type === 'player_heartbeat' || type === 'player_join') {
       this.onRemotePlayerUpdate(payload);
@@ -113,10 +114,17 @@ export class NetworkManager {
       this.lastSeenMap.delete(payload.id);
     } else if (type === 'player_chat') {
       this.onChatMessage(payload);
+    } else if (type === 'monster_hit') {
+      if (payload.attackerId !== this.localPlayer.id && this.onMonsterHit) {
+        this.onMonsterHit(payload);
+      }
+    } else if (type === 'monster_respawn') {
+      if (this.onMonsterRespawn) {
+        this.onMonsterRespawn(payload);
+      }
     }
   }
 
-  // Prepara o pacote de dados do jogador local
   getPlayerDataPayload() {
     return {
       id: this.localPlayer.id,
@@ -131,7 +139,6 @@ export class NetworkManager {
     };
   }
 
-  // Envia qualquer mensagem de broadcast para o canal ativo
   sendBroadcast(event, payload) {
     if (this.useSupabase && this.supabaseChannel && this.isSupabaseSubscribed) {
       this.supabaseChannel.send({
@@ -146,7 +153,6 @@ export class NetworkManager {
     }
   }
 
-  // Transmite movimentação do jogador local
   sendMove(gridX, gridY, direction) {
     const payload = {
       id: this.localPlayer.id,
@@ -163,7 +169,29 @@ export class NetworkManager {
     this.sendBroadcast('player_move', payload);
   }
 
-  // Transmite mensagem de chat
+  // Envia evento de dano no Monstro em Tempo Real
+  sendMonsterHit(ratId, damage, attackerName) {
+    const payload = {
+      attackerId: this.localPlayer.id,
+      attackerName: attackerName,
+      ratId: ratId,
+      damage: damage,
+      timestamp: Date.now()
+    };
+
+    this.sendBroadcast('monster_hit', payload);
+  }
+
+  // Envia evento de respawn do Monstro em Tempo Real
+  sendMonsterRespawn(ratId) {
+    const payload = {
+      ratId: ratId,
+      timestamp: Date.now()
+    };
+
+    this.sendBroadcast('monster_respawn', payload);
+  }
+
   sendChat(text) {
     const payload = {
       id: this.localPlayer.id,
@@ -176,7 +204,6 @@ export class NetworkManager {
     this.onChatMessage(payload);
   }
 
-  // Heartbeat periódico (a cada 2 segundos)
   startHeartbeat() {
     this.heartbeatTimer = setInterval(() => {
       this.sendBroadcast('player_heartbeat', this.getPlayerDataPayload());
@@ -188,7 +215,6 @@ export class NetworkManager {
     });
   }
 
-  // Limpeza após 20 segundos de silêncio
   startCleanupTask() {
     this.cleanupTimer = setInterval(() => {
       const now = Date.now();
@@ -201,7 +227,6 @@ export class NetworkManager {
     }, 5000);
   }
 
-  // Auto-Save no banco de dados Supabase
   setupAutoSave() {
     this.autoSaveTimer = setInterval(() => {
       this.savePositionToDatabase();

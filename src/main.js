@@ -52,7 +52,9 @@ class GameEngine {
       this.localPlayer,
       (remoteData) => this.handleRemotePlayerUpdate(remoteData),
       (remoteId) => this.handleRemotePlayerLeave(remoteId),
-      (chatPayload) => this.handleChatMessage(chatPayload)
+      (chatPayload) => this.handleChatMessage(chatPayload),
+      (hitPayload) => this.handleRemoteMonsterHit(hitPayload),
+      (respawnPayload) => this.handleRemoteMonsterRespawn(respawnPayload)
     );
     this.network.connect('map-1');
 
@@ -76,15 +78,17 @@ class GameEngine {
     this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! Mova-se com WASD e aperte <strong>ESPAÇO</strong> para atacar os Rats nos 4 cantos do mapa!', true);
   }
 
+  // Realiza um ataque físico contra qualquer Rat adjacente (1 tile de distância)
   performAttack() {
     if (!this.localPlayer) return;
     const now = performance.now();
-    if (now - this.lastAttackTime < 500) return;
+    if (now - this.lastAttackTime < 450) return; // Cooldown de 450ms
     this.lastAttackTime = now;
 
     let targetRat = null;
     let minDistance = 999;
 
+    // Buscar monstro vivo mais próximo em até 1 tile
     this.monsterManager.monsters.forEach(rat => {
       if (rat.isDead) return;
       const dist = Math.max(Math.abs(rat.gridX - this.localPlayer.gridX), Math.abs(rat.gridY - this.localPlayer.gridY));
@@ -95,12 +99,18 @@ class GameEngine {
     });
 
     if (targetRat) {
+      // Dano do Ataque do Jogador (8 a 16 HP)
       const dmg = Math.floor(Math.random() * 9) + 8;
       const died = targetRat.takeDamage(dmg);
 
+      // Mostrar número de dano flutuante em vermelho sobre o Rat
       this.monsterManager.addFloatingText(`-${dmg}`, targetRat.gridX, targetRat.gridY, '#f56565');
 
+      // Transmitir evento de dano no Rat em tempo real para todos os outros jogadores!
+      this.network.sendMonsterHit(targetRat.id, dmg, this.localPlayer.name);
+
       if (died) {
+        // Monstro Derrotado! Conceder EXP para quem desferiu o golpe final
         const gainedXp = 25;
         const leveledUp = this.localPlayer.addXp(gainedXp);
         this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
@@ -111,15 +121,42 @@ class GameEngine {
           this.hud.addChatMessage('Sistema', `⚔️ Você derrotou o <strong>${targetRat.name}</strong> e ganhou +${gainedXp} EXP!`, true);
         }
 
+        // Transmitir evento de agendamento de Respawn
+        const ratId = targetRat.id;
         setTimeout(() => {
           targetRat.respawn();
+          this.network.sendMonsterRespawn(ratId);
           this.hud.addChatMessage('Sistema', `⚠️ Um <strong>${targetRat.name}</strong> renasceu nos cantos do mapa!`, true);
         }, 8000);
       }
 
       this.hud.updatePlayerStats();
     } else {
+      // Golpe no ar
       this.monsterManager.addFloatingText(`miss`, this.localPlayer.gridX, this.localPlayer.gridY, '#a0aec0');
+    }
+  }
+
+  // Recebe dano causado por OUTRO jogador a um Rat
+  handleRemoteMonsterHit(payload) {
+    const rat = this.monsterManager.monsters.get(payload.ratId);
+    if (!rat || rat.isDead) return;
+
+    const died = rat.takeDamage(payload.damage);
+
+    // Exibir número de dano vermelho na tela do outro jogador!
+    this.monsterManager.addFloatingText(`-${payload.damage}`, rat.gridX, rat.gridY, '#f56565');
+
+    if (died && this.hud) {
+      this.hud.addChatMessage('Sistema', `⚔️ <strong>${payload.attackerName}</strong> derrotou o <strong>${rat.name}</strong>!`, true);
+    }
+  }
+
+  // Recebe notificação de respawn de um Rat
+  handleRemoteMonsterRespawn(payload) {
+    const rat = this.monsterManager.monsters.get(payload.ratId);
+    if (rat) {
+      rat.respawn();
     }
   }
 
