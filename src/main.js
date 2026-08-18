@@ -351,6 +351,47 @@ class GameEngine {
     }
   }
 
+  switchMap(targetMapId, targetX, targetY) {
+    if (!this.localPlayer) return;
+
+    this.lockedTargetId = null;
+    this.remotePlayers.clear();
+    if (this.hud) {
+      this.hud.updateOnlineList(this.remotePlayers);
+    }
+
+    // 1. Instanciar novo mapa, monstros e NPCs do destino
+    this.gameMap = new GameMap(targetMapId);
+    this.monsterManager = new MonsterManager(this.gameMap);
+    this.npcManager = new NpcManager(this.gameMap);
+
+    // 2. Reposicionar o jogador local na entrada do novo mapa
+    this.localPlayer.gridX = targetX;
+    this.localPlayer.gridY = targetY;
+    this.localPlayer.renderX = targetX * CONFIG.TILE_SIZE;
+    this.localPlayer.renderY = targetY * CONFIG.TILE_SIZE;
+    this.localPlayer.startX = this.localPlayer.renderX;
+    this.localPlayer.startY = this.localPlayer.renderY;
+    this.localPlayer.targetX = this.localPlayer.renderX;
+    this.localPlayer.targetY = this.localPlayer.renderY;
+    this.localPlayer.isMoving = false;
+
+    // 3. Reconectar canal multiplayer Supabase Realtime para a nova região
+    if (this.network) {
+      this.network.connect(targetMapId);
+    }
+
+    // 4. Notificação e atualização da interface
+    if (this.hud) {
+      this.hud.updatePlayerStats();
+      if (targetMapId === 'map-2') {
+        this.hud.addChatMessage('Sistema', '🌲 Você entrou na <strong>Floresta do Sul</strong>! Cuidado com os ratos selvagens pela vegetação!', true);
+      } else {
+        this.hud.addChatMessage('Sistema', '🏰 Você retornou à <strong>Vila Principal</strong>!', true);
+      }
+    }
+  }
+
   triggerStepFromPointer(now) {
     if (!this.localPlayer || this.localPlayer.isMoving) return;
 
@@ -368,6 +409,15 @@ class GameEngine {
 
     const nextX = this.localPlayer.gridX + dx;
     const nextY = this.localPlayer.gridY + dy;
+
+    // Verificar transição de mapa ao chegar ao portão
+    const transition = this.gameMap.getTransition(nextX, nextY);
+    if (transition) {
+      this.localPlayer.direction = dir;
+      this.lastStepTime = now;
+      this.switchMap(transition.targetMapId, transition.targetX, transition.targetY);
+      return;
+    }
 
     if (this.gameMap.isWalkable(nextX, nextY) && !this.npcManager.isNpcAt(nextX, nextY)) {
       this.localPlayer.moveTo(nextX, nextY, dir);

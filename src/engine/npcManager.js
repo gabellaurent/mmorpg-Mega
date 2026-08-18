@@ -1,4 +1,4 @@
-// Gerenciador do Sistema de NPCs (Non-Player Characters)
+// Gerenciador do Sistema de NPCs (Non-Player Characters - Multi-Mapa)
 import { CONFIG } from '../config.js';
 
 export class Npc {
@@ -44,43 +44,60 @@ export class NpcManager {
   }
 
   initDefaultNpcs() {
-    // 1. Guardas do Portão Sul
-    this.addNpc(new Npc({
-      id: 'guard_south_left',
-      name: 'Sir Gareth',
-      title: 'Guarda Real',
-      type: 'guard',
-      gridX: 14,
-      gridY: 30,
-      direction: 'south',
-      badgeText: '🛡️ GUARDA',
-      badgeColor: '#4299e1'
-    }));
+    this.npcs.clear();
+    const mapId = this.gameMap ? this.gameMap.mapId : 'map-1';
 
-    this.addNpc(new Npc({
-      id: 'guard_south_right',
-      name: 'Sir Tristan',
-      title: 'Guarda Real',
-      type: 'guard',
-      gridX: 17,
-      gridY: 30,
-      direction: 'south',
-      badgeText: '🛡️ GUARDA',
-      badgeColor: '#4299e1'
-    }));
+    if (mapId === 'map-2') {
+      // Patrulheiro da Floresta no Portão Norte
+      this.addNpc(new Npc({
+        id: 'ranger_forest',
+        name: 'Elric',
+        title: 'Patrulheiro da Floresta',
+        type: 'guard',
+        gridX: 17,
+        gridY: 1,
+        direction: 'south',
+        badgeText: '🏹 GUIA',
+        badgeColor: '#38a169'
+      }));
+    } else {
+      // Guardas e Mercador da Vila Principal (Map 1)
+      this.addNpc(new Npc({
+        id: 'guard_south_left',
+        name: 'Sir Gareth',
+        title: 'Guarda Real',
+        type: 'guard',
+        gridX: 14,
+        gridY: 30,
+        direction: 'south',
+        badgeText: '🛡️ GUARDA',
+        badgeColor: '#4299e1'
+      }));
 
-    // 2. Mercador na Praça Central
-    this.addNpc(new Npc({
-      id: 'merchant_center',
-      name: 'Barnaby',
-      title: 'Mercador da Vila',
-      type: 'merchant',
-      gridX: 14,
-      gridY: 15,
-      direction: 'east',
-      badgeText: '💰 MERCADOR',
-      badgeColor: '#ecc94b'
-    }));
+      this.addNpc(new Npc({
+        id: 'guard_south_right',
+        name: 'Sir Tristan',
+        title: 'Guarda Real',
+        type: 'guard',
+        gridX: 17,
+        gridY: 30,
+        direction: 'south',
+        badgeText: '🛡️ GUARDA',
+        badgeColor: '#4299e1'
+      }));
+
+      this.addNpc(new Npc({
+        id: 'merchant_center',
+        name: 'Barnaby',
+        title: 'Mercador da Vila',
+        type: 'merchant',
+        gridX: 14,
+        gridY: 15,
+        direction: 'east',
+        badgeText: '💰 MERCADOR',
+        badgeColor: '#ecc94b'
+      }));
+    }
   }
 
   addNpc(npc) {

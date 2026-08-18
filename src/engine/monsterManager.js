@@ -1,4 +1,4 @@
-// Gerenciador de Monstros (Rats) e Sistema de IA / Combat
+// Gerenciador de Monstros (Rats) e Sistema de IA / Combat (Multi-Mapa)
 import { CONFIG } from '../config.js';
 
 export class Monster {
@@ -30,7 +30,7 @@ export class Monster {
 
     if (this.hp <= 0) {
       this.isDead = true;
-      return true; // Morreu!
+      return true;
     }
     return false;
   }
@@ -47,7 +47,6 @@ export class Monster {
   update(now) {
     if (this.isDead) return;
 
-    // Suavizar interpolação de renderização
     const targetX = this.gridX * CONFIG.TILE_SIZE;
     const targetY = this.gridY * CONFIG.TILE_SIZE;
 
@@ -60,25 +59,43 @@ export class MonsterManager {
   constructor(gameMap) {
     this.gameMap = gameMap;
     this.monsters = new Map();
-    this.floatingTexts = []; // Array de textos flutuantes de dano
+    this.floatingTexts = [];
     this.initMonsters();
   }
 
-  // Cria os 4 Rats nos 4 cantos do mapa
   initMonsters() {
-    const corners = [
-      { id: 'rat_nw', name: 'Cave Rat', x: 4, y: 4 },
-      { id: 'rat_ne', name: 'Cave Rat', x: 27, y: 4 },
-      { id: 'rat_sw', name: 'Cave Rat', x: 4, y: 27 },
-      { id: 'rat_se', name: 'Cave Rat', x: 27, y: 27 }
-    ];
+    this.monsters.clear();
+    const mapId = this.gameMap ? this.gameMap.mapId : 'map-1';
 
-    corners.forEach(c => {
-      this.monsters.set(c.id, new Monster(c.id, c.name, c.x, c.y));
+    let spawns = [];
+    if (mapId === 'map-2') {
+      // 9 Ratos Selvagens Espalhados pela Floresta do Sul
+      spawns = [
+        { id: 'f_rat_1', name: 'Rato Selvagem', x: 6, y: 8 },
+        { id: 'f_rat_2', name: 'Rato Selvagem', x: 25, y: 8 },
+        { id: 'f_rat_3', name: 'Rato Selvagem', x: 10, y: 14 },
+        { id: 'f_rat_4', name: 'Rato Selvagem', x: 21, y: 14 },
+        { id: 'f_rat_5', name: 'Rato da Floresta', x: 8, y: 22 },
+        { id: 'f_rat_6', name: 'Rato da Floresta', x: 24, y: 22 },
+        { id: 'f_rat_7', name: 'Rato da Floresta', x: 16, y: 26 },
+        { id: 'f_rat_8', name: 'Rato da Floresta', x: 14, y: 8 },
+        { id: 'f_rat_9', name: 'Rato da Floresta', x: 27, y: 16 }
+      ];
+    } else {
+      // 4 Cave Rats nos cantos do Mapa 1 (Vila)
+      spawns = [
+        { id: 'rat_nw', name: 'Cave Rat', x: 4, y: 4 },
+        { id: 'rat_ne', name: 'Cave Rat', x: 27, y: 4 },
+        { id: 'rat_sw', name: 'Cave Rat', x: 4, y: 27 },
+        { id: 'rat_se', name: 'Cave Rat', x: 27, y: 27 }
+      ];
+    }
+
+    spawns.forEach(s => {
+      this.monsters.set(s.id, new Monster(s.id, s.name, s.x, s.y));
     });
   }
 
-  // Adiciona um texto flutuante de dano ou cura na tela (ex: -12 ou +25 XP)
   addFloatingText(text, gridX, gridY, color = '#f56565') {
     this.floatingTexts.push({
       text,
@@ -90,12 +107,11 @@ export class MonsterManager {
     });
   }
 
-  // Atualiza a posição dos textos flutuantes
   updateFloatingTexts(now) {
     for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
       const ft = this.floatingTexts[i];
-      ft.y -= 0.6; // Flutuar para cima
-      ft.opacity -= 0.02; // Desvanecer
+      ft.y -= 0.6;
+      ft.opacity -= 0.02;
 
       if (ft.opacity <= 0) {
         this.floatingTexts.splice(i, 1);
@@ -103,7 +119,6 @@ export class MonsterManager {
     }
   }
 
-  // Atualiza a IA e respawn dos monstros a cada frame
   update(now, localPlayer, onPlayerTakeDamage) {
     this.updateFloatingTexts(now);
 
@@ -112,18 +127,15 @@ export class MonsterManager {
 
       if (rat.isDead) return;
 
-      // IA de Combate do Rat contra o Jogador Local se estiver adjacente (1 tile)
       const dist = Math.max(Math.abs(rat.gridX - localPlayer.gridX), Math.abs(rat.gridY - localPlayer.gridY));
       
       if (dist === 1 && now - rat.lastAttackTime > 1600) {
-        // Ataque do Rat! Caia dano ao jogador
-        const dmg = Math.floor(Math.random() * 5) + 3; // 3 a 7 de dano
+        const dmg = Math.floor(Math.random() * 5) + 3;
         rat.lastAttackTime = now;
 
         onPlayerTakeDamage(dmg);
         this.addFloatingText(`-${dmg}`, localPlayer.gridX, localPlayer.gridY, '#f56565');
       } 
-      // Movimentação aleatória no ninho a cada 3.5 segundos se não estiver em combate
       else if (dist > 1 && now - rat.lastAiTime > 3500) {
         rat.lastAiTime = now;
         const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
@@ -131,7 +143,7 @@ export class MonsterManager {
         const nextX = rat.spawnX + dx;
         const nextY = rat.spawnY + dy;
 
-        if (this.gameMap.isWalkable(nextX, nextY)) {
+        if (this.gameMap && this.gameMap.isWalkable(nextX, nextY)) {
           rat.gridX = nextX;
           rat.gridY = nextY;
         }

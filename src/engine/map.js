@@ -1,22 +1,30 @@
-// Gerenciador do Mapa 32x32 Grid
+// Gerenciador do Mapa 32x32 Grid (Suporte Multi-Mapa)
 import { CONFIG } from '../config.js';
 
 export class GameMap {
-  constructor() {
+  constructor(mapId = 'map-1') {
+    this.mapId = mapId;
     this.width = CONFIG.GRID_WIDTH;
     this.height = CONFIG.GRID_HEIGHT;
     this.grid = [];
-    this.generateMap();
+    
+    if (mapId === 'map-2') {
+      this.name = 'Floresta do Sul';
+      this.generateForestMap();
+    } else {
+      this.mapId = 'map-1';
+      this.name = 'Vila Principal';
+      this.generateTownMap();
+    }
   }
 
-  // Gera o layout do Mapa 32x32 (Grama, Árvores, Praça de Pedra, Lago e Portal)
-  generateMap() {
+  // Gera o layout do Mapa 1: Vila Principal (32x32)
+  generateTownMap() {
     const { TILE_TYPES } = CONFIG;
     this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
 
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        // Tile Padrão: Grama com variações
         const variant = (x * 7 + y * 13) % 3;
         let type = TILE_TYPES.GRASS;
         let isSolid = false;
@@ -49,19 +57,18 @@ export class GameMap {
           type = TILE_TYPES.COBBLE;
           spriteKey = 'cobble';
           
-          // Portal Mágico no Centro Exato (16, 16)
           if (x === 16 && y === 16) {
             type = TILE_TYPES.PORTAL;
             spriteKey = 'portal';
           }
         } 
-        // 3. Lago de Água (Grid 5..9 em X, 6..10 em Y)
+        // 5. Lago de Água (Grid 5..8 em X, 5..9 em Y)
         else if (x >= 5 && x <= 8 && y >= 5 && y <= 9) {
           type = TILE_TYPES.WATER;
           isSolid = true;
           spriteKey = 'water_0';
         }
-        // 4. Árvores e Rochas de Obstáculo no Mapa
+        // 6. Árvores e Rochas no Mapa
         else if (
           (x === 4 && y === 14) || (x === 4 && y === 15) || (x === 5 && y === 15) ||
           (x === 25 && y === 8) || (x === 26 && y === 8) || (x === 25 && y === 9) ||
@@ -72,30 +79,107 @@ export class GameMap {
           isSolid = true;
           spriteKey = 'tree_trunk';
         }
-        // 5. Rochas de Obstáculo
         else if ((x === 8 && y === 18) || (x === 24 && y === 18) || (x === 18 && y === 6)) {
           type = TILE_TYPES.ROCK;
           isSolid = true;
           spriteKey = 'rock';
         }
-        // 6. Flores decorativas
         else if ((x % 5 === 0 && y % 7 === 0) || (x % 9 === 0 && y % 4 === 0)) {
           type = TILE_TYPES.FLOWERS;
           spriteKey = 'flowers';
         }
 
-        this.grid[y][x] = {
-          x,
-          y,
-          type,
-          isSolid,
-          spriteKey
-        };
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
       }
     }
   }
 
-  // Verifica se uma posição (x, y) está dentro do mapa e é passável (sem colisão)
+  // Gera o layout do Mapa 2: Floresta do Sul (32x32)
+  generateForestMap() {
+    const { TILE_TYPES } = CONFIG;
+    this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const variant = (x * 11 + y * 17) % 3;
+        let type = TILE_TYPES.GRASS;
+        let isSolid = false;
+        let spriteKey = `grass_${variant}`;
+
+        // 1. Portão Norte de Entrada/Saída para a Vila (Grid X:14..17, Y:0)
+        if ((x === 15 || x === 16) && y === 0) {
+          type = TILE_TYPES.DIRT;
+          isSolid = false;
+          spriteKey = 'dirt';
+        }
+        else if ((x === 14 || x === 17) && y === 0) {
+          type = TILE_TYPES.GATE;
+          isSolid = true;
+          spriteKey = 'gate_pillar';
+        }
+        // 2. Trilhas de Terra na Floresta (Trilha Norte-Sul e Leste-Oeste)
+        else if ((x === 15 || x === 16) && y >= 1 && y <= 30) {
+          type = TILE_TYPES.DIRT;
+          spriteKey = 'dirt';
+        }
+        else if (y === 15 && x >= 5 && x <= 26) {
+          type = TILE_TYPES.DIRT;
+          spriteKey = 'dirt';
+        }
+        // 3. Bordas da Floresta: Parede de Árvores Densas
+        else if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+        }
+        // 4. Aglomerados de Árvores Selvagens na Floresta
+        else if (
+          (x >= 3 && x <= 7 && y >= 3 && y <= 6) ||
+          (x >= 23 && x <= 28 && y >= 3 && y <= 8) ||
+          (x >= 3 && x <= 9 && y >= 20 && y <= 25) ||
+          (x >= 22 && x <= 28 && y >= 20 && y <= 26) ||
+          (x === 10 && y === 10) || (x === 11 && y === 10) || (x === 20 && y === 10) ||
+          (x === 10 && y === 20) || (x === 21 && y === 18)
+        ) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+        }
+        // 5. Rochas Místicas Espalhadas
+        else if (
+          (x === 12 && y === 6) || (x === 20 && y === 6) ||
+          (x === 8 && y === 16) || (x === 23 && y === 16) ||
+          (x === 14 && y === 24) || (x === 18 && y === 24)
+        ) {
+          type = TILE_TYPES.ROCK;
+          isSolid = true;
+          spriteKey = 'rock';
+        }
+        // 6. Clareiras com Flores
+        else if ((x % 3 === 0 && y % 5 === 0) || (x % 7 === 0 && y % 3 === 0)) {
+          type = TILE_TYPES.FLOWERS;
+          spriteKey = 'flowers';
+        }
+
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+      }
+    }
+  }
+
+  // Retorna informações de transição de mapa se o tile for uma passagem
+  getTransition(x, y) {
+    if (this.mapId === 'map-1') {
+      if ((x === 15 || x === 16) && y === 31) {
+        return { targetMapId: 'map-2', targetX: 15, targetY: 1 };
+      }
+    } else if (this.mapId === 'map-2') {
+      if ((x === 15 || x === 16) && y === 0) {
+        return { targetMapId: 'map-1', targetX: 15, targetY: 30 };
+      }
+    }
+    return null;
+  }
+
   isWalkable(x, y) {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
       return false;
@@ -103,7 +187,6 @@ export class GameMap {
     return !this.grid[y][x].isSolid;
   }
 
-  // Obtém o tile na coordenada (x, y)
   getTile(x, y) {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) return null;
     return this.grid[y][x];
