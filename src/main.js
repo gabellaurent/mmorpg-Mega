@@ -98,7 +98,8 @@ class GameEngine {
 
     if (targetRat && !targetRat.isDead) {
       const dist = Math.max(Math.abs(targetRat.gridX - this.localPlayer.gridX), Math.abs(targetRat.gridY - this.localPlayer.gridY));
-      if (dist <= 1) {
+      const maxRange = this.getMaxAttackRange();
+      if (dist <= maxRange) {
         this.lastAttackTime = now;
         const dmg = Math.floor(Math.random() * 9) + 8;
         const died = targetRat.takeDamage(dmg);
@@ -264,30 +265,53 @@ class GameEngine {
     window.addEventListener('pointercancel', releasePointer);
   }
 
+  getMaxAttackRange() {
+    if (!this.localPlayer) return 1;
+    const spriteId = this.localPlayer.spriteId;
+    if (spriteId === 'paladin') return 5; // Paladino/Ranger ataca a até 5 quadros de distância
+    if (spriteId === 'mage') return 4;    // Mago ataca a até 4 quadros de distância
+    return 1;                             // Guerreiro ataca corpo a corpo (1 quadro)
+  }
+
   handleRightClick(clientX, clientY) {
-    if (!this.localPlayer || !this.monsterManager) return;
+    if (!this.localPlayer || !this.monsterManager || !this.renderer) return;
 
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    // Calcular o retângulo real do canvas na tela do navegador
+    const rect = this.canvas.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
 
-    const dx = clientX - centerX;
-    const dy = clientY - centerY;
+    const screenDx = clientX - centerX;
+    const screenDy = clientY - centerY;
 
     const tileSize = CONFIG.TILE_SIZE;
-    const clickWorldX = this.localPlayer.renderX + tileSize / 2 + dx;
-    const clickWorldY = this.localPlayer.renderY + tileSize / 2 + dy;
+    const worldViewWidth = this.renderer.viewportTilesX * tileSize;
+    const worldViewHeight = this.renderer.viewportTilesY * tileSize;
+
+    // Converte o deslocamento da tela (pixels CSS) para deslocamento no mundo do jogo (pixels Canvas)
+    const worldDx = (screenDx / rect.width) * worldViewWidth;
+    const worldDy = (screenDy / rect.height) * worldViewHeight;
+
+    const clickWorldX = (this.localPlayer.renderX + tileSize / 2) + worldDx;
+    const clickWorldY = (this.localPlayer.renderY + tileSize / 2) + worldDy;
+
+    const clickGridX = Math.floor(clickWorldX / tileSize);
+    const clickGridY = Math.floor(clickWorldY / tileSize);
 
     let clickedRat = null;
     let minDistance = 999;
 
     this.monsterManager.monsters.forEach(rat => {
       if (rat.isDead) return;
+
+      const sameTile = (rat.gridX === clickGridX && rat.gridY === clickGridY);
       const rx = rat.renderX + tileSize / 2;
       const ry = rat.renderY + tileSize / 2;
-      const dist = Math.hypot(clickWorldX - rx, clickWorldY - ry);
+      const pixelDist = Math.hypot(clickWorldX - rx, clickWorldY - ry);
 
-      if (dist < 45 && dist < minDistance) {
-        minDistance = dist;
+      // Permite clicar no monstro a qualquer distância na tela!
+      if ((sameTile || pixelDist < tileSize * 1.2) && pixelDist < minDistance) {
+        minDistance = pixelDist;
         clickedRat = rat;
       }
     });
@@ -298,7 +322,8 @@ class GameEngine {
         this.hud.addChatMessage('Sistema', `🛑 Mira destravada de <strong>${clickedRat.name}</strong>.`, true);
       } else {
         this.lockedTargetId = clickedRat.id;
-        this.hud.addChatMessage('Sistema', `🎯 <strong>MIRA TRAVADA:</strong> Atacando <strong>${clickedRat.name}</strong> (Estilo Tibia)!`, true);
+        const dist = Math.max(Math.abs(clickedRat.gridX - this.localPlayer.gridX), Math.abs(clickedRat.gridY - this.localPlayer.gridY));
+        this.hud.addChatMessage('Sistema', `🎯 <strong>MIRA TRAVADA:</strong> <strong>${clickedRat.name}</strong> selecionado a ${dist} quadros de distância!`, true);
       }
     } else {
       if (this.lockedTargetId) {
@@ -383,7 +408,8 @@ class GameEngine {
       const targetRat = this.monsterManager.monsters.get(this.lockedTargetId);
       if (targetRat && !targetRat.isDead) {
         const dist = Math.max(Math.abs(targetRat.gridX - this.localPlayer.gridX), Math.abs(targetRat.gridY - this.localPlayer.gridY));
-        if (dist <= 1) {
+        const maxRange = this.getMaxAttackRange();
+        if (dist <= maxRange) {
           this.performAttack(targetRat);
         }
       } else {
