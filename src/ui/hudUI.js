@@ -62,7 +62,7 @@ export class HudUI {
       <!-- Bottom Left: Chat Global em Tempo Real -->
       <div class="hud-card chat-card">
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-msg system">🎮 <strong>Clique ou toque na tela</strong> para andar em direção ao ponto (1 passo/segundo). Pressione <strong>ESPAÇO</strong> para atacar!</div>
+          <div class="chat-msg system">🎮 <strong>Clique ou toque na tela</strong> para andar em direção ao ponto (1 passo a cada 0.5s). Pressione <strong>ESPAÇO</strong> para atacar!</div>
         </div>
         <form class="chat-input-form" id="chat-form">
           <input type="text" id="chat-input" placeholder="Digite uma mensagem..." maxlength="80" autocomplete="off" />

@@ -6,8 +6,8 @@ export const CONFIG = {
   TILE_SIZE: 48, // Tamanho de renderização de cada tile em pixels (48x48)
   
   // Animação e Movimentação
-  STEP_DURATION_MS: 180, // Tempo de interpolação entre tiles (estilo Tibia)
-  ANIMATION_FRAME_MS: 120, // Velocidade das pernas ao caminhar
+  STEP_DURATION_MS: 500, // Tempo de transição entre tiles (0.5s)
+  ANIMATION_FRAME_MS: 160, // Velocidade das pernas ao caminhar
   
   // Persistência
   AUTO_SAVE_INTERVAL_MS: 30000, // Salvar coordenadas no banco a cada 30 segundos

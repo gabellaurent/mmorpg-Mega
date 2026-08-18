@@ -79,7 +79,7 @@ class GameEngine {
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
 
-    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! <strong>Clique ou toque na tela</strong> para andar (1 passo a cada 1 segundo)! Pressione ESPAÇO para atacar!', true);
+    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! <strong>Clique ou toque na tela</strong> para andar (1 passo a cada 0.5s)! Pressione ESPAÇO para atacar!', true);
   }
 
   performAttack() {
@@ -286,8 +286,8 @@ class GameEngine {
   triggerStepFromPointer(now) {
     if (!this.localPlayer || this.localPlayer.isMoving) return;
 
-    // Velocidade de caminhada delimitada a EXATAMENTE 1 passo a cada 1.0 segundo (1000ms)
-    if (now - this.lastStepTime < 1000) return;
+    // Velocidade de caminhada delimitada a EXATAMENTE 1 passo a cada 0.5 segundos (500ms)
+    if (now - this.lastStepTime < 500) return;
 
     const dir = this.getDirectionFromPointer(this.pointerTarget);
     if (!dir) return;
