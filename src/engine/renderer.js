@@ -22,9 +22,20 @@ export class Renderer {
 
   updateCamera(player) {
     const tileSize = CONFIG.TILE_SIZE;
-    const zoom = this.zoom;
-    const viewportWidth = this.canvas.width / zoom;
-    const viewportHeight = this.canvas.height / zoom;
+
+    // Zoom Dinâmico Adaptável à Resolução do Monitor
+    // Limita estritamente a tela a exibir no MÁXIMO ~9 quadros horizontais por ~7 quadros verticais (~4 quadros ao redor do jogador)
+    const maxVisibleTilesX = 9;
+    const maxVisibleTilesY = 7;
+
+    const zoomX = this.canvas.width / (maxVisibleTilesX * tileSize);
+    const zoomY = this.canvas.height / (maxVisibleTilesY * tileSize);
+    
+    // O zoom será o maior para garantir que nunca exiba mais do que 4 quadros de raio
+    this.zoom = Math.max(zoomX, zoomY, 2.8);
+
+    const viewportWidth = this.canvas.width / this.zoom;
+    const viewportHeight = this.canvas.height / this.zoom;
 
     const mapPixelWidth = CONFIG.GRID_WIDTH * tileSize;
     const mapPixelHeight = CONFIG.GRID_HEIGHT * tileSize;
