@@ -211,9 +211,15 @@ class GameEngine {
   }
 
   setupControls() {
-    // Teclado apenas para a tecla ESPAÇO (Ataque)
+    // Bloquear estritamente qualquer tentativa de movimentação via teclado (WASD / Setas)
     window.addEventListener('keydown', (e) => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+      const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
+      if (moveKeys.includes(e.key)) {
+        e.preventDefault();
+        return; // Impede completamente o movimento via teclado
+      }
 
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
@@ -221,19 +227,22 @@ class GameEngine {
       }
     });
 
-    // Controle de Movimentação por Clique / Toque na Tela
-    const canvas = this.canvas;
-
+    // Captura global de Toque / Clique em qualquer lugar da tela
     const updatePointerPos = (e) => {
-      const rect = canvas.getBoundingClientRect();
       this.pointerTarget = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: e.clientX,
+        y: e.clientY
       };
     };
 
-    canvas.addEventListener('pointerdown', (e) => {
+    window.addEventListener('pointerdown', (e) => {
       if (e.button !== undefined && e.button !== 0) return;
+      
+      // Ignorar cliques dentro de campos de entrada (chat input), formulários e botões de interface
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.hud-card') || e.target.closest('#auth-container'))) {
+        return;
+      }
+
       this.isPointerDown = true;
       updatePointerPos(e);
       this.triggerStepFromPointer(performance.now());
@@ -255,14 +264,16 @@ class GameEngine {
   }
 
   getDirectionFromPointer(target) {
-    if (!target || !this.canvas) return null;
-    const rect = this.canvas.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    if (!target) return null;
+
+    // O jogador está sempre posicionado no centro exato da janela (window.innerWidth / 2, window.innerHeight / 2)
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
 
     const dx = target.x - centerX;
     const dy = target.y - centerY;
 
+    // Se o clique for muito próximo do próprio centro (< 15px), ignora
     if (Math.hypot(dx, dy) < 15) return null;
 
     if (Math.abs(dx) > Math.abs(dy)) {
@@ -275,7 +286,7 @@ class GameEngine {
   triggerStepFromPointer(now) {
     if (!this.localPlayer || this.localPlayer.isMoving) return;
 
-    // Velocidade de caminhada limitada a 1 passo a cada 1.0 segundo (1000ms)
+    // Velocidade de caminhada delimitada a EXATAMENTE 1 passo a cada 1.0 segundo (1000ms)
     if (now - this.lastStepTime < 1000) return;
 
     const dir = this.getDirectionFromPointer(this.pointerTarget);
