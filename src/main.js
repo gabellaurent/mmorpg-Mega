@@ -29,6 +29,7 @@ class GameEngine {
 
     this.isPointerDown = false;
     this.pointerTarget = null;
+    this.lockedTargetId = null; // ID do Monstro com mira travada (Estilo Tibia)
 
     this.init();
   }
@@ -71,64 +72,62 @@ class GameEngine {
       () => {
         this.renderer.showGridOverlay = !this.renderer.showGridOverlay;
       },
-      () => {
-        this.performAttack();
-      }
+      () => {}
     );
 
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
 
-    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! <strong>Clique ou toque na tela</strong> para andar (1 passo a cada 0.5s)! Pressione ESPAÇO para atacar!', true);
+    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! <strong>Clique com o Botão Direito no Rato</strong> para travar a mira e atacar (Estilo Tibia)!', true);
   }
 
-  performAttack() {
+  performAttack(explicitTarget = null) {
     if (!this.localPlayer) return;
     const now = performance.now();
-    if (now - this.lastAttackTime < 450) return;
-    this.lastAttackTime = now;
+    if (now - this.lastAttackTime < 800) return;
 
-    let targetRat = null;
-    let minDistance = 999;
+    let targetRat = explicitTarget;
 
-    this.monsterManager.monsters.forEach(rat => {
-      if (rat.isDead) return;
-      const dist = Math.max(Math.abs(rat.gridX - this.localPlayer.gridX), Math.abs(rat.gridY - this.localPlayer.gridY));
-      if (dist <= 1 && dist < minDistance) {
-        minDistance = dist;
-        targetRat = rat;
+    if (!targetRat && this.lockedTargetId) {
+      targetRat = this.monsterManager.monsters.get(this.lockedTargetId);
+      if (targetRat && targetRat.isDead) {
+        targetRat = null;
+        this.lockedTargetId = null;
       }
-    });
+    }
 
-    if (targetRat) {
-      const dmg = Math.floor(Math.random() * 9) + 8;
-      const died = targetRat.takeDamage(dmg);
+    if (targetRat && !targetRat.isDead) {
+      const dist = Math.max(Math.abs(targetRat.gridX - this.localPlayer.gridX), Math.abs(targetRat.gridY - this.localPlayer.gridY));
+      if (dist <= 1) {
+        this.lastAttackTime = now;
+        const dmg = Math.floor(Math.random() * 9) + 8;
+        const died = targetRat.takeDamage(dmg);
 
-      this.monsterManager.addFloatingText(`-${dmg}`, targetRat.gridX, targetRat.gridY, '#f56565');
-      this.network.sendMonsterHit(targetRat.id, dmg, this.localPlayer.name);
+        this.monsterManager.addFloatingText(`-${dmg}`, targetRat.gridX, targetRat.gridY, '#f56565');
+        this.network.sendMonsterHit(targetRat.id, dmg, this.localPlayer.name);
 
-      if (died) {
-        const gainedXp = 25;
-        const leveledUp = this.localPlayer.addXp(gainedXp);
-        this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
+        if (died) {
+          this.lockedTargetId = null;
+          const gainedXp = 25;
+          const leveledUp = this.localPlayer.addXp(gainedXp);
+          this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
 
-        if (leveledUp) {
-          this.hud.addChatMessage('Sistema', `✨ <strong>LEVEL UP!</strong> Você alcançou o Nível ${this.localPlayer.level}! Sua vida foi restaurada!`, true);
-        } else {
-          this.hud.addChatMessage('Sistema', `⚔️ Você derrotou o <strong>${targetRat.name}</strong> e ganhou +${gainedXp} EXP!`, true);
+          if (leveledUp) {
+            this.hud.addChatMessage('Sistema', `✨ <strong>LEVEL UP!</strong> Você alcançou o Nível ${this.localPlayer.level}! Sua vida foi restaurada!`, true);
+          } else {
+            this.hud.addChatMessage('Sistema', `⚔️ Você derrotou o <strong>${targetRat.name}</strong> e ganhou +${gainedXp} EXP!`, true);
+          }
+
+          const ratId = targetRat.id;
+          setTimeout(() => {
+            targetRat.respawn();
+            this.network.sendMonsterRespawn(ratId);
+            this.hud.addChatMessage('Sistema', `⚠️ Um <strong>${targetRat.name}</strong> renasceu nos cantos do mapa!`, true);
+          }, 8000);
         }
 
-        const ratId = targetRat.id;
-        setTimeout(() => {
-          targetRat.respawn();
-          this.network.sendMonsterRespawn(ratId);
-          this.hud.addChatMessage('Sistema', `⚠️ Um <strong>${targetRat.name}</strong> renasceu nos cantos do mapa!`, true);
-        }, 8000);
+        this.hud.updatePlayerStats();
       }
-
-      this.hud.updatePlayerStats();
-    } else {
-      this.monsterManager.addFloatingText(`miss`, this.localPlayer.gridX, this.localPlayer.gridY, '#a0aec0');
     }
   }
 
@@ -215,19 +214,20 @@ class GameEngine {
     window.addEventListener('keydown', (e) => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
 
-      const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
-      if (moveKeys.includes(e.key)) {
+      const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', ' ', 'Space'];
+      if (moveKeys.includes(e.key) || e.code === 'Space') {
         e.preventDefault();
-        return; // Impede completamente o movimento via teclado
-      }
-
-      if (e.key === ' ' || e.code === 'Space') {
-        e.preventDefault();
-        this.performAttack();
+        return; // Desativa barra de espaço e setas
       }
     });
 
-    // Captura global de Toque / Clique em qualquer lugar da tela
+    // Desativar menu de contexto do botão direito no jogo
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      this.handleRightClick(e.clientX, e.clientY);
+    });
+
+    // Captura global de Toque / Clique Esquerdo em qualquer lugar da tela
     const updatePointerPos = (e) => {
       this.pointerTarget = {
         x: e.clientX,
@@ -236,7 +236,8 @@ class GameEngine {
     };
 
     window.addEventListener('pointerdown', (e) => {
-      if (e.button !== undefined && e.button !== 0) return;
+      // Aceita apenas botão esquerdo para movimentação (button 0)
+      if (e.button !== 0) return;
       
       // Ignorar cliques dentro de campos de entrada (chat input), formulários e botões de interface
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.hud-card') || e.target.closest('#auth-container'))) {
@@ -263,17 +264,59 @@ class GameEngine {
     window.addEventListener('pointercancel', releasePointer);
   }
 
+  handleRightClick(clientX, clientY) {
+    if (!this.localPlayer || !this.monsterManager) return;
+
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    const dx = clientX - centerX;
+    const dy = clientY - centerY;
+
+    const tileSize = CONFIG.TILE_SIZE;
+    const clickWorldX = this.localPlayer.renderX + tileSize / 2 + dx;
+    const clickWorldY = this.localPlayer.renderY + tileSize / 2 + dy;
+
+    let clickedRat = null;
+    let minDistance = 999;
+
+    this.monsterManager.monsters.forEach(rat => {
+      if (rat.isDead) return;
+      const rx = rat.renderX + tileSize / 2;
+      const ry = rat.renderY + tileSize / 2;
+      const dist = Math.hypot(clickWorldX - rx, clickWorldY - ry);
+
+      if (dist < 45 && dist < minDistance) {
+        minDistance = dist;
+        clickedRat = rat;
+      }
+    });
+
+    if (clickedRat) {
+      if (this.lockedTargetId === clickedRat.id) {
+        this.lockedTargetId = null;
+        this.hud.addChatMessage('Sistema', `🛑 Mira destravada de <strong>${clickedRat.name}</strong>.`, true);
+      } else {
+        this.lockedTargetId = clickedRat.id;
+        this.hud.addChatMessage('Sistema', `🎯 <strong>MIRA TRAVADA:</strong> Atacando <strong>${clickedRat.name}</strong> (Estilo Tibia)!`, true);
+      }
+    } else {
+      if (this.lockedTargetId) {
+        this.lockedTargetId = null;
+        this.hud.addChatMessage('Sistema', '🛑 Mira destravada.', true);
+      }
+    }
+  }
+
   getDirectionFromPointer(target) {
     if (!target) return null;
 
-    // O jogador está sempre posicionado no centro exato da janela (window.innerWidth / 2, window.innerHeight / 2)
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
 
     const dx = target.x - centerX;
     const dy = target.y - centerY;
 
-    // Se o clique for muito próximo do próprio centro (< 15px), ignora
     if (Math.hypot(dx, dy) < 15) return null;
 
     if (Math.abs(dx) > Math.abs(dy)) {
@@ -286,7 +329,6 @@ class GameEngine {
   triggerStepFromPointer(now) {
     if (!this.localPlayer || this.localPlayer.isMoving) return;
 
-    // Velocidade de caminhada delimitada a EXATAMENTE 1 passo a cada 0.5 segundos (500ms)
     if (now - this.lastStepTime < 500) return;
 
     const dir = this.getDirectionFromPointer(this.pointerTarget);
@@ -336,6 +378,19 @@ class GameEngine {
       this.npcManager.update(now);
     }
 
+    // Auto-Ataque com Mira Travada no Monstro (Estilo Tibia)
+    if (this.lockedTargetId && this.localPlayer) {
+      const targetRat = this.monsterManager.monsters.get(this.lockedTargetId);
+      if (targetRat && !targetRat.isDead) {
+        const dist = Math.max(Math.abs(targetRat.gridX - this.localPlayer.gridX), Math.abs(targetRat.gridY - this.localPlayer.gridY));
+        if (dist <= 1) {
+          this.performAttack(targetRat);
+        }
+      } else {
+        this.lockedTargetId = null;
+      }
+    }
+
     if (this.monsterManager && this.localPlayer) {
       this.monsterManager.update(now, this.localPlayer, (damageTaken) => {
         this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
@@ -351,7 +406,7 @@ class GameEngine {
 
     if (this.localPlayer) {
       this.renderer.updateCamera(this.localPlayer);
-      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager, this.npcManager);
+      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager, this.npcManager, this.lockedTargetId);
     }
 
     requestAnimationFrame((n) => this.gameLoop(n));

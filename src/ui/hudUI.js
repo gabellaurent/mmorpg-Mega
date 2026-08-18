@@ -38,7 +38,7 @@ export class HudUI {
 
           <div class="coords-info">
             <span>📍 X:<strong id="hud-coord-x">16</strong> Y:<strong id="hud-coord-y">16</strong></span>
-            <button id="btn-attack-action" class="btn-attack-sm">⚔️ Atacar (ESPAÇO)</button>
+            <span style="font-size: 11px; color: #f56565; font-weight: 700;">🎯 Botão Direito p/ Mira</span>
           </div>
         </div>
       </div>
@@ -62,7 +62,7 @@ export class HudUI {
       <!-- Bottom Left: Chat Global em Tempo Real -->
       <div class="hud-card chat-card">
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-msg system">🎮 <strong>Clique ou toque na tela</strong> para andar em direção ao ponto (1 passo a cada 0.5s). Pressione <strong>ESPAÇO</strong> para atacar!</div>
+          <div class="chat-msg system">🎮 <strong>Clique com o Botão Direito no Rato</strong> para travar a mira e atacar (Estilo Tibia)! Clique com o esquerdo na tela para caminhar (0.5s).</div>
         </div>
         <form class="chat-input-form" id="chat-form">
           <input type="text" id="chat-input" placeholder="Digite uma mensagem..." maxlength="80" autocomplete="off" />
@@ -93,12 +93,6 @@ export class HudUI {
       this.onToggleGrid();
     });
 
-    const attackBtn = this.container.querySelector('#btn-attack-action');
-    if (attackBtn) {
-      attackBtn.addEventListener('click', () => {
-        this.onAttack();
-      });
-    }
   }
 
   updatePlayerStats() {

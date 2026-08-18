@@ -45,7 +45,7 @@ export class Renderer {
   }
 
   // Loop Principal de Renderização
-  render(gameMap, localPlayer, remotePlayersMap, monsterManager, npcManager) {
+  render(gameMap, localPlayer, remotePlayersMap, monsterManager, npcManager, lockedTargetId = null) {
     const ctx = this.ctx;
     const tileSize = CONFIG.TILE_SIZE;
     const viewWidth = this.viewportTilesX * tileSize;
@@ -90,7 +90,8 @@ export class Renderer {
     if (monsterManager) {
       monsterManager.monsters.forEach(rat => {
         if (!rat.isDead) {
-          this.renderMonster(rat);
+          const isLocked = lockedTargetId && rat.id === lockedTargetId;
+          this.renderMonster(rat, isLocked);
         }
       });
     }
@@ -222,13 +223,61 @@ export class Renderer {
     }
   }
 
-  // Renderiza um Monstro (Rat) com Barra de Vida e Nome
-  renderMonster(rat) {
+  // Renderiza um Monstro (Rat) com Barra de Vida, Nome e Trava de Mira (Tibia Style)
+  renderMonster(rat, isLocked = false) {
     const ctx = this.ctx;
     const tileSize = CONFIG.TILE_SIZE;
 
+    const rx = Math.floor(rat.renderX);
+    const ry = Math.floor(rat.renderY);
+
+    // Se a mira estiver travada no monstro (Estilo Tibia), desenha o quadrado de mira vermelho reluzente
+    if (isLocked) {
+      const s = tileSize;
+      const cornerLen = 8;
+
+      ctx.save();
+      ctx.strokeStyle = '#f56565';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rx - 2, ry - 2, s + 4, s + 4);
+
+      // Cantoneiras destacadas nos 4 cantos em vermelho vivo
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 3;
+
+      // Canto Superior Esquerdo
+      ctx.beginPath();
+      ctx.moveTo(rx - 4, ry + cornerLen);
+      ctx.lineTo(rx - 4, ry - 4);
+      ctx.lineTo(rx + cornerLen, ry - 4);
+      ctx.stroke();
+
+      // Canto Superior Direito
+      ctx.beginPath();
+      ctx.moveTo(rx + s - cornerLen, ry - 4);
+      ctx.lineTo(rx + s + 4, ry - 4);
+      ctx.lineTo(rx + s + 4, ry + cornerLen);
+      ctx.stroke();
+
+      // Canto Inferior Esquerdo
+      ctx.beginPath();
+      ctx.moveTo(rx - 4, ry + s - cornerLen);
+      ctx.lineTo(rx - 4, ry + s + 4);
+      ctx.lineTo(rx + cornerLen, ry + s + 4);
+      ctx.stroke();
+
+      // Canto Inferior Direito
+      ctx.beginPath();
+      ctx.moveTo(rx + s - cornerLen, ry + s + 4);
+      ctx.lineTo(rx + s + 4, ry + s + 4);
+      ctx.lineTo(rx + s + 4, ry + s - cornerLen);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
     const ratImg = spriteGen.get('rat');
-    ctx.drawImage(ratImg, Math.floor(rat.renderX), Math.floor(rat.renderY), tileSize, tileSize);
+    ctx.drawImage(ratImg, rx, ry, tileSize, tileSize);
 
     const cx = rat.renderX + tileSize / 2;
     const headY = rat.renderY - 8;
@@ -241,7 +290,7 @@ export class Renderer {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(cx - barWidth / 2, headY, barWidth, barHeight);
 
-    ctx.fillStyle = '#e53e3e';
+    ctx.fillStyle = isLocked ? '#ff0000' : '#e53e3e';
     ctx.fillRect(cx - barWidth / 2, headY, barWidth * hpRatio, barHeight);
 
     // Nome do Monstro
@@ -249,8 +298,14 @@ export class Renderer {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#000';
     ctx.fillText(`Lvl.${rat.level} ${rat.name}`, cx + 1, headY - 2);
-    ctx.fillStyle = '#fc8181';
+    ctx.fillStyle = isLocked ? '#ff4d4d' : '#fc8181';
     ctx.fillText(`Lvl.${rat.level} ${rat.name}`, cx, headY - 3);
+
+    if (isLocked) {
+      ctx.fillStyle = '#ff0000';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('🎯 MIRA', cx, headY - 14);
+    }
   }
 
   // Renderiza um Personagem
