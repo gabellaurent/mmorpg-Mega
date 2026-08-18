@@ -62,22 +62,12 @@ export class HudUI {
       <!-- Bottom Left: Chat Global em Tempo Real -->
       <div class="hud-card chat-card">
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-msg system">🎮 Encontre os <strong>Rats</strong> nos 4 cantos do mapa e pressione <strong>ESPAÇO</strong> para batalhar!</div>
+          <div class="chat-msg system">🎮 <strong>Clique ou toque na tela</strong> para andar em direção ao ponto (1 passo/segundo). Pressione <strong>ESPAÇO</strong> para atacar!</div>
         </div>
         <form class="chat-input-form" id="chat-form">
           <input type="text" id="chat-input" placeholder="Digite uma mensagem..." maxlength="80" autocomplete="off" />
           <button type="submit" class="btn-send">Enviar</button>
         </form>
-      </div>
-
-      <!-- D-Pad Virtual para Telas Touch -->
-      <div class="dpad-container">
-        <button class="dpad-btn dpad-up" id="btn-up">▲</button>
-        <div class="dpad-row">
-          <button class="dpad-btn dpad-left" id="btn-left">◀</button>
-          <button class="dpad-btn dpad-down" id="btn-down">▼</button>
-          <button class="dpad-btn dpad-right" id="btn-right">▶</button>
-        </div>
       </div>
     `;
 
@@ -109,22 +99,6 @@ export class HudUI {
         this.onAttack();
       });
     }
-
-    const bindTouchDir = (id, key) => {
-      const btn = this.container.querySelector(id);
-      if (!btn) return;
-      const trigger = (e) => {
-        e.preventDefault();
-        window.dispatchEvent(new KeyboardEvent('keydown', { key }));
-      };
-      btn.addEventListener('touchstart', trigger, { passive: false });
-      btn.addEventListener('mousedown', trigger);
-    };
-
-    bindTouchDir('#btn-up', 'ArrowUp');
-    bindTouchDir('#btn-down', 'ArrowDown');
-    bindTouchDir('#btn-left', 'ArrowLeft');
-    bindTouchDir('#btn-right', 'ArrowRight');
   }
 
   updatePlayerStats() {

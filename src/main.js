@@ -27,6 +27,9 @@ class GameEngine {
     this.lastStepTime = 0;
     this.lastAttackTime = 0;
 
+    this.isPointerDown = false;
+    this.pointerTarget = null;
+
     this.init();
   }
 
@@ -76,7 +79,7 @@ class GameEngine {
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
 
-    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! Mova-se com WASD e aperte <strong>ESPAÇO</strong> para atacar os Rats nos 4 cantos do mapa!', true);
+    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! <strong>Clique ou toque na tela</strong> para andar (1 passo a cada 1 segundo)! Pressione ESPAÇO para atacar!', true);
   }
 
   performAttack() {
@@ -208,61 +211,102 @@ class GameEngine {
   }
 
   setupControls() {
+    // Teclado apenas para a tecla ESPAÇO (Ataque)
     window.addEventListener('keydown', (e) => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
 
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
         this.performAttack();
-      } else {
-        this.keysPressed[e.key] = true;
       }
     });
 
-    window.addEventListener('keyup', (e) => {
-      if (e.key !== ' ' && e.code !== 'Space') {
-        this.keysPressed[e.key] = false;
+    // Controle de Movimentação por Clique / Toque na Tela
+    const canvas = this.canvas;
+
+    const updatePointerPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      this.pointerTarget = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      this.isPointerDown = true;
+      updatePointerPos(e);
+      this.triggerStepFromPointer(performance.now());
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (this.isPointerDown) {
+        updatePointerPos(e);
       }
     });
+
+    const releasePointer = () => {
+      this.isPointerDown = false;
+      this.pointerTarget = null;
+    };
+
+    window.addEventListener('pointerup', releasePointer);
+    window.addEventListener('pointercancel', releasePointer);
   }
 
-  processInput(now) {
+  getDirectionFromPointer(target) {
+    if (!target || !this.canvas) return null;
+    const rect = this.canvas.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const dx = target.x - centerX;
+    const dy = target.y - centerY;
+
+    if (Math.hypot(dx, dy) < 15) return null;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      return dx > 0 ? 'east' : 'west';
+    } else {
+      return dy > 0 ? 'south' : 'north';
+    }
+  }
+
+  triggerStepFromPointer(now) {
     if (!this.localPlayer || this.localPlayer.isMoving) return;
 
-    if (now - this.lastStepTime < CONFIG.STEP_DURATION_MS - 20) return;
+    // Velocidade de caminhada limitada a 1 passo a cada 1.0 segundo (1000ms)
+    if (now - this.lastStepTime < 1000) return;
+
+    const dir = this.getDirectionFromPointer(this.pointerTarget);
+    if (!dir) return;
 
     let dx = 0;
     let dy = 0;
-    let dir = null;
+    if (dir === 'north') dy = -1;
+    else if (dir === 'south') dy = 1;
+    else if (dir === 'west') dx = -1;
+    else if (dir === 'east') dx = 1;
 
-    if (this.keysPressed['ArrowUp'] || this.keysPressed['w'] || this.keysPressed['W']) {
-      dy = -1;
-      dir = 'north';
-    } else if (this.keysPressed['ArrowDown'] || this.keysPressed['s'] || this.keysPressed['S']) {
-      dy = 1;
-      dir = 'south';
-    } else if (this.keysPressed['ArrowLeft'] || this.keysPressed['a'] || this.keysPressed['A']) {
-      dx = -1;
-      dir = 'west';
-    } else if (this.keysPressed['ArrowRight'] || this.keysPressed['d'] || this.keysPressed['D']) {
-      dx = 1;
-      dir = 'east';
+    const nextX = this.localPlayer.gridX + dx;
+    const nextY = this.localPlayer.gridY + dy;
+
+    if (this.gameMap.isWalkable(nextX, nextY) && !this.npcManager.isNpcAt(nextX, nextY)) {
+      this.localPlayer.moveTo(nextX, nextY, dir);
+      this.lastStepTime = now;
+
+      this.network.sendMove(nextX, nextY, dir);
+      this.hud.updatePlayerStats();
+    } else {
+      this.localPlayer.direction = dir;
+      this.network.sendMove(this.localPlayer.gridX, this.localPlayer.gridY, dir);
+      this.lastStepTime = now;
     }
+  }
 
-    if (dir && (dx !== 0 || dy !== 0)) {
-      const nextX = this.localPlayer.gridX + dx;
-      const nextY = this.localPlayer.gridY + dy;
-
-      if (this.gameMap.isWalkable(nextX, nextY) && !this.npcManager.isNpcAt(nextX, nextY)) {
-        this.localPlayer.moveTo(nextX, nextY, dir);
-        this.lastStepTime = now;
-
-        this.network.sendMove(nextX, nextY, dir);
-        this.hud.updatePlayerStats();
-      } else {
-        this.localPlayer.direction = dir;
-        this.network.sendMove(this.localPlayer.gridX, this.localPlayer.gridY, dir);
-      }
+  processInput(now) {
+    if (this.isPointerDown && this.pointerTarget) {
+      this.triggerStepFromPointer(now);
     }
   }
 
