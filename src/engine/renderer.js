@@ -11,6 +11,7 @@ export class Renderer {
     this.cameraX = 0;
     this.cameraY = 0;
     this.showGridOverlay = false;
+    this.zoom = 2.5; // Aproximação de Câmera (Foco próximo do jogador, estilo 6x4 / 4x6 tiles)
   }
 
   resize() {
@@ -21,35 +22,44 @@ export class Renderer {
 
   updateCamera(player) {
     const tileSize = CONFIG.TILE_SIZE;
+    const zoom = this.zoom;
+    const viewportWidth = this.canvas.width / zoom;
+    const viewportHeight = this.canvas.height / zoom;
+
     const mapPixelWidth = CONFIG.GRID_WIDTH * tileSize;
     const mapPixelHeight = CONFIG.GRID_HEIGHT * tileSize;
 
-    const targetCamX = player.renderX + tileSize / 2 - this.canvas.width / 2;
-    const targetCamY = player.renderY + tileSize / 2 - this.canvas.height / 2;
+    const targetCamX = player.renderX + tileSize / 2 - viewportWidth / 2;
+    const targetCamY = player.renderY + tileSize / 2 - viewportHeight / 2;
 
     this.cameraX += (targetCamX - this.cameraX) * 0.15;
     this.cameraY += (targetCamY - this.cameraY) * 0.15;
 
-    this.cameraX = Math.max(0, Math.min(this.cameraX, mapPixelWidth - this.canvas.width));
-    this.cameraY = Math.max(0, Math.min(this.cameraY, mapPixelHeight - this.canvas.height));
+    this.cameraX = Math.max(0, Math.min(this.cameraX, mapPixelWidth - viewportWidth));
+    this.cameraY = Math.max(0, Math.min(this.cameraY, mapPixelHeight - viewportHeight));
   }
 
   // Loop Principal de Renderização
   render(gameMap, localPlayer, remotePlayersMap, monsterManager, npcManager) {
     const ctx = this.ctx;
     const tileSize = CONFIG.TILE_SIZE;
+    const zoom = this.zoom;
+    const viewportWidth = this.canvas.width / zoom;
+    const viewportHeight = this.canvas.height / zoom;
 
     // 1. Limpar fundo
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     ctx.save();
+    ctx.scale(zoom, zoom);
     ctx.translate(-Math.floor(this.cameraX), -Math.floor(this.cameraY));
+    ctx.imageSmoothingEnabled = false;
 
     const startCol = Math.max(0, Math.floor(this.cameraX / tileSize));
-    const endCol = Math.min(CONFIG.GRID_WIDTH - 1, Math.ceil((this.cameraX + this.canvas.width) / tileSize));
+    const endCol = Math.min(CONFIG.GRID_WIDTH - 1, Math.ceil((this.cameraX + viewportWidth) / tileSize));
     const startRow = Math.max(0, Math.floor(this.cameraY / tileSize));
-    const endRow = Math.min(CONFIG.GRID_HEIGHT - 1, Math.ceil((this.cameraY + this.canvas.height) / tileSize));
+    const endRow = Math.min(CONFIG.GRID_HEIGHT - 1, Math.ceil((this.cameraY + viewportHeight) / tileSize));
 
     // PASSO 1: Terrenos Base
     for (let y = startRow; y <= endRow; y++) {
