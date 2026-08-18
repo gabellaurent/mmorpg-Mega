@@ -35,7 +35,7 @@ export class Renderer {
   }
 
   // Loop Principal de Renderização
-  render(gameMap, localPlayer, remotePlayersMap, monsterManager) {
+  render(gameMap, localPlayer, remotePlayersMap, monsterManager, npcManager) {
     const ctx = this.ctx;
     const tileSize = CONFIG.TILE_SIZE;
 
@@ -82,18 +82,29 @@ export class Renderer {
       });
     }
 
-    // PASSO 4: Entidades (Jogadores)
+    // PASSO 4: Entidades (Jogadores + NPCs)
     const allEntities = [
-      { player: localPlayer, isLocal: true },
-      ...Array.from(remotePlayersMap.values()).map(p => ({ player: p, isLocal: false }))
+      { entity: localPlayer, type: 'player', isLocal: true },
+      ...Array.from(remotePlayersMap.values()).map(p => ({ entity: p, type: 'player', isLocal: false }))
     ];
-    allEntities.sort((a, b) => a.player.renderY - b.player.renderY);
+
+    if (npcManager) {
+      npcManager.npcs.forEach(npc => {
+        allEntities.push({ entity: npc, type: 'npc' });
+      });
+    }
+
+    allEntities.sort((a, b) => a.entity.renderY - b.entity.renderY);
 
     allEntities.forEach(item => {
-      this.renderPlayer(item.player, item.isLocal);
+      if (item.type === 'player') {
+        this.renderPlayer(item.entity, item.isLocal);
+      } else if (item.type === 'npc') {
+        this.renderNpc(item.entity);
+      }
     });
 
-    // PASSO 5: Copas das Árvores
+    // PASSO 5: Copas das Árvores e Estrutura Superior do Portão Sul
     const canopyImg = spriteGen.get('tree_canopy');
     const canopySize = tileSize * 1.6;
     const canopyOffset = (canopySize - tileSize) / 2;
@@ -113,6 +124,15 @@ export class Renderer {
       }
     }
 
+    // Arco Superior do Portão Sul
+    const gateY = (CONFIG.GRID_HEIGHT - 1) * tileSize;
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(14 * tileSize + 10, gateY - 6, 3 * tileSize + 28, 12);
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(14 * tileSize + 12, gateY - 4, 3 * tileSize + 24, 8);
+    ctx.fillStyle = '#d69e2e';
+    ctx.fillRect(14 * tileSize + 12, gateY - 4, 3 * tileSize + 24, 2);
+
     // PASSO 6: Textos Flutuantes de Dano (ex: -14, +20 XP)
     if (monsterManager) {
       monsterManager.floatingTexts.forEach(ft => {
@@ -128,6 +148,65 @@ export class Renderer {
     }
 
     ctx.restore();
+  }
+
+  // Renderiza um NPC
+  renderNpc(npc) {
+    const ctx = this.ctx;
+    const tileSize = CONFIG.TILE_SIZE;
+
+    // Sombra Dourada do NPC
+    const cx = npc.renderX + tileSize / 2;
+    const cy = npc.renderY + tileSize / 2 + 10;
+    ctx.fillStyle = 'rgba(236, 201, 75, 0.25)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 18, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const spritesheet = spriteGen.get(npc.spriteKey);
+    if (spritesheet) {
+      const dirCols = { south: 0, north: 1, east: 2, west: 3 };
+      const colIndex = dirCols[npc.direction] !== undefined ? dirCols[npc.direction] : 0;
+      const rowIndex = 0;
+
+      const srcX = colIndex * tileSize;
+      const srcY = rowIndex * tileSize;
+
+      ctx.drawImage(
+        spritesheet,
+        srcX, srcY, tileSize, tileSize,
+        Math.floor(npc.renderX), Math.floor(npc.renderY), tileSize, tileSize
+      );
+    }
+
+    const headY = npc.renderY - 14;
+
+    // Badge de Título
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    const badgeMetrics = ctx.measureText(npc.badgeText);
+    const badgeW = badgeMetrics.width + 10;
+    const badgeH = 14;
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(cx - badgeW / 2, headY - 18, badgeW, badgeH);
+    ctx.strokeStyle = npc.badgeColor;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - badgeW / 2, headY - 18, badgeW, badgeH);
+
+    ctx.fillStyle = npc.badgeColor;
+    ctx.fillText(npc.badgeText, cx, headY - 8);
+
+    // Nome do NPC
+    ctx.font = 'bold 11px monospace';
+    ctx.fillStyle = '#000';
+    ctx.fillText(npc.name, cx + 1, headY - 21);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(npc.name, cx, headY - 22);
+
+    if (npc.chatBubble) {
+      this.renderChatBubble(npc.chatBubble, cx, headY - 32);
+    }
   }
 
   // Renderiza um Monstro (Rat) com Barra de Vida e Nome

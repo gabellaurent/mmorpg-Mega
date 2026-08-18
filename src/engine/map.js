@@ -22,13 +22,29 @@ export class GameMap {
         let isSolid = false;
         let spriteKey = `grass_${variant}`;
 
-        // 1. Bordas do Mapa: Paredes de Árvores Densas
-        if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
+        // 1. Portão Sul e Pilares (Grid X:14..17, Y:31)
+        if ((x === 15 || x === 16) && y === this.height - 1) {
+          type = TILE_TYPES.COBBLE;
+          isSolid = false;
+          spriteKey = 'cobble';
+        }
+        else if ((x === 14 || x === 17) && y === this.height - 1) {
+          type = TILE_TYPES.GATE;
+          isSolid = true;
+          spriteKey = 'gate_pillar';
+        }
+        // 2. Estrada de Paralelepípedo para o Portão Sul (X: 15..16, Y: 20..30)
+        else if ((x === 15 || x === 16) && y >= 20 && y < this.height - 1) {
+          type = TILE_TYPES.COBBLE;
+          spriteKey = 'cobble';
+        }
+        // 3. Bordas do Mapa: Paredes de Árvores Densas
+        else if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
           type = TILE_TYPES.TREE;
           isSolid = true;
           spriteKey = 'tree_trunk';
         } 
-        // 2. Praça Central (Grid 12..20 em X e Y)
+        // 4. Praça Central (Grid 12..19 em X e Y)
         else if (x >= 12 && x <= 19 && y >= 12 && y <= 19) {
           type = TILE_TYPES.COBBLE;
           spriteKey = 'cobble';

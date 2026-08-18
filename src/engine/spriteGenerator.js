@@ -27,20 +27,23 @@ class SpriteGenerator {
     this.cache['water_0'] = this.drawWaterTile(size, 0);
     this.cache['water_1'] = this.drawWaterTile(size, 1);
 
-    // 2. Obstáculos
+    // 2. Obstáculos e Estruturas
     this.cache['tree_trunk'] = this.drawTreeTrunk(size);
     this.cache['tree_canopy'] = this.drawTreeCanopy(size * 1.6);
     this.cache['rock'] = this.drawRockTile(size);
     this.cache['flowers'] = this.drawFlowersTile(size);
     this.cache['portal'] = this.drawPortalTile(size);
+    this.cache['gate_pillar'] = this.drawGatePillarTile(size);
 
     // 3. Monstro: Rat (Cave Rat)
     this.cache['rat'] = this.drawRatSprite(size);
 
-    // 4. Personagens (Knight, Mage, Paladin)
+    // 4. Personagens e NPCs
     CONFIG.CLASSES.forEach(cls => {
       this.cache[`char_${cls.id}`] = this.drawCharacterSpritesheet(size, cls);
     });
+    this.cache['npc_guard'] = this.drawGuardSpritesheet(size);
+    this.cache['npc_merchant'] = this.drawMerchantSpritesheet(size);
   }
 
   drawGrassTile(size, variant) {
@@ -322,6 +325,193 @@ class SpriteGenerator {
       ctx.fillRect(cx + 3, cy - 12, 3, 3);
     } else if (dir === 'west') {
       ctx.fillRect(cx - 6, cy - 12, 3, 3);
+    }
+  }
+
+  drawGatePillarTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.drawImage(this.cache['cobble'], 0, 0);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(size / 2, size - 4, 18, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(8, 14, 32, 30);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(10, 16, 28, 26);
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(12, 18, 24, 8);
+    ctx.fillRect(12, 28, 24, 8);
+
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(6, 6, 36, 10);
+    ctx.fillStyle = '#d69e2e';
+    ctx.fillRect(8, 4, 32, 4);
+
+    ctx.fillStyle = '#ed8936';
+    ctx.beginPath();
+    ctx.arc(size / 2, 6, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ecc94b';
+    ctx.beginPath();
+    ctx.arc(size / 2, 6, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    return canvas;
+  }
+
+  drawGuardSpritesheet(tileSize) {
+    const width = tileSize * 4;
+    const height = tileSize * 3;
+    const { canvas, ctx } = this.createCanvas(width, height);
+    const directions = ['south', 'north', 'east', 'west'];
+
+    directions.forEach((dir, colIndex) => {
+      for (let frameIndex = 0; frameIndex < 3; frameIndex++) {
+        const destX = colIndex * tileSize;
+        const destY = frameIndex * tileSize;
+        this.renderGuardFrame(ctx, destX, destY, tileSize, dir, frameIndex);
+      }
+    });
+
+    return canvas;
+  }
+
+  renderGuardFrame(ctx, offsetX, offsetY, size, dir, frame) {
+    const cx = offsetX + size / 2;
+    const cy = offsetY + size / 2;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 13, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    let legOffsetLeft = 0;
+    let legOffsetRight = 0;
+    if (frame === 1) legOffsetLeft = -4;
+    if (frame === 2) legOffsetRight = -4;
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(cx - 8, cy + 10 + legOffsetLeft, 6, 8);
+    ctx.fillRect(cx + 2, cy + 10 + legOffsetRight, 6, 8);
+
+    ctx.fillStyle = '#2b6cb0';
+    ctx.fillRect(cx - 11, cy - 6, 22, 18);
+
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(cx - 9, cy - 4, 18, 15);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(cx - 7, cy - 2, 14, 11);
+
+    ctx.fillStyle = '#d69e2e';
+    ctx.fillRect(cx - 9, cy + 7, 18, 3);
+    ctx.fillStyle = '#ecc94b';
+    ctx.fillRect(cx - 2, cy + 6, 5, 5);
+
+    ctx.fillStyle = '#a0aec0';
+    ctx.fillRect(cx - 7, cy - 18, 14, 14);
+
+    ctx.fillStyle = '#1a202c';
+    if (dir === 'south') {
+      ctx.fillRect(cx - 5, cy - 13, 10, 3);
+    } else if (dir === 'east') {
+      ctx.fillRect(cx + 1, cy - 13, 5, 3);
+    } else if (dir === 'west') {
+      ctx.fillRect(cx - 6, cy - 13, 5, 3);
+    } else {
+      ctx.fillRect(cx - 4, cy - 15, 8, 2);
+    }
+
+    ctx.fillStyle = '#e53e3e';
+    ctx.fillRect(cx - 2, cy - 23, 5, 6);
+    ctx.fillRect(cx - 4, cy - 21, 9, 3);
+
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(cx + 9, cy - 22, 3, 34);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(cx + 8, cy - 28, 5, 7);
+    ctx.fillStyle = '#ecc94b';
+    ctx.fillRect(cx + 9, cy - 21, 3, 3);
+  }
+
+  drawMerchantSpritesheet(tileSize) {
+    const width = tileSize * 4;
+    const height = tileSize * 3;
+    const { canvas, ctx } = this.createCanvas(width, height);
+    const directions = ['south', 'north', 'east', 'west'];
+
+    directions.forEach((dir, colIndex) => {
+      for (let frameIndex = 0; frameIndex < 3; frameIndex++) {
+        const destX = colIndex * tileSize;
+        const destY = frameIndex * tileSize;
+        this.renderMerchantFrame(ctx, destX, destY, tileSize, dir, frameIndex);
+      }
+    });
+
+    return canvas;
+  }
+
+  renderMerchantFrame(ctx, offsetX, offsetY, size, dir, frame) {
+    const cx = offsetX + size / 2;
+    const cy = offsetY + size / 2;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 13, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    let legOffsetLeft = 0;
+    let legOffsetRight = 0;
+    if (frame === 1) legOffsetLeft = -4;
+    if (frame === 2) legOffsetRight = -4;
+
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(cx - 8, cy + 10 + legOffsetLeft, 6, 8);
+    ctx.fillRect(cx + 2, cy + 10 + legOffsetRight, 6, 8);
+
+    ctx.fillStyle = '#22543d';
+    ctx.fillRect(cx - 10, cy - 4, 20, 16);
+    ctx.fillStyle = '#38a169';
+    ctx.fillRect(cx - 7, cy - 2, 14, 14);
+
+    ctx.fillStyle = '#d69e2e';
+    ctx.fillRect(cx - 5, cy - 2, 10, 12);
+    ctx.fillStyle = '#ecc94b';
+    ctx.fillRect(cx - 3, cy, 6, 8);
+
+    ctx.fillStyle = '#975a16';
+    if (dir === 'south' || dir === 'east' || dir === 'west') {
+      ctx.fillRect(cx - 13, cy - 2, 5, 12);
+    } else {
+      ctx.fillRect(cx - 11, cy - 6, 22, 15);
+    }
+
+    ctx.fillStyle = '#fbd38d';
+    ctx.fillRect(cx - 7, cy - 18, 14, 14);
+
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(cx - 6, cy - 10, 12, 6);
+
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(cx - 12, cy - 18, 24, 4);
+    ctx.fillStyle = '#b7791f';
+    ctx.fillRect(cx - 8, cy - 24, 16, 7);
+    ctx.fillStyle = '#ecc94b';
+    ctx.fillRect(cx - 8, cy - 19, 16, 2);
+
+    ctx.fillStyle = '#e53e3e';
+    ctx.fillRect(cx + 5, cy - 27, 4, 8);
+
+    ctx.fillStyle = '#1a202c';
+    if (dir === 'south') {
+      ctx.fillRect(cx - 4, cy - 14, 2, 2);
+      ctx.fillRect(cx + 2, cy - 14, 2, 2);
+    } else if (dir === 'east') {
+      ctx.fillRect(cx + 3, cy - 14, 2, 2);
+    } else if (dir === 'west') {
+      ctx.fillRect(cx - 5, cy - 14, 2, 2);
     }
   }
 

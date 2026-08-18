@@ -4,6 +4,7 @@ import { GameMap } from './engine/map.js';
 import { Player } from './engine/player.js';
 import { Renderer } from './engine/renderer.js';
 import { MonsterManager } from './engine/monsterManager.js';
+import { NpcManager } from './engine/npcManager.js';
 import { NetworkManager } from './services/networkManager.js';
 import { AuthUI } from './ui/authUI.js';
 import { HudUI } from './ui/hudUI.js';
@@ -15,6 +16,7 @@ class GameEngine {
     this.renderer = new Renderer(this.canvas);
     this.gameMap = new GameMap();
     this.monsterManager = new MonsterManager(this.gameMap);
+    this.npcManager = new NpcManager(this.gameMap);
     
     this.localPlayer = null;
     this.remotePlayers = new Map();
@@ -251,7 +253,7 @@ class GameEngine {
       const nextX = this.localPlayer.gridX + dx;
       const nextY = this.localPlayer.gridY + dy;
 
-      if (this.gameMap.isWalkable(nextX, nextY)) {
+      if (this.gameMap.isWalkable(nextX, nextY) && !this.npcManager.isNpcAt(nextX, nextY)) {
         this.localPlayer.moveTo(nextX, nextY, dir);
         this.lastStepTime = now;
 
@@ -275,6 +277,10 @@ class GameEngine {
       rp.update(now);
     });
 
+    if (this.npcManager) {
+      this.npcManager.update(now);
+    }
+
     if (this.monsterManager && this.localPlayer) {
       this.monsterManager.update(now, this.localPlayer, (damageTaken) => {
         this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
@@ -290,7 +296,7 @@ class GameEngine {
 
     if (this.localPlayer) {
       this.renderer.updateCamera(this.localPlayer);
-      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager);
+      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager, this.npcManager);
     }
 
     requestAnimationFrame((n) => this.gameLoop(n));

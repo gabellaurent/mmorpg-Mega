@@ -21,11 +21,12 @@ export const CONFIG = {
     WATER: 4,
     PORTAL: 5,
     DIRT: 6,
-    FLOWERS: 7
+    FLOWERS: 7,
+    GATE: 8
   },
 
   // Flags de Colisão por tipo de Tile
-  SOLID_TILES: [2, 3, 4], // TREE, ROCK, WATER são sólidos (bloqueiam passagem)
+  SOLID_TILES: [2, 3, 4, 8], // TREE, ROCK, WATER, GATE são sólidos (bloqueiam passagem)
 
   // Outfits de Personagens disponíveis
   CLASSES: [
