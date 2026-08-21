@@ -2,13 +2,15 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 
 export class NetworkManager {
-  constructor(localPlayer, onRemotePlayerUpdate, onRemotePlayerLeave, onChatMessage, onMonsterHit, onMonsterRespawn) {
+  constructor(localPlayer, onRemotePlayerUpdate, onRemotePlayerLeave, onChatMessage, onMonsterHit, onMonsterRespawn, onItemSpawn, onItemPickup) {
     this.localPlayer = localPlayer;
     this.onRemotePlayerUpdate = onRemotePlayerUpdate;
     this.onRemotePlayerLeave = onRemotePlayerLeave;
     this.onChatMessage = onChatMessage;
     this.onMonsterHit = onMonsterHit;
     this.onMonsterRespawn = onMonsterRespawn;
+    this.onItemSpawn = onItemSpawn;
+    this.onItemPickup = onItemPickup;
 
     this.supabaseChannel = null;
     this.localChannel = null;
@@ -86,6 +88,15 @@ export class NetworkManager {
       this.handleMessage('monster_respawn', payload);
     });
 
+    // Eventos de Itens no Chão
+    this.supabaseChannel.on('broadcast', { event: 'item_spawn' }, ({ payload }) => {
+      this.handleMessage('item_spawn', payload);
+    });
+
+    this.supabaseChannel.on('broadcast', { event: 'item_pickup' }, ({ payload }) => {
+      this.handleMessage('item_pickup', payload);
+    });
+
     this.supabaseChannel.subscribe((status) => {
       console.log('📡 Status Supabase Realtime:', status);
       if (status === 'SUBSCRIBED') {
@@ -101,7 +112,7 @@ export class NetworkManager {
     if (!payload) return;
 
     // Ignorar eventos do próprio jogador local para evitar duplicação de ataques
-    if (payload.id === this.localPlayer.id && type !== 'monster_hit' && type !== 'monster_respawn') return;
+    if (payload.id === this.localPlayer.id && type !== 'monster_hit' && type !== 'monster_respawn' && type !== 'item_spawn' && type !== 'item_pickup') return;
 
     if (payload.id && payload.id !== this.localPlayer.id) {
       this.lastSeenMap.set(payload.id, Date.now());
@@ -121,6 +132,14 @@ export class NetworkManager {
     } else if (type === 'monster_respawn') {
       if (this.onMonsterRespawn) {
         this.onMonsterRespawn(payload);
+      }
+    } else if (type === 'item_spawn') {
+      if (this.onItemSpawn) {
+        this.onItemSpawn(payload);
+      }
+    } else if (type === 'item_pickup') {
+      if (this.onItemPickup) {
+        this.onItemPickup(payload);
       }
     }
   }
@@ -190,6 +209,16 @@ export class NetworkManager {
     };
 
     this.sendBroadcast('monster_respawn', payload);
+  }
+
+  // Envia evento de item caindo no chão em Tempo Real
+  sendItemSpawn(itemData) {
+    this.sendBroadcast('item_spawn', itemData);
+  }
+
+  // Envia evento de item coletado do chão em Tempo Real
+  sendItemPickup(itemId) {
+    this.sendBroadcast('item_pickup', { id: itemId, collectorId: this.localPlayer.id });
   }
 
   sendChat(text) {

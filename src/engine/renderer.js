@@ -45,7 +45,7 @@ export class Renderer {
   }
 
   // Loop Principal de Renderização
-  render(gameMap, localPlayer, remotePlayersMap, monsterManager, npcManager, lockedTargetId = null) {
+  render(gameMap, localPlayer, remotePlayersMap, monsterManager, npcManager, lockedTargetId = null, itemManager = null) {
     const ctx = this.ctx;
     const tileSize = CONFIG.TILE_SIZE;
     const viewWidth = this.viewportTilesX * tileSize;
@@ -84,6 +84,34 @@ export class Renderer {
           ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
         }
       }
+    }
+
+    // PASSO 2.5: Itens no Chão (Ground Items & Loot)
+    if (itemManager) {
+      const now = performance.now();
+      itemManager.items.forEach(item => {
+        const rx = item.gridX * tileSize;
+        const ry = item.gridY * tileSize;
+        const floatOffset = Math.sin((now / 350) + (item.gridX * 5 + item.gridY * 11)) * 3;
+
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(rx + tileSize / 2, ry + tileSize / 2 + 12, 10, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const spriteKey = item.itemConfig ? item.itemConfig.spriteKey : 'item_gold';
+        const sprite = spriteGen.get(spriteKey);
+        ctx.drawImage(sprite, rx, ry + floatOffset, tileSize, tileSize);
+
+        if (item.quantity > 1) {
+          ctx.font = 'bold 10px monospace';
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#000000';
+          ctx.fillText(`x${item.quantity}`, rx + tileSize - 4, ry + tileSize - 2);
+          ctx.fillStyle = '#f6e05e';
+          ctx.fillText(`x${item.quantity}`, rx + tileSize - 5, ry + tileSize - 3);
+        }
+      });
     }
 
     // PASSO 3: Monstros (Rats)

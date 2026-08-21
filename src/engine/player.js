@@ -35,8 +35,86 @@ export class Player {
     this.xp = data.xp || 0;
     this.maxXp = this.level * 50; // XP necessária para subir de nível
 
+    // Inventário & Ouro (16 Slots no Mochila)
+    this.gold = data.gold || 0;
+    this.inventory = data.inventory || Array(16).fill(null);
+
     this.chatBubble = null;
     this.chatBubbleTimer = null;
+  }
+
+  // Adiciona um item ao inventário ou acumula ouro
+  addItem(itemId, quantity = 1) {
+    const itemConfig = CONFIG.ITEMS[itemId];
+    if (!itemConfig) return false;
+
+    // Se for Ouro, soma diretamente ao contador de moedas
+    if (itemId === 'gold') {
+      this.gold += quantity;
+      return true;
+    }
+
+    // Tentar empilhar em slot existente se o item for acumulável
+    if (itemConfig.stackable) {
+      for (let i = 0; i < this.inventory.length; i++) {
+        if (this.inventory[i] && this.inventory[i].itemId === itemId) {
+          this.inventory[i].quantity += quantity;
+          return true;
+        }
+      }
+    }
+
+    // Procurar o primeiro slot livre (null)
+    const emptyIndex = this.inventory.findIndex(slot => slot === null);
+    if (emptyIndex !== -1) {
+      this.inventory[emptyIndex] = { itemId, quantity };
+      return true;
+    }
+
+    return false; // Inventário Cheio!
+  }
+
+  // Utiliza um item consumível do inventário (ex: Poção de Vida, Queijo)
+  useItem(slotIndex) {
+    const slot = this.inventory[slotIndex];
+    if (!slot) return null;
+
+    const itemConfig = CONFIG.ITEMS[slot.itemId];
+    if (!itemConfig) return null;
+
+    if (itemConfig.type === 'consumable' && itemConfig.healHp) {
+      if (this.hp >= this.maxHp) {
+        return { success: false, reason: 'Sua vida já está cheia!' };
+      }
+
+      const healedAmount = Math.min(itemConfig.healHp, this.maxHp - this.hp);
+      this.hp += healedAmount;
+
+      // Reduzir quantidade ou esvaziar slot
+      slot.quantity -= 1;
+      if (slot.quantity <= 0) {
+        this.inventory[slotIndex] = null;
+      }
+
+      return { success: true, healed: healedAmount, itemConfig };
+    }
+
+    return { success: false, reason: 'Este item não pode ser consumido.' };
+  }
+
+  // Remove ou descarta item do inventário
+  removeItem(slotIndex, qty = 1) {
+    const slot = this.inventory[slotIndex];
+    if (!slot) return null;
+
+    const removedItem = { itemId: slot.itemId, quantity: Math.min(qty, slot.quantity) };
+    slot.quantity -= qty;
+
+    if (slot.quantity <= 0) {
+      this.inventory[slotIndex] = null;
+    }
+
+    return removedItem;
   }
 
   // Adiciona XP e verifica se subiu de nível (Level Up!)

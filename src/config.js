@@ -33,5 +33,23 @@ export const CONFIG = {
     { id: 'knight', name: 'Guerreiro (Knight)', description: 'Mestre no combate corpo a corpo', primaryColor: '#2b6cb0' },
     { id: 'mage', name: 'Mago (Mage)', description: 'Dominador das artes arcanas', primaryColor: '#6b46c1' },
     { id: 'paladin', name: 'Paladino (Ranger)', description: 'Especialista em ataques à distância', primaryColor: '#2f855a' }
-  ]
+  ],
+
+  // Definição do Catálogo de Itens do Jogo
+  ITEMS: {
+    gold: { id: 'gold', name: 'Moedas de Ouro', description: 'Moeda de troca usada no reino.', stackable: true, type: 'currency', spriteKey: 'item_gold' },
+    health_potion: { id: 'health_potion', name: 'Poção de Vida', description: 'Restaura +35 Pontos de Vida (HP).', stackable: true, type: 'consumable', healHp: 35, spriteKey: 'item_health_potion' },
+    cheese: { id: 'cheese', name: 'Fatia de Queijo', description: 'Restaura +15 Pontos de Vida (HP).', stackable: true, type: 'consumable', healHp: 15, spriteKey: 'item_cheese' },
+    rat_tail: { id: 'rat_tail', name: 'Rabo de Rato', description: 'Item troféu coletado de ratos.', stackable: true, type: 'material', spriteKey: 'item_rat_tail' }
+  },
+
+  // Tabela de Drops de Monstros
+  LOOT_TABLES: {
+    rat: [
+      { itemId: 'gold', chance: 0.85, minQty: 1, maxQty: 5 },
+      { itemId: 'health_potion', chance: 0.35, minQty: 1, maxQty: 1 },
+      { itemId: 'cheese', chance: 0.45, minQty: 1, maxQty: 1 },
+      { itemId: 'rat_tail', chance: 0.30, minQty: 1, maxQty: 1 }
+    ]
+  }
 };

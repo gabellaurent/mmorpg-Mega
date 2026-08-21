@@ -1,15 +1,17 @@
-// Interface do Jogo (HUD, Chat em Tempo Real, XP e Minimapa Radar)
-import { CONFIG } from '../config.js';
+import { spriteGen } from '../engine/spriteGenerator.js';
 
 export class HudUI {
-  constructor(localPlayer, onSendChat, onToggleGrid, onAttack) {
+  constructor(localPlayer, onSendChat, onToggleGrid, onAttack, onUseItem, onDropItem) {
     this.localPlayer = localPlayer;
     this.onSendChat = onSendChat;
     this.onToggleGrid = onToggleGrid;
     this.onAttack = onAttack;
+    this.onUseItem = onUseItem;
+    this.onDropItem = onDropItem;
 
     this.container = document.getElementById('hud-container');
     this.remotePlayersMap = new Map();
+    this.isInventoryOpen = false;
     this.init();
   }
 
@@ -38,7 +40,7 @@ export class HudUI {
 
           <div class="coords-info">
             <span>📍 X:<strong id="hud-coord-x">16</strong> Y:<strong id="hud-coord-y">16</strong></span>
-            <span style="font-size: 11px; color: #f56565; font-weight: 700;">🎯 Botão Direito p/ Mira</span>
+            <button id="btn-toggle-inv" class="btn-sm" style="background: var(--accent-gold); color: #000; font-weight: bold;">🎒 Mochila [I]</button>
           </div>
         </div>
       </div>
@@ -59,10 +61,26 @@ export class HudUI {
         </ul>
       </div>
 
+      <!-- Card do Inventário (Mochila de 16 Slots) -->
+      <div class="inventory-card hidden" id="inventory-card">
+        <div class="inventory-header">
+          <span>🎒 Mochila (<span id="inv-slot-count">0/16</span>)</span>
+          <button class="btn-icon" id="btn-close-inv">✖</button>
+        </div>
+        <div class="gold-badge">
+          <span>🪙 Ouro do Reino:</span>
+          <span id="inv-gold-count">0</span>
+        </div>
+        <div class="inventory-grid" id="inventory-grid"></div>
+        <div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">
+          Clique p/ Usar | botão Direito p/ Largar
+        </div>
+      </div>
+
       <!-- Bottom Left: Chat Global em Tempo Real -->
       <div class="hud-card chat-card">
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-msg system">🎮 <strong>Clique com o Botão Direito no Rato</strong> para travar a mira e atacar (Estilo Tibia)! Clique com o esquerdo na tela para caminhar (0.5s).</div>
+          <div class="chat-msg system">🎮 <strong>Clique com o Botão Direito no Rato</strong> para travar a mira e atacar (Estilo Tibia)! Pressione <strong>[I]</strong> para abrir a mochila.</div>
         </div>
         <form class="chat-input-form" id="chat-form">
           <input type="text" id="chat-input" placeholder="Digite uma mensagem..." maxlength="80" autocomplete="off" />
@@ -93,6 +111,99 @@ export class HudUI {
       this.onToggleGrid();
     });
 
+    const toggleInvBtn = this.container.querySelector('#btn-toggle-inv');
+    const closeInvBtn = this.container.querySelector('#btn-close-inv');
+
+    if (toggleInvBtn) {
+      toggleInvBtn.addEventListener('click', () => this.toggleInventory());
+    }
+    if (closeInvBtn) {
+      closeInvBtn.addEventListener('click', () => this.toggleInventory(false));
+    }
+
+    // Tecla de atalho I para Mochila
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+      if (e.key === 'i' || e.key === 'I') {
+        this.toggleInventory();
+      }
+    });
+  }
+
+  toggleInventory(forceState = null) {
+    const invCard = this.container.querySelector('#inventory-card');
+    if (!invCard) return;
+
+    this.isInventoryOpen = forceState !== null ? forceState : !this.isInventoryOpen;
+    if (this.isInventoryOpen) {
+      invCard.classList.remove('hidden');
+      this.renderInventory();
+    } else {
+      invCard.classList.add('hidden');
+    }
+  }
+
+  renderInventory() {
+    const gridEl = this.container.querySelector('#inventory-grid');
+    const slotCountEl = this.container.querySelector('#inv-slot-count');
+    const goldCountEl = this.container.querySelector('#inv-gold-count');
+
+    if (!gridEl) return;
+
+    if (goldCountEl) {
+      goldCountEl.textContent = `${this.localPlayer.gold} gold`;
+    }
+
+    let occupiedCount = 0;
+    gridEl.innerHTML = '';
+
+    this.localPlayer.inventory.forEach((slot, index) => {
+      const slotDiv = document.createElement('div');
+      slotDiv.className = `inventory-slot ${slot ? '' : 'empty'}`;
+
+      if (slot) {
+        occupiedCount++;
+        const itemConfig = CONFIG.ITEMS[slot.itemId];
+
+        if (itemConfig) {
+          const sprite = spriteGen.get(itemConfig.spriteKey);
+          if (sprite) {
+            const iconImg = document.createElement('img');
+            iconImg.src = sprite.toDataURL();
+            iconImg.title = `${itemConfig.name}\n${itemConfig.description}`;
+            slotDiv.appendChild(iconImg);
+          }
+
+          if (slot.quantity > 1) {
+            const qtyBadge = document.createElement('span');
+            qtyBadge.className = 'slot-qty';
+            qtyBadge.textContent = slot.quantity;
+            slotDiv.appendChild(qtyBadge);
+          }
+
+          // Clique Esquerdo: Usar Item Consumível
+          slotDiv.addEventListener('click', () => {
+            if (this.onUseItem) {
+              this.onUseItem(index);
+            }
+          });
+
+          // Clique Direito: Descartar Item no Chão
+          slotDiv.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (this.onDropItem) {
+              this.onDropItem(index);
+            }
+          });
+        }
+      }
+
+      gridEl.appendChild(slotDiv);
+    });
+
+    if (slotCountEl) {
+      slotCountEl.textContent = `${occupiedCount}/16`;
+    }
   }
 
   updatePlayerStats() {
@@ -123,6 +234,9 @@ export class HudUI {
     }
 
     this.renderMinimap();
+    if (this.isInventoryOpen) {
+      this.renderInventory();
+    }
   }
 
   addChatMessage(sender, text, isSystem = false) {

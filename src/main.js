@@ -1,10 +1,10 @@
-// Arquivo Principal - Orquestrador do MMORPG
 import { spriteGen } from './engine/spriteGenerator.js';
 import { GameMap } from './engine/map.js';
 import { Player } from './engine/player.js';
 import { Renderer } from './engine/renderer.js';
 import { MonsterManager } from './engine/monsterManager.js';
 import { NpcManager } from './engine/npcManager.js';
+import { ItemManager } from './engine/itemManager.js';
 import { NetworkManager } from './services/networkManager.js';
 import { AuthUI } from './ui/authUI.js';
 import { HudUI } from './ui/hudUI.js';
@@ -17,6 +17,7 @@ class GameEngine {
     this.gameMap = new GameMap();
     this.monsterManager = new MonsterManager(this.gameMap);
     this.npcManager = new NpcManager(this.gameMap);
+    this.itemManager = new ItemManager(this.gameMap);
     
     this.localPlayer = null;
     this.remotePlayers = new Map();
@@ -59,7 +60,9 @@ class GameEngine {
       (remoteId) => this.handleRemotePlayerLeave(remoteId),
       (chatPayload) => this.handleChatMessage(chatPayload),
       (hitPayload) => this.handleRemoteMonsterHit(hitPayload),
-      (respawnPayload) => this.handleRemoteMonsterRespawn(respawnPayload)
+      (respawnPayload) => this.handleRemoteMonsterRespawn(respawnPayload),
+      (itemPayload) => this.itemManager.addGroundItem(itemPayload),
+      (pickupPayload) => this.itemManager.removeGroundItem(pickupPayload.id)
     );
     this.network.connect('map-1');
 
@@ -72,13 +75,15 @@ class GameEngine {
       () => {
         this.renderer.showGridOverlay = !this.renderer.showGridOverlay;
       },
-      () => {}
+      () => {},
+      (slotIndex) => this.handleUseItem(slotIndex),
+      (slotIndex) => this.handleDropItem(slotIndex)
     );
 
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
 
-    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! <strong>Clique com o Botão Direito no Rato</strong> para travar a mira e atacar (Estilo Tibia)!', true);
+    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! <strong>Clique com o Botão Direito no Rato</strong> para travar a mira e atacar (Estilo Tibia)! Pressione <strong>[I]</strong> para abrir a mochila.', true);
   }
 
   performAttack(explicitTarget = null) {
@@ -113,6 +118,13 @@ class GameEngine {
           const leveledUp = this.localPlayer.addXp(gainedXp);
           this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
 
+          // Gerar loot do rato no chão e notificar rede
+          const loot = this.itemManager.spawnMonsterLoot('rat', targetRat.gridX, targetRat.gridY, this.network);
+          if (loot.length > 0) {
+            const itemNames = loot.map(i => i.itemConfig.name).join(', ');
+            this.hud.addChatMessage('Sistema', `💰 O monstro dropou: <strong>${itemNames}</strong>!`, true);
+          }
+
           if (leveledUp) {
             this.hud.addChatMessage('Sistema', `✨ <strong>LEVEL UP!</strong> Você alcançou o Nível ${this.localPlayer.level}! Sua vida foi restaurada!`, true);
           } else {
@@ -130,6 +142,44 @@ class GameEngine {
         this.hud.updatePlayerStats();
       }
     }
+  }
+
+  handleUseItem(slotIndex) {
+    if (!this.localPlayer) return;
+    const result = this.localPlayer.useItem(slotIndex);
+    if (!result) return;
+
+    if (result.success) {
+      this.monsterManager.addFloatingText(`+${result.healed} HP`, this.localPlayer.gridX, this.localPlayer.gridY, '#48bb78');
+      this.hud.addChatMessage('Sistema', `🍷 Você consumiu <strong>${result.itemConfig.name}</strong> e recuperou <strong>+${result.healed} HP</strong>!`, true);
+      this.hud.updatePlayerStats();
+    } else if (result.reason) {
+      this.hud.addChatMessage('Sistema', `⚠️ ${result.reason}`, true);
+    }
+  }
+
+  handleDropItem(slotIndex) {
+    if (!this.localPlayer) return;
+    const removed = this.localPlayer.removeItem(slotIndex, 1);
+    if (!removed) return;
+
+    const groundItemId = `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const groundItemData = {
+      id: groundItemId,
+      itemId: removed.itemId,
+      quantity: removed.quantity,
+      gridX: this.localPlayer.gridX,
+      gridY: this.localPlayer.gridY
+    };
+
+    this.itemManager.addGroundItem(groundItemData);
+    if (this.network) {
+      this.network.sendItemSpawn(groundItemData);
+    }
+    const itemConfig = CONFIG.ITEMS[removed.itemId];
+    const itemName = itemConfig ? itemConfig.name : removed.itemId;
+    this.hud.addChatMessage('Sistema', `🎒 Você descartou <strong>${itemName}</strong> no chão.`, true);
+    this.hud.updatePlayerStats();
   }
 
   handleRemoteMonsterHit(payload) {
@@ -360,10 +410,11 @@ class GameEngine {
       this.hud.updateOnlineList(this.remotePlayers);
     }
 
-    // 1. Instanciar novo mapa, monstros e NPCs do destino
+    // 1. Instanciar novo mapa, monstros, NPCs e gerenciador de itens do destino
     this.gameMap = new GameMap(targetMapId);
     this.monsterManager = new MonsterManager(this.gameMap);
     this.npcManager = new NpcManager(this.gameMap);
+    this.itemManager = new ItemManager(this.gameMap);
 
     // 2. Reposicionar o jogador local na entrada do novo mapa
     this.localPlayer.gridX = targetX;
@@ -453,6 +504,24 @@ class GameEngine {
       this.npcManager.update(now);
     }
 
+    // Checar coleta de itens no chão ao passar por cima
+    if (this.itemManager && this.localPlayer) {
+      this.itemManager.checkPickups(this.localPlayer, (item) => {
+        if (this.network) {
+          this.network.sendItemPickup(item.id);
+        }
+        const itemName = item.itemConfig ? item.itemConfig.name : item.itemId;
+        if (item.itemId === 'gold') {
+          this.monsterManager.addFloatingText(`+${item.quantity} Gold`, this.localPlayer.gridX, this.localPlayer.gridY, '#ecc94b');
+          this.hud.addChatMessage('Sistema', `🪙 Você coletou <strong>+${item.quantity} Moedas de Ouro</strong>!`, true);
+        } else {
+          this.monsterManager.addFloatingText(`+1 ${itemName}`, this.localPlayer.gridX, this.localPlayer.gridY, '#cbd5e0');
+          this.hud.addChatMessage('Sistema', `🎒 Você coletou <strong>${itemName}</strong>!`, true);
+        }
+        this.hud.updatePlayerStats();
+      });
+    }
+
     // Auto-Ataque com Mira Travada no Monstro (Estilo Tibia)
     if (this.lockedTargetId && this.localPlayer) {
       const targetRat = this.monsterManager.monsters.get(this.lockedTargetId);
@@ -482,7 +551,7 @@ class GameEngine {
 
     if (this.localPlayer) {
       this.renderer.updateCamera(this.localPlayer);
-      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager, this.npcManager, this.lockedTargetId);
+      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager, this.npcManager, this.lockedTargetId, this.itemManager);
     }
 
     requestAnimationFrame((n) => this.gameLoop(n));

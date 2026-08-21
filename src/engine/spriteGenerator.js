@@ -44,6 +44,12 @@ class SpriteGenerator {
     });
     this.cache['npc_guard'] = this.drawGuardSpritesheet(size);
     this.cache['npc_merchant'] = this.drawMerchantSpritesheet(size);
+
+    // 5. Sprites de Itens (Loot & Inventário)
+    this.cache['item_gold'] = this.drawGoldSprite(size);
+    this.cache['item_health_potion'] = this.drawHealthPotionSprite(size);
+    this.cache['item_cheese'] = this.drawCheeseSprite(size);
+    this.cache['item_rat_tail'] = this.drawRatTailSprite(size);
   }
 
   drawGrassTile(size, variant) {
@@ -513,6 +519,125 @@ class SpriteGenerator {
     } else if (dir === 'west') {
       ctx.fillRect(cx - 5, cy - 14, 2, 2);
     }
+  }
+
+  // Desfazer/desenhar Moedas de Ouro (Brilho dourado)
+  drawGoldSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#d69e2e';
+    ctx.beginPath();
+    ctx.arc(cx - 3, cy + 2, 6, 0, Math.PI * 2);
+    ctx.arc(cx + 4, cy + 1, 6, 0, Math.PI * 2);
+    ctx.arc(cx, cy - 4, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ecc94b';
+    ctx.beginPath();
+    ctx.arc(cx - 3, cy + 2, 4, 0, Math.PI * 2);
+    ctx.arc(cx + 4, cy + 1, 4, 0, Math.PI * 2);
+    ctx.arc(cx, cy - 4, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 1, cy - 6, 2, 2);
+    ctx.fillRect(cx - 4, cy, 2, 2);
+    return canvas;
+  }
+
+  // Desfazer/desenhar Poção de Vida (Frasco com líquido vermelho)
+  drawHealthPotionSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // Rolha de cortiça
+    ctx.fillStyle = '#975a16';
+    ctx.fillRect(cx - 3, cy - 14, 6, 4);
+
+    // Gargalo do frasco
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(cx - 4, cy - 10, 8, 4);
+
+    // Corpo de vidro do frasco
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.arc(cx, cy + 2, 11, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Líquido vermelho mágico
+    ctx.fillStyle = '#e53e3e';
+    ctx.beginPath();
+    ctx.arc(cx, cy + 3, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fc8181';
+    ctx.beginPath();
+    ctx.arc(cx - 2, cy, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Brilho de vidro
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 6, cy - 3, 3, 5);
+    return canvas;
+  }
+
+  // Desfazer/desenhar Fatia de Queijo
+  drawCheeseSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#d69e2e';
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 6);
+    ctx.lineTo(cx + 12, cy + 6);
+    ctx.lineTo(cx + 4, cy - 10);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#f6e05e';
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy + 4);
+    ctx.lineTo(cx + 10, cy + 4);
+    ctx.lineTo(cx + 3, cy - 8);
+    ctx.closePath();
+    ctx.fill();
+
+    // Furos do queijo
+    ctx.fillStyle = '#b7791f';
+    ctx.beginPath();
+    ctx.arc(cx - 2, cy + 1, 3, 0, Math.PI * 2);
+    ctx.arc(cx + 4, cy + 2, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 1, cy - 3, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    return canvas;
+  }
+
+  // Desfazer/desenhar Rabo de Rato
+  drawRatTailSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#b7791f';
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 8);
+    ctx.quadraticCurveTo(cx - 2, cy - 10, cx + 10, cy + 4);
+    ctx.stroke();
+
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#fed7e2';
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 8);
+    ctx.quadraticCurveTo(cx - 2, cy - 10, cx + 10, cy + 4);
+    ctx.stroke();
+
+    return canvas;
   }
 
   get(key) {

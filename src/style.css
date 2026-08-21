@@ -518,3 +518,107 @@ html, body {
     display: flex;
   }
 }
+
+/* Painel de Inventário & Mochila */
+.inventory-card {
+  grid-column: 3;
+  grid-row: 2;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--panel-bg);
+  border: 1.5px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  transition: all 0.2s ease;
+}
+
+.inventory-card.hidden {
+  display: none !important;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 8px;
+}
+
+.gold-badge {
+  background: rgba(214, 158, 46, 0.15);
+  border: 1px solid rgba(214, 158, 46, 0.4);
+  color: var(--accent-gold);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.inventory-slot {
+  width: 48px;
+  height: 48px;
+  background: #1a202c;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.inventory-slot:hover {
+  border-color: var(--accent-gold);
+  background: #2d3748;
+}
+
+.inventory-slot.empty {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.inventory-slot img, .inventory-slot canvas {
+  width: 36px;
+  height: 36px;
+  pointer-events: none;
+}
+
+.slot-qty {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #f6e05e;
+  text-shadow: 0 1px 2px #000;
+  font-family: monospace;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-icon:hover {
+  color: #fff;
+}
+
