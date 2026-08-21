@@ -41,7 +41,7 @@ export class HudUI {
 
           <div class="coords-info">
             <span>📍 X:<strong id="hud-coord-x">16</strong> Y:<strong id="hud-coord-y">16</strong></span>
-            <button id="btn-toggle-inv" class="btn-sm" style="background: var(--accent-gold); color: #000; font-weight: bold;">🎒 Mochila [I]</button>
+            <span style="font-size: 11px; color: #f56565; font-weight: 700;">🎯 Botão Direito p/ Mira</span>
           </div>
         </div>
       </div>
@@ -50,7 +50,6 @@ export class HudUI {
       <div class="hud-card online-players-card">
         <div class="card-header">
           <span>👥 Online (<strong id="online-count">1</strong>)</span>
-          <button id="btn-toggle-grid" class="btn-sm">📐 Grade</button>
         </div>
         
         <div class="minimap-container">
@@ -62,20 +61,42 @@ export class HudUI {
         </ul>
       </div>
 
-      <!-- Card do Inventário (Mochila de 16 Slots) -->
+      <!-- Janela Flutuante Estilo RPG: Mochila / Inventário -->
       <div class="inventory-card hidden" id="inventory-card">
         <div class="inventory-header">
-          <span>🎒 Mochila (<span id="inv-slot-count">0/16</span>)</span>
-          <button class="btn-icon" id="btn-close-inv">✖</button>
+          <div class="inv-title-group">
+            <span class="inv-icon">🎒</span>
+            <span class="inv-title-text">Mochila do Aventureiro</span>
+          </div>
+          <button class="btn-close-window" id="btn-close-inv" title="Fechar (Esc)">✖</button>
         </div>
-        <div class="gold-badge">
-          <span>🪙 Ouro do Reino:</span>
-          <span id="inv-gold-count">0</span>
+        <div class="inventory-stats-bar">
+          <div class="gold-badge">
+            <span class="gold-icon">🪙</span>
+            <span id="inv-gold-count">0 gold</span>
+          </div>
+          <div class="slot-count-badge">
+            <span>Espaço:</span>
+            <strong id="inv-slot-count">0/16</strong>
+          </div>
         </div>
         <div class="inventory-grid" id="inventory-grid"></div>
-        <div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">
-          Clique p/ Usar | botão Direito p/ Largar
+        <div class="inventory-item-detail" id="inv-item-detail">
+          <span class="detail-placeholder">Passe o cursor sobre um item ou clique com o Botão Direito para descartar.</span>
         </div>
+      </div>
+
+      <!-- Bottom Center: Barra de Ações Rápida (RPG Action Bar) -->
+      <div class="action-bar-card">
+        <button id="btn-toggle-inv" class="action-btn main-action" title="Abrir/Fechar Mochila (Tecla I)">
+          <span class="action-btn-icon">🎒</span>
+          <span class="action-btn-text">Mochila</span>
+          <span class="action-badge" id="hud-inv-badge">0/16</span>
+        </button>
+        <button id="btn-toggle-grid" class="action-btn" title="Alternar Grade Guia">
+          <span class="action-btn-icon">📐</span>
+          <span class="action-btn-text">Grade</span>
+        </button>
       </div>
 
       <!-- Bottom Left: Chat Global em Tempo Real -->
@@ -122,11 +143,13 @@ export class HudUI {
       closeInvBtn.addEventListener('click', () => this.toggleInventory(false));
     }
 
-    // Tecla de atalho I para Mochila
+    // Teclas de atalho: I para Mochila, Esc para Fechar
     window.addEventListener('keydown', (e) => {
       if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
       if (e.key === 'i' || e.key === 'I') {
         this.toggleInventory();
+      } else if (e.key === 'Escape') {
+        this.toggleInventory(false);
       }
     });
   }
@@ -148,6 +171,8 @@ export class HudUI {
     const gridEl = this.container.querySelector('#inventory-grid');
     const slotCountEl = this.container.querySelector('#inv-slot-count');
     const goldCountEl = this.container.querySelector('#inv-gold-count');
+    const invBadgeEl = this.container.querySelector('#hud-inv-badge');
+    const detailEl = this.container.querySelector('#inv-item-detail');
 
     if (!gridEl) return;
 
@@ -167,11 +192,12 @@ export class HudUI {
         const itemConfig = CONFIG.ITEMS[slot.itemId];
 
         if (itemConfig) {
+          slotDiv.dataset.type = itemConfig.type || 'normal';
+
           const sprite = spriteGen.get(itemConfig.spriteKey);
           if (sprite) {
             const iconImg = document.createElement('img');
             iconImg.src = sprite.toDataURL();
-            iconImg.title = `${itemConfig.name}\n${itemConfig.description}`;
             slotDiv.appendChild(iconImg);
           }
 
@@ -181,6 +207,24 @@ export class HudUI {
             qtyBadge.textContent = slot.quantity;
             slotDiv.appendChild(qtyBadge);
           }
+
+          // Exibir detalhes no rodapé do inventário ao passar o mouse
+          slotDiv.addEventListener('mouseenter', () => {
+            if (detailEl) {
+              const typeText = itemConfig.type === 'consumable' ? '🧪 Consumível' : itemConfig.type === 'currency' ? '🪙 Moeda' : '📦 Material';
+              detailEl.innerHTML = `
+                <div class="detail-name">${itemConfig.name} <span class="detail-type">${typeText}</span></div>
+                <div class="detail-desc">${itemConfig.description}</div>
+                <div class="detail-action">${itemConfig.type === 'consumable' ? '🖱️ Clique p/ Usar' : ''} | 🛑 Botão Direito p/ Largar</div>
+              `;
+            }
+          });
+
+          slotDiv.addEventListener('mouseleave', () => {
+            if (detailEl) {
+              detailEl.innerHTML = `<span class="detail-placeholder">Passe o cursor sobre um item ou clique com o Botão Direito para descartar.</span>`;
+            }
+          });
 
           // Clique Esquerdo: Usar Item Consumível
           slotDiv.addEventListener('click', () => {
@@ -205,6 +249,9 @@ export class HudUI {
     if (slotCountEl) {
       slotCountEl.textContent = `${occupiedCount}/16`;
     }
+    if (invBadgeEl) {
+      invBadgeEl.textContent = `${occupiedCount}/16`;
+    }
   }
 
   updatePlayerStats() {
@@ -216,6 +263,7 @@ export class HudUI {
     const xpText = this.container.querySelector('#hud-xp-text');
     const coordX = this.container.querySelector('#hud-coord-x');
     const coordY = this.container.querySelector('#hud-coord-y');
+    const invBadgeEl = this.container.querySelector('#hud-inv-badge');
 
     if (nameEl) nameEl.textContent = this.localPlayer.name;
     if (lvlEl) lvlEl.textContent = `Lvl.${this.localPlayer.level}`;
@@ -232,6 +280,11 @@ export class HudUI {
       const xpRatio = Math.max(0, Math.min(1, this.localPlayer.xp / this.localPlayer.maxXp));
       xpFill.style.width = `${xpRatio * 100}%`;
       xpText.textContent = `XP: ${this.localPlayer.xp} / ${this.localPlayer.maxXp}`;
+    }
+
+    if (invBadgeEl) {
+      const occupied = this.localPlayer.inventory.filter(slot => slot !== null).length;
+      invBadgeEl.textContent = `${occupied}/16`;
     }
 
     this.renderMinimap();
