@@ -1,3 +1,4 @@
+import { CONFIG } from '../config.js';
 import { spriteGen } from '../engine/spriteGenerator.js';
 
 export class HudUI {
