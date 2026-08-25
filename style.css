@@ -37,22 +37,20 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-dark);
-  overflow: hidden;
+  background: radial-gradient(circle at center, #111827 0%, #090d16 100%);
 }
 
-/* Canvas 2D - Moldura Retro 8x8 Quadros */
+/* Canvas 2D - Quadros do Jogo */
 #game-canvas {
   display: block;
-  width: min(82vw, 82vh);
-  height: min(82vw, 82vh);
+  max-width: 100vw;
+  max-height: 100vh;
   aspect-ratio: 1 / 1;
-  background-color: #0f172a;
-  border: 3px solid var(--panel-border);
+  border: 3px solid #2d3748;
   border-radius: 10px;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(214, 158, 46, 0.35);
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 15px rgba(214, 158, 46, 0.2);
+  background-color: #0f172a;
+  cursor: crosshair;
 }
 
 /* Modal de Autenticação / Escolha de Personagem */
@@ -528,4 +526,299 @@ html, body {
   .dpad-container {
     display: flex;
   }
+}
+
+/* Barra de Ações Inferior (RPG Action Bar) */
+.action-bar-card {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1.5px solid var(--accent-gold);
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7), 0 0 15px rgba(214, 158, 46, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.action-btn {
+  pointer-events: auto;
+  background: #1a202c;
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action-btn * {
+  pointer-events: none;
+}
+
+.action-btn:hover, .action-btn:active {
+  background: #2d3748;
+  border-color: var(--accent-gold);
+  transform: translateY(-2px);
+}
+
+.action-btn.main-action {
+  background: linear-gradient(135deg, #d69e2e, #b7791f);
+  color: #000;
+  border: 1px solid #ecc94b;
+}
+
+.action-btn.main-action:hover, .action-btn.main-action:active {
+  background: linear-gradient(135deg, #ecc94b, #d69e2e);
+  box-shadow: 0 4px 12px rgba(214, 158, 46, 0.4);
+}
+
+.action-btn-icon {
+  font-size: 15px;
+}
+
+.action-badge {
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-family: monospace;
+}
+
+/* Janela Flutuante Estilo RPG: Bolsa de Couro & Pergaminho */
+.inventory-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: 360px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(180deg, #4a2e1b 0%, #2e1a0d 100%);
+  border: 4px solid #1a0e07;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 20px rgba(74, 46, 27, 0.6), inset 0 0 15px rgba(0, 0, 0, 0.7);
+  z-index: 200;
+  pointer-events: auto;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.inventory-card.hidden {
+  display: none !important;
+  opacity: 0;
+  pointer-events: none !important;
+}
+
+/* Cinta de Couro no Topo com Fivela Metálica Dourada */
+.leather-belt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #3d2313, #5a351c, #3d2313);
+  border: 2px solid #1a0e07;
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.1), 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.belt-strap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.belt-buckle {
+  font-size: 18px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.belt-title {
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 700;
+  color: #f5dcba;
+  text-shadow: 0 2px 4px #000;
+  letter-spacing: 0.5px;
+}
+
+.btn-close-window {
+  background: rgba(229, 62, 62, 0.3);
+  border: 1px solid #e53e3e;
+  color: #fff;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-close-window:hover {
+  background: #e53e3e;
+  box-shadow: 0 0 8px rgba(229, 62, 62, 0.6);
+}
+
+/* Barra de Status e Ouro */
+.inventory-stats-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 9, 5, 0.6);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #3a2214;
+}
+
+.gold-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #f6e05e;
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 0 1px 3px #000;
+}
+
+.slot-count-badge {
+  font-size: 12px;
+  color: #d0b293;
+}
+
+.slot-count-badge strong {
+  color: #fff;
+}
+
+/* Grade de Slots de Pergaminho (6 Colunas x 4 Linhas) */
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.inventory-slot {
+  width: 48px;
+  height: 48px;
+  background: #e6c8a2; /* Fundo Pergaminho bege */
+  border: 2px solid #8c5c3e;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+  transition: all 0.15s ease;
+}
+
+.inventory-slot:hover {
+  background: #f5dcba;
+  border-color: #d69e2e;
+  box-shadow: 0 0 10px rgba(214, 158, 46, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.inventory-slot[data-type="consumable"] {
+  border-color: #38a169;
+}
+
+.inventory-slot[data-type="currency"] {
+  border-color: #d69e2e;
+}
+
+.inventory-slot.empty {
+  background: rgba(230, 200, 162, 0.25);
+  border: 1.5px dashed #6b462b;
+  box-shadow: none;
+  cursor: default;
+}
+
+.inventory-slot img {
+  width: 36px;
+  height: 36px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.slot-qty {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #1a0e07;
+  background: #f6e05e;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1px solid #744210;
+  font-family: monospace;
+  line-height: 1;
+}
+
+/* Detalhes do Item e Instruções */
+.inventory-item-detail {
+  background: rgba(15, 9, 5, 0.7);
+  border: 1px solid #3a2214;
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+}
+
+.detail-placeholder {
+  color: #a08468;
+  font-style: italic;
+  font-size: 10px;
+  text-align: center;
+  margin: auto;
+}
+
+.detail-name {
+  font-weight: 700;
+  color: #f6e05e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-type {
+  font-size: 9px;
+  color: #d0b293;
+  font-weight: normal;
+}
+
+.detail-desc {
+  color: #f5dcba;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.detail-action {
+  color: #68d391;
+  font-size: 9px;
+  font-weight: 700;
+  margin-top: 2px;
 }
