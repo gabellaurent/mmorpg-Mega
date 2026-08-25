@@ -35,9 +35,9 @@ export class Player {
     this.xp = data.xp || 0;
     this.maxXp = this.level * 50; // XP necessária para subir de nível
 
-    // Inventário & Ouro (16 Slots no Mochila)
+    // Inventário & Ouro (24 Slots de Pergaminho na Bolsa de Couro)
     this.gold = data.gold || 0;
-    this.inventory = data.inventory || Array(16).fill(null);
+    this.inventory = data.inventory || Array(24).fill(null);
 
     this.chatBubble = null;
     this.chatBubbleTimer = null;

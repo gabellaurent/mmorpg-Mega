@@ -275,6 +275,10 @@ class GameEngine {
     // Desativar menu de contexto do botão direito no jogo
     window.addEventListener('contextmenu', (e) => {
       e.preventDefault();
+      // Se o clique for dentro de algum elemento da UI, não aciona a trava de mira no mundo
+      if (e.target && (e.target.closest('.inventory-card') || e.target.closest('.action-bar-card') || e.target.closest('.hud-card') || e.target.closest('#auth-container'))) {
+        return;
+      }
       this.handleRightClick(e.clientX, e.clientY);
     });
 
@@ -290,8 +294,15 @@ class GameEngine {
       // Aceita apenas botão esquerdo para movimentação (button 0)
       if (e.button !== 0) return;
       
-      // Ignorar cliques dentro de campos de entrada (chat input), formulários e botões de interface
-      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.hud-card') || e.target.closest('#auth-container'))) {
+      // Ignorar cliques dentro de qualquer componente da UI (mochila, botões, formulários, chat)
+      if (e.target && (
+        e.target.tagName === 'INPUT' || 
+        e.target.tagName === 'BUTTON' || 
+        e.target.closest('.hud-card') || 
+        e.target.closest('.inventory-card') || 
+        e.target.closest('.action-bar-card') || 
+        e.target.closest('#auth-container')
+      )) {
         return;
       }
 

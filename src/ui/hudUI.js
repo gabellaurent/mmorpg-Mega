@@ -61,28 +61,35 @@ export class HudUI {
         </ul>
       </div>
 
-      <!-- Janela Flutuante Estilo RPG: Mochila / Inventário -->
+      <!-- Janela Flutuante Estilo RPG: Bolsa de Couro & Pergaminho (24 Slots) -->
       <div class="inventory-card hidden" id="inventory-card">
-        <div class="inventory-header">
-          <div class="inv-title-group">
-            <span class="inv-icon">🎒</span>
-            <span class="inv-title-text">Mochila do Aventureiro</span>
+        <!-- Cinta Superior de Couro com Fivela Metálica Dourada -->
+        <div class="leather-belt-header">
+          <div class="belt-strap">
+            <span class="belt-buckle">🧈</span>
+            <span class="belt-title">Bolsa do Aventureiro</span>
           </div>
           <button class="btn-close-window" id="btn-close-inv" title="Fechar (Esc)">✖</button>
         </div>
+
+        <!-- Faixa de Ouro e Capacidade -->
         <div class="inventory-stats-bar">
           <div class="gold-badge">
             <span class="gold-icon">🪙</span>
-            <span id="inv-gold-count">0 gold</span>
+            <span id="inv-gold-count">0 ouro</span>
           </div>
           <div class="slot-count-badge">
             <span>Espaço:</span>
-            <strong id="inv-slot-count">0/16</strong>
+            <strong id="inv-slot-count">0/24</strong>
           </div>
         </div>
+
+        <!-- Grade de 24 Slots de Pergaminho (6 Colunas x 4 Linhas) -->
         <div class="inventory-grid" id="inventory-grid"></div>
+
+        <!-- Rodapé de Detalhes do Item Selecionado -->
         <div class="inventory-item-detail" id="inv-item-detail">
-          <span class="detail-placeholder">Passe o cursor sobre um item ou clique com o Botão Direito para descartar.</span>
+          <span class="detail-placeholder">Toque ou passe o cursor sobre um item para ver detalhes e opções.</span>
         </div>
       </div>
 
@@ -91,7 +98,7 @@ export class HudUI {
         <button id="btn-toggle-inv" class="action-btn main-action" title="Abrir/Fechar Mochila (Tecla I)">
           <span class="action-btn-icon">🎒</span>
           <span class="action-btn-text">Mochila</span>
-          <span class="action-badge" id="hud-inv-badge">0/16</span>
+          <span class="action-badge" id="hud-inv-badge">0/24</span>
         </button>
         <button id="btn-toggle-grid" class="action-btn" title="Alternar Grade Guia">
           <span class="action-btn-icon">📐</span>
@@ -247,10 +254,10 @@ export class HudUI {
     });
 
     if (slotCountEl) {
-      slotCountEl.textContent = `${occupiedCount}/16`;
+      slotCountEl.textContent = `${occupiedCount}/24`;
     }
     if (invBadgeEl) {
-      invBadgeEl.textContent = `${occupiedCount}/16`;
+      invBadgeEl.textContent = `${occupiedCount}/24`;
     }
   }
 
@@ -284,7 +291,7 @@ export class HudUI {
 
     if (invBadgeEl) {
       const occupied = this.localPlayer.inventory.filter(slot => slot !== null).length;
-      invBadgeEl.textContent = `${occupied}/16`;
+      invBadgeEl.textContent = `${occupied}/24`;
     }
 
     this.renderMinimap();
