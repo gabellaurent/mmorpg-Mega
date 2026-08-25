@@ -1,4 +1,3 @@
-import './style.css';
 import { spriteGen } from './engine/spriteGenerator.js';
 import { GameMap } from './engine/map.js';
 import { Player } from './engine/player.js';
