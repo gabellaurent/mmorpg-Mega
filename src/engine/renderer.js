@@ -220,20 +220,28 @@ export class Renderer {
 
     // PASSO 7: Vigneta de Perigo em Vermelho quando HP < 35%
     if (localPlayer && localPlayer.maxHp > 0 && (localPlayer.hp / localPlayer.maxHp) < 0.35) {
-      const pulse = 0.35 + 0.25 * Math.sin(performance.now() / 200);
-      const cWidth = this.canvas.width;
-      const cHeight = this.canvas.height;
-      const gradient = ctx.createRadialGradient(
-        cWidth / 2, cHeight / 2, Math.min(cWidth, cHeight) * 0.3,
-        cWidth / 2, cHeight / 2, Math.max(cWidth, cHeight) * 0.65
-      );
-      gradient.addColorStop(0, 'rgba(229, 62, 62, 0)');
-      gradient.addColorStop(1, `rgba(229, 62, 62, ${pulse})`);
+      try {
+        const pulse = Math.max(0, Math.min(1, 0.35 + 0.25 * Math.sin(performance.now() / 200)));
+        const cWidth = Number(this.canvas?.width) || 800;
+        const cHeight = Number(this.canvas?.height) || 600;
+        const cx = cWidth / 2;
+        const cy = cHeight / 2;
+        const r0 = Math.max(0, Math.min(cWidth, cHeight) * 0.3);
+        const r1 = Math.max(0, Math.max(cWidth, cHeight) * 0.65);
 
-      ctx.save();
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, cWidth, cHeight);
-      ctx.restore();
+        if (Number.isFinite(cx) && Number.isFinite(cy) && Number.isFinite(r0) && Number.isFinite(r1)) {
+          const gradient = ctx.createRadialGradient(cx, cy, r0, cx, cy, r1);
+          gradient.addColorStop(0, 'rgba(229, 62, 62, 0)');
+          gradient.addColorStop(1, `rgba(229, 62, 62, ${pulse})`);
+
+          ctx.save();
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, cWidth, cHeight);
+          ctx.restore();
+        }
+      } catch (err) {
+        // Silenciosamente previne travamento do gameLoop
+      }
     }
   }
 
