@@ -21,8 +21,19 @@ export class Renderer {
 
   resize() {
     const tileSize = CONFIG.TILE_SIZE;
-    this.canvas.width = this.viewportTilesX * tileSize;   // 8 * 48 = 384px
-    this.canvas.height = this.viewportTilesY * tileSize; // 8 * 48 = 384px
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+      const aspect = window.innerHeight / Math.max(1, window.innerWidth);
+      this.viewportTilesX = 7;
+      this.viewportTilesY = Math.max(10, Math.min(18, Math.round(7 * aspect)));
+    } else {
+      this.viewportTilesX = 8;
+      this.viewportTilesY = 8;
+    }
+
+    this.canvas.width = this.viewportTilesX * tileSize;
+    this.canvas.height = this.viewportTilesY * tileSize;
     this.ctx.imageSmoothingEnabled = false;
   }
 
