@@ -10,6 +10,7 @@ import { NetworkManager } from './services/networkManager.js';
 import { AuthUI } from './ui/authUI.js';
 import { HudUI } from './ui/hudUI.js';
 import { CONFIG } from './config.js';
+import { RadialMenu } from './ui/radialMenu.js';
 
 class GameEngine {
   constructor() {
@@ -24,6 +25,7 @@ class GameEngine {
     this.remotePlayers = new Map();
     this.network = null;
     this.hud = null;
+    this.radialMenu = null;
 
     this.keysPressed = {};
     this.lastStepTime = 0;
@@ -55,6 +57,17 @@ class GameEngine {
       maxHp: 100
     });
 
+    this.radialMenu = new RadialMenu((action) => {
+      if (action === 'inventory') this.hud.toggleInventory();
+      else if (action === 'map') this.hud.toggleMap();
+      else if (action === 'status') this.hud.toggleStatus();
+      else if (action === 'chat') {
+        this.hud.toggleChat(true);
+        const input = document.getElementById('chat-input');
+        if (input) input.focus();
+      }
+    });
+
     this.network = new NetworkManager(
       this.localPlayer,
       (remoteData) => this.handleRemotePlayerUpdate(remoteData),
@@ -84,7 +97,7 @@ class GameEngine {
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
 
-    this.hud.addChatMessage('Sistema', '🌟 Você se conectou ao mapa! <strong>Clique com o Botão Direito no Rato</strong> para travar a mira e atacar (Estilo Tibia)! Pressione <strong>[I]</strong> para abrir a mochila.', true);
+    this.hud.addChatMessage('Sistema', '🌟 <strong>Zero-HUD Ativo:</strong> Tela 100% limpa! Pressione <strong>[I]</strong> (Bolsa), <strong>[M]</strong> (Mapa), <strong>[C]</strong> (Status), <strong>[Tab]</strong> ou Toque Longo no Celular para a Roda Radial!', true);
   }
 
   performAttack(explicitTarget = null) {
@@ -262,15 +275,55 @@ class GameEngine {
   }
 
   setupControls() {
-    // Bloquear estritamente qualquer tentativa de movimentação via teclado (WASD / Setas)
     window.addEventListener('keydown', (e) => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        if (this.radialMenu) {
+          this.radialMenu.toggle();
+        }
+        return;
+      }
 
       const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', ' ', 'Space'];
       if (moveKeys.includes(e.key) || e.code === 'Space') {
         e.preventDefault();
         return; // Desativa barra de espaço e setas
       }
+    });
+
+    // Gestos de Toque no Celular (Toque Longo de 0.4s ou 3 Dedos para abrir Menu Radial)
+    let touchHoldTimer = null;
+
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 3) {
+        e.preventDefault();
+        if (this.radialMenu) {
+          this.radialMenu.toggle(e.touches[0].clientX, e.touches[0].clientY);
+        }
+        return;
+      }
+
+      if (e.touches.length === 1) {
+        const touchX = e.touches[0].clientX;
+        const touchY = e.touches[0].clientY;
+        touchHoldTimer = setTimeout(() => {
+          this.isPointerDown = false;
+          this.pointerTarget = null;
+          if (this.radialMenu) {
+            this.radialMenu.open(touchX, touchY);
+          }
+        }, 400);
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchend', () => {
+      if (touchHoldTimer) clearTimeout(touchHoldTimer);
+    });
+
+    this.canvas.addEventListener('touchmove', () => {
+      if (touchHoldTimer) clearTimeout(touchHoldTimer);
     });
 
     // Desativar menu de contexto do botão direito no jogo

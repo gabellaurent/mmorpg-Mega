@@ -18,52 +18,60 @@ export class HudUI {
 
   init() {
     this.container.innerHTML = `
-      <!-- Top Left: Card do Jogador Local -->
-      <div class="hud-card player-stats-card">
-        <div class="player-avatar" id="hud-avatar">⚔️</div>
-        <div class="player-info">
-          <div class="player-title">
-            <span id="hud-player-name">--</span>
-            <span class="badge-lvl" id="hud-player-lvl">Lvl.1</span>
+      <!-- Modal Flutuante: Status do Personagem [C] -->
+      <div class="hud-modal hidden" id="status-card">
+        <div class="modal-header">
+          <span>⚔️ Status do Herói</span>
+          <button class="btn-close-window" id="btn-close-status">✖</button>
+        </div>
+        <div class="modal-body">
+          <div class="status-row">
+            <span>Nome:</span>
+            <strong id="hud-player-name">--</strong>
           </div>
-          
-          <!-- Barra de HP -->
-          <div class="hp-bar-container">
-            <div class="hp-bar-fill" id="hud-hp-fill" style="width: 100%;"></div>
-            <span class="hp-text" id="hud-hp-text">100 / 100</span>
+          <div class="status-row">
+            <span>Nível:</span>
+            <strong id="hud-player-lvl" class="badge-lvl">Lvl.1</strong>
           </div>
-
-          <!-- Barra de EXP -->
-          <div class="xp-bar-container">
-            <div class="xp-bar-fill" id="hud-xp-fill" style="width: 0%;"></div>
-            <span class="xp-text" id="hud-xp-text">XP: 0 / 50</span>
+          <div class="status-row">
+            <span>Pontos de Vida:</span>
+            <div class="hp-bar-container">
+              <div class="hp-bar-fill" id="hud-hp-fill" style="width: 100%;"></div>
+              <span class="hp-text" id="hud-hp-text">100 / 100</span>
+            </div>
           </div>
-
-          <div class="coords-info">
+          <div class="status-row">
+            <span>Experiência:</span>
+            <div class="xp-bar-container">
+              <div class="xp-bar-fill" id="hud-xp-fill" style="width: 0%;"></div>
+              <span class="xp-text" id="hud-xp-text">XP: 0 / 50</span>
+            </div>
+          </div>
+          <div class="status-row">
+            <span>Coordenadas:</span>
             <span>📍 X:<strong id="hud-coord-x">16</strong> Y:<strong id="hud-coord-y">16</strong></span>
-            <span style="font-size: 11px; color: #f56565; font-weight: 700;">🎯 Botão Direito p/ Mira</span>
           </div>
         </div>
       </div>
 
-      <!-- Top Right: Minimapa Radar & Jogadores Online -->
-      <div class="hud-card online-players-card">
-        <div class="card-header">
-          <span>👥 Online (<strong id="online-count">1</strong>)</span>
+      <!-- Modal Flutuante: Mapa do Mundo [M] -->
+      <div class="hud-modal hidden" id="map-card">
+        <div class="modal-header">
+          <span>🗺️ Mapa do Mundo (<strong id="online-count">1</strong> Online)</span>
+          <button class="btn-close-window" id="btn-close-map">✖</button>
         </div>
-        
-        <div class="minimap-container">
-          <canvas id="minimap-canvas" width="128" height="128"></canvas>
+        <div class="modal-body map-body">
+          <div class="minimap-container">
+            <canvas id="minimap-canvas" width="160" height="160"></canvas>
+          </div>
+          <ul class="online-list" id="online-list">
+            <li class="you">👑 ${this.localPlayer.name} (Você)</li>
+          </ul>
         </div>
-
-        <ul class="online-list" id="online-list">
-          <li class="you">👑 ${this.localPlayer.name} (Você)</li>
-        </ul>
       </div>
 
-      <!-- Janela Flutuante Estilo RPG: Bolsa de Couro & Pergaminho (24 Slots) -->
+      <!-- Janela Flutuante Estilo RPG: Bolsa de Couro & Pergaminho (24 Slots) [I] -->
       <div class="inventory-card hidden" id="inventory-card">
-        <!-- Cinta Superior de Couro com Fivela Metálica Dourada -->
         <div class="leather-belt-header">
           <div class="belt-strap">
             <span class="belt-buckle">🧈</span>
@@ -72,7 +80,6 @@ export class HudUI {
           <button class="btn-close-window" id="btn-close-inv" title="Fechar (Esc)">✖</button>
         </div>
 
-        <!-- Faixa de Ouro e Capacidade -->
         <div class="inventory-stats-bar">
           <div class="gold-badge">
             <span class="gold-icon">🪙</span>
@@ -84,32 +91,21 @@ export class HudUI {
           </div>
         </div>
 
-        <!-- Grade de 24 Slots de Pergaminho (6 Colunas x 4 Linhas) -->
         <div class="inventory-grid" id="inventory-grid"></div>
 
-        <!-- Rodapé de Detalhes do Item Selecionado -->
         <div class="inventory-item-detail" id="inv-item-detail">
           <span class="detail-placeholder">Toque ou passe o cursor sobre um item para ver detalhes e opções.</span>
         </div>
       </div>
 
-      <!-- Bottom Center: Barra de Ações Rápida (RPG Action Bar) -->
-      <div class="action-bar-card">
-        <button id="btn-toggle-inv" class="action-btn main-action" title="Abrir/Fechar Mochila (Tecla I)">
-          <span class="action-btn-icon">🎒</span>
-          <span class="action-btn-text">Mochila</span>
-          <span class="action-badge" id="hud-inv-badge">0/24</span>
-        </button>
-        <button id="btn-toggle-grid" class="action-btn" title="Alternar Grade Guia">
-          <span class="action-btn-icon">📐</span>
-          <span class="action-btn-text">Grade</span>
-        </button>
-      </div>
-
-      <!-- Bottom Left: Chat Global em Tempo Real -->
-      <div class="hud-card chat-card">
+      <!-- Modal Flutuante: Chat Global em Tempo Real [Enter] -->
+      <div class="hud-modal chat-card hidden" id="chat-card">
+        <div class="modal-header">
+          <span>💬 Chat do Mundo</span>
+          <button class="btn-close-window" id="btn-close-chat">✖</button>
+        </div>
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-msg system">🎮 <strong>Clique com o Botão Direito no Rato</strong> para travar a mira e atacar (Estilo Tibia)! Pressione <strong>[I]</strong> para abrir a mochila.</div>
+          <div class="chat-msg system">🎮 Pressione <strong>[I]</strong> (Bolsa), <strong>[M]</strong> (Mapa), <strong>[C]</strong> (Status) ou Toque Longo no Celular para o Menu Radial!</div>
         </div>
         <form class="chat-input-form" id="chat-form">
           <input type="text" id="chat-input" placeholder="Digite uma mensagem..." maxlength="80" autocomplete="off" />
@@ -150,40 +146,92 @@ export class HudUI {
 
     const toggleInvBtn = this.container.querySelector('#btn-toggle-inv');
     const closeInvBtn = this.container.querySelector('#btn-close-inv');
+    const closeStatusBtn = this.container.querySelector('#btn-close-status');
+    const closeMapBtn = this.container.querySelector('#btn-close-map');
+    const closeChatBtn = this.container.querySelector('#btn-close-chat');
 
-    if (toggleInvBtn) {
-      const handleToggleInv = (e) => {
-        if (e) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        this.toggleInventory();
-      };
-      toggleInvBtn.addEventListener('click', handleToggleInv);
-      toggleInvBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-    }
+    if (closeInvBtn) closeInvBtn.addEventListener('click', () => this.toggleInventory(false));
+    if (closeStatusBtn) closeStatusBtn.addEventListener('click', () => this.toggleStatus(false));
+    if (closeMapBtn) closeMapBtn.addEventListener('click', () => this.toggleMap(false));
+    if (closeChatBtn) closeChatBtn.addEventListener('click', () => this.toggleChat(false));
 
-    if (closeInvBtn) {
-      const handleCloseInv = (e) => {
-        if (e) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        this.toggleInventory(false);
-      };
-      closeInvBtn.addEventListener('click', handleCloseInv);
-      closeInvBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-    }
-
-    // Teclas de atalho: I para Mochila, Esc para Fechar
+    // Teclas de atalho diretas no PC: I (Mochila), M (Mapa), C (Status), Enter (Chat), Esc (Fechar Tudo)
     window.addEventListener('keydown', (e) => {
-      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+      const isInputActive = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+
+      if (e.key === 'Enter') {
+        if (!isInputActive) {
+          e.preventDefault();
+          this.toggleChat(true);
+          const input = this.container.querySelector('#chat-input');
+          if (input) input.focus();
+        }
+        return;
+      }
+
+      if (isInputActive) {
+        if (e.key === 'Escape') {
+          document.activeElement.blur();
+          this.toggleChat(false);
+        }
+        return;
+      }
+
       if (e.key === 'i' || e.key === 'I') {
         this.toggleInventory();
+      } else if (e.key === 'm' || e.key === 'M') {
+        this.toggleMap();
+      } else if (e.key === 'c' || e.key === 'C') {
+        this.toggleStatus();
       } else if (e.key === 'Escape') {
-        this.toggleInventory(false);
+        this.closeAllModals();
       }
     });
+  }
+
+  closeAllModals() {
+    this.toggleInventory(false);
+    this.toggleStatus(false);
+    this.toggleMap(false);
+    this.toggleChat(false);
+  }
+
+  toggleStatus(forceState = null) {
+    const card = this.container.querySelector('#status-card');
+    if (!card) return;
+    const isHidden = card.classList.contains('hidden');
+    const newState = forceState !== null ? forceState : isHidden;
+    if (newState) {
+      card.classList.remove('hidden');
+      this.updatePlayerStats();
+    } else {
+      card.classList.add('hidden');
+    }
+  }
+
+  toggleMap(forceState = null) {
+    const card = this.container.querySelector('#map-card');
+    if (!card) return;
+    const isHidden = card.classList.contains('hidden');
+    const newState = forceState !== null ? forceState : isHidden;
+    if (newState) {
+      card.classList.remove('hidden');
+      this.renderMinimap();
+    } else {
+      card.classList.add('hidden');
+    }
+  }
+
+  toggleChat(forceState = null) {
+    const card = this.container.querySelector('#chat-card');
+    if (!card) return;
+    const isHidden = card.classList.contains('hidden');
+    const newState = forceState !== null ? forceState : isHidden;
+    if (newState) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
   }
 
   toggleInventory(forceState = null) {

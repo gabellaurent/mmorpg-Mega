@@ -190,6 +190,22 @@ export class Renderer {
     }
 
     ctx.restore();
+
+    // PASSO 7: Vigneta de Perigo em Vermelho quando HP < 35%
+    if (localPlayer && localPlayer.hp / localPlayer.maxHp < 0.35) {
+      const pulse = 0.35 + 0.25 * Math.sin(performance.now() / 200);
+      const gradient = ctx.createRadialGradient(
+        this.width / 2, this.height / 2, Math.min(this.width, this.height) * 0.3,
+        this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.65
+      );
+      gradient.addColorStop(0, 'rgba(229, 62, 62, 0)');
+      gradient.addColorStop(1, `rgba(229, 62, 62, ${pulse})`);
+
+      ctx.save();
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.restore();
+    }
   }
 
   // Renderiza um NPC
