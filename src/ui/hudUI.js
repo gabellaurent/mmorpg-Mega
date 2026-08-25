@@ -136,18 +136,43 @@ export class HudUI {
     });
 
     const toggleGridBtn = this.container.querySelector('#btn-toggle-grid');
-    toggleGridBtn.addEventListener('click', () => {
-      this.onToggleGrid();
-    });
+    if (toggleGridBtn) {
+      const handleToggleGrid = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        this.onToggleGrid();
+      };
+      toggleGridBtn.addEventListener('click', handleToggleGrid);
+      toggleGridBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
 
     const toggleInvBtn = this.container.querySelector('#btn-toggle-inv');
     const closeInvBtn = this.container.querySelector('#btn-close-inv');
 
     if (toggleInvBtn) {
-      toggleInvBtn.addEventListener('click', () => this.toggleInventory());
+      const handleToggleInv = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        this.toggleInventory();
+      };
+      toggleInvBtn.addEventListener('click', handleToggleInv);
+      toggleInvBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
     }
+
     if (closeInvBtn) {
-      closeInvBtn.addEventListener('click', () => this.toggleInventory(false));
+      const handleCloseInv = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        this.toggleInventory(false);
+      };
+      closeInvBtn.addEventListener('click', handleCloseInv);
+      closeInvBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
     }
 
     // Teclas de atalho: I para Mochila, Esc para Fechar
