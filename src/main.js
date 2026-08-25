@@ -637,7 +637,15 @@ class GameEngine {
             this.localPlayer.hp = this.localPlayer.maxHp;
             this.localPlayer.gridX = 16;
             this.localPlayer.gridY = 16;
-            this.hud.addChatMessage('Sistema', '☠️ Você caiu em batalha! Renascendo na praça central...', true);
+            this.localPlayer.renderX = 16 * CONFIG.TILE_SIZE;
+            this.localPlayer.renderY = 16 * CONFIG.TILE_SIZE;
+            this.localPlayer.clearPath();
+            this.lockedTargetId = null;
+            if (this.network) {
+              this.network.sendMove(16, 16, 'south');
+            }
+            this.hud.updatePlayerStats();
+            this.hud.addChatMessage('Sistema', '☠️ <strong>Você caiu em batalha!</strong> Renascendo na praça central da vila...', true);
           }
         }
       );
