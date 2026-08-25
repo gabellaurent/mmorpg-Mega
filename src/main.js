@@ -275,23 +275,23 @@ class GameEngine {
   }
 
   getGridCoordsFromClient(clientX, clientY) {
-    if (!this.localPlayer || !this.renderer) return null;
+    if (!this.renderer) return null;
     const rect = this.canvas.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
+    if (rect.width <= 0 || rect.height <= 0) return null;
 
-    const screenDx = clientX - centerX;
-    const screenDy = clientY - centerY;
+    // Posição do ponteiro relativa aos limites do canvas na tela (pixels CSS)
+    const canvasPixelX = clientX - rect.left;
+    const canvasPixelY = clientY - rect.top;
+
+    // Escalonamento para a resolução interna real do Canvas HTML5 (pixels de jogo)
+    const internalX = (canvasPixelX / rect.width) * this.canvas.width;
+    const internalY = (canvasPixelY / rect.height) * this.canvas.height;
+
+    // Adicionar a posição real da câmera (cameraX e cameraY) para precisão absoluta, mesmo nas bordas do mapa!
+    const clickWorldX = this.renderer.cameraX + internalX;
+    const clickWorldY = this.renderer.cameraY + internalY;
 
     const tileSize = CONFIG.TILE_SIZE;
-    const worldViewWidth = this.renderer.viewportTilesX * tileSize;
-    const worldViewHeight = this.renderer.viewportTilesY * tileSize;
-
-    const worldDx = (screenDx / rect.width) * worldViewWidth;
-    const worldDy = (screenDy / rect.height) * worldViewHeight;
-
-    const clickWorldX = (this.localPlayer.renderX + tileSize / 2) + worldDx;
-    const clickWorldY = (this.localPlayer.renderY + tileSize / 2) + worldDy;
 
     return {
       worldX: clickWorldX,
