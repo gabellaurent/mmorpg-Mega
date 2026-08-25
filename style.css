@@ -40,13 +40,15 @@ html, body {
   background: radial-gradient(circle at center, #111827 0%, #090d16 100%);
 }
 
-/* Canvas 2D - Quadros do Jogo (800x600 no PC, Fullscreen no Mobile) */
+/* Canvas 2D - Quadros do Jogo (1:1 Proporção Quadrada Sem Distorção) */
 #game-canvas {
   display: block;
-  width: 800px;
-  height: 600px;
+  aspect-ratio: 1 / 1;
+  width: min(85vw, 85vh);
+  height: min(85vw, 85vh);
   max-width: 95vw;
-  max-height: 90vh;
+  max-height: 95vh;
+  object-fit: contain;
   border: 3px solid #2d3748;
   border-radius: 10px;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 15px rgba(214, 158, 46, 0.2);
@@ -56,12 +58,12 @@ html, body {
 
 @media (max-width: 768px) {
   #game-canvas {
-    width: 100vw;
-    height: 100vh;
+    width: min(98vw, 98vh);
+    height: min(98vw, 98vh);
     max-width: 100vw;
     max-height: 100vh;
-    border-radius: 0;
-    border: none;
+    border-radius: 6px;
+    border: 2px solid #2d3748;
   }
 }
 

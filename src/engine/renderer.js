@@ -146,6 +146,22 @@ export class Renderer {
       }
     });
 
+    // Indicador de Destino Point-and-Click (Marcador Reticular no Chão)
+    if (localPlayer && localPlayer.targetDestinationTile) {
+      const destX = localPlayer.targetDestinationTile.x * tileSize;
+      const destY = localPlayer.targetDestinationTile.y * tileSize;
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 150);
+
+      ctx.save();
+      ctx.strokeStyle = `rgba(72, 187, 120, ${0.6 + pulse * 0.4})`;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(destX + 4, destY + 4, tileSize - 8, tileSize - 8);
+
+      ctx.fillStyle = `rgba(72, 187, 120, ${0.15 + pulse * 0.15})`;
+      ctx.fillRect(destX + 4, destY + 4, tileSize - 8, tileSize - 8);
+      ctx.restore();
+    }
+
     // PASSO 5: Copas das Árvores e Estrutura Superior do Portão Sul
     const canopyImg = spriteGen.get('tree_canopy');
     const canopySize = tileSize * 1.6;

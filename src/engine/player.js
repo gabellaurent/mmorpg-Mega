@@ -41,6 +41,22 @@ export class Player {
 
     this.chatBubble = null;
     this.chatBubbleTimer = null;
+    this.path = []; // Rota de caminhamento Point-and-Click
+    this.targetDestinationTile = null;
+  }
+
+  setPath(pathNodes) {
+    this.path = pathNodes ? [...pathNodes] : [];
+    if (this.path.length > 0) {
+      this.targetDestinationTile = this.path[this.path.length - 1];
+    } else {
+      this.targetDestinationTile = null;
+    }
+  }
+
+  clearPath() {
+    this.path = [];
+    this.targetDestinationTile = null;
   }
 
   // Adiciona um item ao inventário ou acumula ouro
@@ -165,6 +181,9 @@ export class Player {
         this.renderY = this.targetY;
         this.isMoving = false;
         this.animFrame = 0;
+        if (this.path.length === 0) {
+          this.targetDestinationTile = null;
+        }
       }
     } else {
       this.animFrame = 0;

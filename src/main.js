@@ -10,6 +10,7 @@ import { AuthUI } from './ui/authUI.js';
 import { HudUI } from './ui/hudUI.js';
 import { CONFIG } from './config.js';
 import { RadialMenu } from './ui/radialMenu.js';
+import { Pathfinder } from './engine/pathfinder.js';
 
 class GameEngine {
   constructor() {
@@ -273,6 +274,33 @@ class GameEngine {
     }
   }
 
+  getGridCoordsFromClient(clientX, clientY) {
+    if (!this.localPlayer || !this.renderer) return null;
+    const rect = this.canvas.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const screenDx = clientX - centerX;
+    const screenDy = clientY - centerY;
+
+    const tileSize = CONFIG.TILE_SIZE;
+    const worldViewWidth = this.renderer.viewportTilesX * tileSize;
+    const worldViewHeight = this.renderer.viewportTilesY * tileSize;
+
+    const worldDx = (screenDx / rect.width) * worldViewWidth;
+    const worldDy = (screenDy / rect.height) * worldViewHeight;
+
+    const clickWorldX = (this.localPlayer.renderX + tileSize / 2) + worldDx;
+    const clickWorldY = (this.localPlayer.renderY + tileSize / 2) + worldDy;
+
+    return {
+      worldX: clickWorldX,
+      worldY: clickWorldY,
+      gridX: Math.floor(clickWorldX / tileSize),
+      gridY: Math.floor(clickWorldY / tileSize)
+    };
+  }
+
   setupControls() {
     window.addEventListener('keydown', (e) => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
@@ -308,12 +336,10 @@ class GameEngine {
         const touchX = e.touches[0].clientX;
         const touchY = e.touches[0].clientY;
         touchHoldTimer = setTimeout(() => {
-          this.isPointerDown = false;
-          this.pointerTarget = null;
           if (this.radialMenu) {
             this.radialMenu.open(touchX, touchY);
           }
-        }, 400);
+        }, 450);
       }
     }, { passive: false });
 
@@ -328,7 +354,6 @@ class GameEngine {
     // Desativar menu de contexto do botão direito no jogo
     window.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      // Se o clique for dentro de algum elemento da UI, não aciona a trava de mira no mundo
       if (e.target && (e.target.closest('.inventory-card') || e.target.closest('.action-bar-card') || e.target.closest('.hud-card') || e.target.closest('#auth-container'))) {
         return;
       }
@@ -336,72 +361,70 @@ class GameEngine {
     });
 
     // Captura de Toque / Clique Esquerdo EXCLUSIVAMENTE dentro do Canvas do Jogo
-    const updatePointerPos = (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      this.pointerTarget = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-        rectWidth: rect.width,
-        rectHeight: rect.height
-      };
-    };
-
     this.canvas.addEventListener('pointerdown', (e) => {
-      // Aceita apenas botão esquerdo no canvas do jogo (button 0)
       if (e.button !== 0) return;
 
-      this.isPointerDown = true;
-      updatePointerPos(e);
-      this.triggerStepFromPointer(performance.now());
-    });
+      const coords = this.getGridCoordsFromClient(e.clientX, e.clientY);
+      if (!coords) return;
 
-    this.canvas.addEventListener('pointermove', (e) => {
-      if (this.isPointerDown) {
-        updatePointerPos(e);
+      // 1. Toque em Monstro Vivo: Trava de Mira e Ataque Imediato por Toque!
+      let clickedRat = null;
+      let minDistance = 999;
+
+      if (this.monsterManager) {
+        this.monsterManager.monsters.forEach(rat => {
+          if (rat.isDead) return;
+          const sameTile = (rat.gridX === coords.gridX && rat.gridY === coords.gridY);
+          const rx = rat.renderX + CONFIG.TILE_SIZE / 2;
+          const ry = rat.renderY + CONFIG.TILE_SIZE / 2;
+          const pixelDist = Math.hypot(coords.worldX - rx, coords.worldY - ry);
+
+          if ((sameTile || pixelDist < CONFIG.TILE_SIZE * 1.2) && pixelDist < minDistance) {
+            minDistance = pixelDist;
+            clickedRat = rat;
+          }
+        });
+      }
+
+      if (clickedRat) {
+        if (touchHoldTimer) clearTimeout(touchHoldTimer);
+        this.lockedTargetId = clickedRat.id;
+        if (this.localPlayer) this.localPlayer.clearPath();
+        const dist = Math.max(Math.abs(clickedRat.gridX - this.localPlayer.gridX), Math.abs(clickedRat.gridY - this.localPlayer.gridY));
+        this.hud.addChatMessage('Sistema', `🎯 <strong>MIRA TRAVADA:</strong> <strong>${clickedRat.name}</strong> selecionado!`, true);
+        return;
+      }
+
+      // 2. Toque no Chão: Movimentação Point-and-Click (Busca de Caminho com Pathfinder)
+      if (this.localPlayer) {
+        const path = Pathfinder.findPath(
+          this.localPlayer.gridX,
+          this.localPlayer.gridY,
+          coords.gridX,
+          coords.gridY,
+          (x, y) => !this.isTileOccupiedByEntity(x, y, this.localPlayer.id)
+        );
+
+        if (path && path.length > 0) {
+          this.localPlayer.setPath(path);
+        }
       }
     });
-
-    const releasePointer = () => {
-      this.isPointerDown = false;
-      this.pointerTarget = null;
-    };
-
-    window.addEventListener('pointerup', releasePointer);
-    window.addEventListener('pointercancel', releasePointer);
   }
 
   getMaxAttackRange() {
     if (!this.localPlayer) return 1;
     const spriteId = this.localPlayer.spriteId;
-    if (spriteId === 'paladin') return 5; // Paladino/Ranger ataca a até 5 quadros de distância
-    if (spriteId === 'mage') return 4;    // Mago ataca a até 4 quadros de distância
-    return 1;                             // Guerreiro ataca corpo a corpo (1 quadro)
+    if (spriteId === 'paladin') return 5;
+    if (spriteId === 'mage') return 4;
+    return 1;
   }
 
   handleRightClick(clientX, clientY) {
     if (!this.localPlayer || !this.monsterManager || !this.renderer) return;
 
-    // Calcular o retângulo real do canvas na tela do navegador
-    const rect = this.canvas.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    const screenDx = clientX - centerX;
-    const screenDy = clientY - centerY;
-
-    const tileSize = CONFIG.TILE_SIZE;
-    const worldViewWidth = this.renderer.viewportTilesX * tileSize;
-    const worldViewHeight = this.renderer.viewportTilesY * tileSize;
-
-    // Converte o deslocamento da tela (pixels CSS) para deslocamento no mundo do jogo (pixels Canvas)
-    const worldDx = (screenDx / rect.width) * worldViewWidth;
-    const worldDy = (screenDy / rect.height) * worldViewHeight;
-
-    const clickWorldX = (this.localPlayer.renderX + tileSize / 2) + worldDx;
-    const clickWorldY = (this.localPlayer.renderY + tileSize / 2) + worldDy;
-
-    const clickGridX = Math.floor(clickWorldX / tileSize);
-    const clickGridY = Math.floor(clickWorldY / tileSize);
+    const coords = this.getGridCoordsFromClient(clientX, clientY);
+    if (!coords) return;
 
     let clickedRat = null;
     let minDistance = 999;
@@ -409,13 +432,12 @@ class GameEngine {
     this.monsterManager.monsters.forEach(rat => {
       if (rat.isDead) return;
 
-      const sameTile = (rat.gridX === clickGridX && rat.gridY === clickGridY);
-      const rx = rat.renderX + tileSize / 2;
-      const ry = rat.renderY + tileSize / 2;
-      const pixelDist = Math.hypot(clickWorldX - rx, clickWorldY - ry);
+      const sameTile = (rat.gridX === coords.gridX && rat.gridY === coords.gridY);
+      const rx = rat.renderX + CONFIG.TILE_SIZE / 2;
+      const ry = rat.renderY + CONFIG.TILE_SIZE / 2;
+      const pixelDist = Math.hypot(coords.worldX - rx, coords.worldY - ry);
 
-      // Permite clicar no monstro a qualquer distância na tela!
-      if ((sameTile || pixelDist < tileSize * 1.2) && pixelDist < minDistance) {
+      if ((sameTile || pixelDist < CONFIG.TILE_SIZE * 1.2) && pixelDist < minDistance) {
         minDistance = pixelDist;
         clickedRat = rat;
       }
@@ -465,13 +487,11 @@ class GameEngine {
       this.hud.updateOnlineList(this.remotePlayers);
     }
 
-    // 1. Instanciar novo mapa, monstros, NPCs e gerenciador de itens do destino
     this.gameMap = new GameMap(targetMapId);
     this.monsterManager = new MonsterManager(this.gameMap);
     this.npcManager = new NpcManager(this.gameMap);
     this.itemManager = new ItemManager(this.gameMap);
 
-    // 2. Reposicionar o jogador local na entrada do novo mapa
     this.localPlayer.gridX = targetX;
     this.localPlayer.gridY = targetY;
     this.localPlayer.renderX = targetX * CONFIG.TILE_SIZE;
@@ -481,13 +501,12 @@ class GameEngine {
     this.localPlayer.targetX = this.localPlayer.renderX;
     this.localPlayer.targetY = this.localPlayer.renderY;
     this.localPlayer.isMoving = false;
+    this.localPlayer.clearPath();
 
-    // 3. Reconectar canal multiplayer Supabase Realtime para a nova região
     if (this.network) {
       this.network.connect(targetMapId);
     }
 
-    // 4. Notificação e atualização da interface
     if (this.hud) {
       this.hud.updatePlayerStats();
       if (targetMapId === 'map-2') {
@@ -532,51 +551,30 @@ class GameEngine {
     return false;
   }
 
-  triggerStepFromPointer(now) {
-    if (!this.localPlayer || this.localPlayer.isMoving) return;
-
-    if (now - this.lastStepTime < 500) return;
-
-    const dir = this.getDirectionFromPointer(this.pointerTarget);
-    if (!dir) return;
-
-    let dx = 0;
-    let dy = 0;
-    if (dir === 'north') dy = -1;
-    else if (dir === 'south') dy = 1;
-    else if (dir === 'west') dx = -1;
-    else if (dir === 'east') dx = 1;
-
-    const nextX = this.localPlayer.gridX + dx;
-    const nextY = this.localPlayer.gridY + dy;
-
-    // Verificar transição de mapa ao chegar ao portão
-    const transition = this.gameMap.getTransition(nextX, nextY);
-    if (transition) {
-      this.localPlayer.direction = dir;
-      this.lastStepTime = now;
-      this.switchMap(transition.targetMapId, transition.targetX, transition.targetY);
-      return;
-    }
-
-    // Sistema de Colisão: Impedir transpasse entre Jogadores, Monstros e Terreno
-    if (!this.isTileOccupiedByEntity(nextX, nextY, this.localPlayer.id)) {
-      this.localPlayer.moveTo(nextX, nextY, dir);
-      this.lastStepTime = now;
-
-      this.network.sendMove(nextX, nextY, dir);
-      this.hud.updatePlayerStats();
-    } else {
-      // Vira o personagem na direção desejada sem andar por cima do obstáculo
-      this.localPlayer.direction = dir;
-      this.network.sendMove(this.localPlayer.gridX, this.localPlayer.gridY, dir);
-      this.lastStepTime = now;
-    }
-  }
-
   processInput(now) {
-    if (this.isPointerDown && this.pointerTarget) {
-      this.triggerStepFromPointer(now);
+    if (!this.localPlayer) return;
+
+    // Execução passo a passo da rota Point-and-Click
+    if (!this.localPlayer.isMoving && this.localPlayer.path && this.localPlayer.path.length > 0) {
+      const nextTile = this.localPlayer.path.shift();
+      const dir = Pathfinder.getDirectionBetween(this.localPlayer.gridX, this.localPlayer.gridY, nextTile.x, nextTile.y);
+
+      const transition = this.gameMap.getTransition(nextTile.x, nextTile.y);
+      if (transition) {
+        this.localPlayer.clearPath();
+        this.switchMap(transition.targetMapId, transition.targetX, transition.targetY);
+        return;
+      }
+
+      if (!this.isTileOccupiedByEntity(nextTile.x, nextTile.y, this.localPlayer.id)) {
+        this.localPlayer.moveTo(nextTile.x, nextTile.y, dir);
+        this.network.sendMove(nextTile.x, nextTile.y, dir);
+        this.hud.updatePlayerStats();
+      } else {
+        this.localPlayer.clearPath();
+        this.localPlayer.direction = dir;
+        this.network.sendMove(this.localPlayer.gridX, this.localPlayer.gridY, dir);
+      }
     }
   }
 
