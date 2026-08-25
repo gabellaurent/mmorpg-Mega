@@ -282,36 +282,27 @@ class GameEngine {
       this.handleRightClick(e.clientX, e.clientY);
     });
 
-    // Captura global de Toque / Clique Esquerdo em qualquer lugar da tela
+    // Captura de Toque / Clique Esquerdo EXCLUSIVAMENTE dentro do Canvas do Jogo
     const updatePointerPos = (e) => {
+      const rect = this.canvas.getBoundingClientRect();
       this.pointerTarget = {
-        x: e.clientX,
-        y: e.clientY
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        rectWidth: rect.width,
+        rectHeight: rect.height
       };
     };
 
-    window.addEventListener('pointerdown', (e) => {
-      // Aceita apenas botão esquerdo para movimentação (button 0)
+    this.canvas.addEventListener('pointerdown', (e) => {
+      // Aceita apenas botão esquerdo no canvas do jogo (button 0)
       if (e.button !== 0) return;
-      
-      // Ignorar cliques dentro de qualquer componente da UI (mochila, botões, formulários, chat)
-      if (e.target && (
-        e.target.tagName === 'INPUT' || 
-        e.target.tagName === 'BUTTON' || 
-        e.target.closest('.hud-card') || 
-        e.target.closest('.inventory-card') || 
-        e.target.closest('.action-bar-card') || 
-        e.target.closest('#auth-container')
-      )) {
-        return;
-      }
 
       this.isPointerDown = true;
       updatePointerPos(e);
       this.triggerStepFromPointer(performance.now());
     });
 
-    window.addEventListener('pointermove', (e) => {
+    this.canvas.addEventListener('pointermove', (e) => {
       if (this.isPointerDown) {
         updatePointerPos(e);
       }
@@ -397,8 +388,8 @@ class GameEngine {
   getDirectionFromPointer(target) {
     if (!target) return null;
 
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    const centerX = target.rectWidth / 2;
+    const centerY = target.rectHeight / 2;
 
     const dx = target.x - centerX;
     const dy = target.y - centerY;

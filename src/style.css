@@ -34,14 +34,23 @@ html, body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #111827 0%, #090d16 100%);
 }
 
-/* Canvas 2D */
+/* Canvas 2D - Quadros do Jogo */
 #game-canvas {
   display: block;
-  width: 100%;
-  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  aspect-ratio: 1 / 1;
+  border: 3px solid #2d3748;
+  border-radius: 10px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 15px rgba(214, 158, 46, 0.2);
   background-color: #0f172a;
+  cursor: crosshair;
 }
 
 /* Modal de Autenticação / Escolha de Personagem */
