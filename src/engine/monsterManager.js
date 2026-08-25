@@ -119,7 +119,7 @@ export class MonsterManager {
     }
   }
 
-  update(now, localPlayer, onPlayerTakeDamage) {
+  update(now, localPlayer, isTileOccupiedFn, onPlayerTakeDamage) {
     this.updateFloatingTexts(now);
 
     this.monsters.forEach(rat => {
@@ -133,7 +133,9 @@ export class MonsterManager {
         const dmg = Math.floor(Math.random() * 5) + 3;
         rat.lastAttackTime = now;
 
-        onPlayerTakeDamage(dmg);
+        if (onPlayerTakeDamage) {
+          onPlayerTakeDamage(dmg);
+        }
         this.addFloatingText(`-${dmg}`, localPlayer.gridX, localPlayer.gridY, '#f56565');
       } 
       else if (dist > 1 && now - rat.lastAiTime > 3500) {
@@ -143,7 +145,12 @@ export class MonsterManager {
         const nextX = rat.spawnX + dx;
         const nextY = rat.spawnY + dy;
 
-        if (this.gameMap && this.gameMap.isWalkable(nextX, nextY)) {
+        // Validar colisão: monstro não entra em quadros ocupados por jogadores ou outros monstros
+        const isOccupied = typeof isTileOccupiedFn === 'function' 
+          ? isTileOccupiedFn(nextX, nextY, rat.id) 
+          : !this.gameMap.isWalkable(nextX, nextY);
+
+        if (!isOccupied) {
           rat.gridX = nextX;
           rat.gridY = nextY;
         }

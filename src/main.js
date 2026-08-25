@@ -498,6 +498,40 @@ class GameEngine {
     }
   }
 
+  isTileOccupiedByEntity(gridX, gridY, excludeEntityId = null) {
+    if (!this.gameMap || !this.gameMap.isWalkable(gridX, gridY)) {
+      return true;
+    }
+
+    if (this.npcManager && this.npcManager.isNpcAt(gridX, gridY)) {
+      return true;
+    }
+
+    if (this.remotePlayers) {
+      for (const [id, rPlayer] of this.remotePlayers) {
+        if (id !== excludeEntityId && rPlayer.gridX === gridX && rPlayer.gridY === gridY) {
+          return true;
+        }
+      }
+    }
+
+    if (this.localPlayer && excludeEntityId !== this.localPlayer.id) {
+      if (this.localPlayer.gridX === gridX && this.localPlayer.gridY === gridY) {
+        return true;
+      }
+    }
+
+    if (this.monsterManager) {
+      for (const [mId, rat] of this.monsterManager.monsters) {
+        if (mId !== excludeEntityId && !rat.isDead && rat.gridX === gridX && rat.gridY === gridY) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   triggerStepFromPointer(now) {
     if (!this.localPlayer || this.localPlayer.isMoving) return;
 
@@ -525,13 +559,15 @@ class GameEngine {
       return;
     }
 
-    if (this.gameMap.isWalkable(nextX, nextY) && !this.npcManager.isNpcAt(nextX, nextY)) {
+    // Sistema de Colisão: Impedir transpasse entre Jogadores, Monstros e Terreno
+    if (!this.isTileOccupiedByEntity(nextX, nextY, this.localPlayer.id)) {
       this.localPlayer.moveTo(nextX, nextY, dir);
       this.lastStepTime = now;
 
       this.network.sendMove(nextX, nextY, dir);
       this.hud.updatePlayerStats();
     } else {
+      // Vira o personagem na direção desejada sem andar por cima do obstáculo
       this.localPlayer.direction = dir;
       this.network.sendMove(this.localPlayer.gridX, this.localPlayer.gridY, dir);
       this.lastStepTime = now;
@@ -592,16 +628,21 @@ class GameEngine {
     }
 
     if (this.monsterManager && this.localPlayer) {
-      this.monsterManager.update(now, this.localPlayer, (damageTaken) => {
-        this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
-        this.hud.updatePlayerStats();
-        if (this.localPlayer.hp <= 0) {
-          this.localPlayer.hp = this.localPlayer.maxHp;
-          this.localPlayer.gridX = 16;
-          this.localPlayer.gridY = 16;
-          this.hud.addChatMessage('Sistema', '☠️ Você caiu em batalha! Renascendo na praça central...', true);
+      this.monsterManager.update(
+        now, 
+        this.localPlayer, 
+        (gx, gy, mId) => this.isTileOccupiedByEntity(gx, gy, mId),
+        (damageTaken) => {
+          this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
+          this.hud.updatePlayerStats();
+          if (this.localPlayer.hp <= 0) {
+            this.localPlayer.hp = this.localPlayer.maxHp;
+            this.localPlayer.gridX = 16;
+            this.localPlayer.gridY = 16;
+            this.hud.addChatMessage('Sistema', '☠️ Você caiu em batalha! Renascendo na praça central...', true);
+          }
         }
-      });
+      );
     }
 
     if (this.localPlayer) {
