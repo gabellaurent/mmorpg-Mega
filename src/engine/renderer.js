@@ -56,7 +56,7 @@ export class Renderer {
   }
 
   // Loop Principal de Renderização
-  render(gameMap, localPlayer, remotePlayersMap, monsterManager, npcManager, lockedTargetId = null, itemManager = null) {
+  render(gameMap, localPlayer, remotePlayersMap, monsterManager, npcManager, lockedTargetId = null, itemManager = null, corpseManager = null) {
     const ctx = this.ctx;
     const tileSize = CONFIG.TILE_SIZE;
     const viewWidth = this.viewportTilesX * tileSize;
@@ -123,6 +123,11 @@ export class Renderer {
           ctx.fillText(`x${item.quantity}`, rx + tileSize - 5, ry + tileSize - 3);
         }
       });
+    }
+
+    // PASSO 2.6: Corpos e Restos Mortais com Decomposição (Sistema Tibia)
+    if (corpseManager) {
+      this.renderCorpses(corpseManager);
     }
 
     // PASSO 3: Monstros (Rats)
@@ -466,5 +471,102 @@ export class Renderer {
     ctx.fillStyle = '#1a202c';
     ctx.textAlign = 'center';
     ctx.fillText(text, x, by + 15);
+  }
+
+  // Renderiza Corpos em Decomposição (Estilo Tibia)
+  renderCorpses(corpseManager) {
+    if (!corpseManager) return;
+    const ctx = this.ctx;
+    const tileSize = CONFIG.TILE_SIZE;
+    const now = performance.now();
+
+    corpseManager.corpses.forEach(corpse => {
+      if (corpse.stage >= 3) return; // Desapareceu
+
+      const rx = corpse.gridX * tileSize;
+      const ry = corpse.gridY * tileSize;
+      const cx = rx + tileSize / 2;
+      const cy = ry + tileSize / 2;
+
+      ctx.save();
+
+      // Sombra sob o corpo
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 8, 14, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (corpse.stage === 0) {
+        // Estágio 0: Corpo Fresco
+        // Desenha poça de sangue
+        ctx.fillStyle = 'rgba(180, 20, 20, 0.7)';
+        ctx.beginPath();
+        ctx.ellipse(cx + 2, cy + 6, 12, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (corpse.entityType === 'monster') {
+          // Rato morto caído de lado
+          ctx.fillStyle = '#744210';
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + 4, 10, 6, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#4a2807';
+          ctx.beginPath();
+          ctx.arc(cx - 6, cy + 1, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx - 4, cy + 3);
+          ctx.lineTo(cx - 2, cy + 5);
+          ctx.stroke();
+        } else {
+          // Jogador morto caído
+          ctx.fillStyle = '#2b6cb0';
+          ctx.fillRect(cx - 8, cy + 2, 16, 8);
+          ctx.fillStyle = '#fbd38d';
+          ctx.beginPath();
+          ctx.arc(cx - 8, cy + 6, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Borda dourada pulsante se contiver loot!
+        if (corpse.loot && corpse.loot.length > 0) {
+          const lootPulse = 0.4 + 0.4 * Math.sin(now / 200);
+          ctx.strokeStyle = `rgba(246, 224, 94, ${lootPulse})`;
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(rx + 2, ry + 2, tileSize - 4, tileSize - 4);
+        }
+
+      } else if (corpse.stage === 1) {
+        // Estágio 1: Corpo em Decomposição (Verde escuro + Moscas)
+        ctx.fillStyle = 'rgba(47, 60, 40, 0.75)';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 4, 10, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Moscas pulando ao redor
+        const flyTime = now / 100;
+        ctx.fillStyle = '#1a202c';
+        for (let i = 0; i < 3; i++) {
+          const fx = cx + Math.cos(flyTime + i * 2.1) * 8;
+          const fy = cy + Math.sin(flyTime * 1.5 + i * 1.7) * 6 - 2;
+          ctx.fillRect(fx, fy, 2, 2);
+        }
+
+      } else if (corpse.stage === 2) {
+        // Estágio 2: Esqueleto / Restos Mortais (Ossos)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.arc(cx - 4, cy + 4, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(cx + 1, cy + 2, 8, 2);
+        ctx.fillRect(cx + 3, cy + 5, 6, 2);
+        ctx.fillStyle = '#1a202c';
+        ctx.fillRect(cx - 5, cy + 4, 1, 2);
+      }
+
+      ctx.restore();
+    });
   }
 }

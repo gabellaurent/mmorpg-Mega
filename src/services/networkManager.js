@@ -97,6 +97,11 @@ export class NetworkManager {
       this.handleMessage('item_pickup', payload);
     });
 
+    // Eventos de Corpos e Decomposição
+    this.supabaseChannel.on('broadcast', { event: 'corpse_spawn' }, ({ payload }) => {
+      this.handleMessage('corpse_spawn', payload);
+    });
+
     this.supabaseChannel.subscribe((status) => {
       console.log('📡 Status Supabase Realtime:', status);
       if (status === 'SUBSCRIBED') {
@@ -111,8 +116,8 @@ export class NetworkManager {
   handleMessage(type, payload) {
     if (!payload) return;
 
-    // Ignorar eventos do próprio jogador local para evitar duplicação de ataques
-    if (payload.id === this.localPlayer.id && type !== 'monster_hit' && type !== 'monster_respawn' && type !== 'item_spawn' && type !== 'item_pickup') return;
+    // Ignorar eventos do próprio jogador local para evitar duplicação
+    if (payload.id === this.localPlayer.id && type !== 'monster_hit' && type !== 'monster_respawn' && type !== 'item_spawn' && type !== 'item_pickup' && type !== 'corpse_spawn') return;
 
     if (payload.id && payload.id !== this.localPlayer.id) {
       this.lastSeenMap.set(payload.id, Date.now());
@@ -140,6 +145,10 @@ export class NetworkManager {
     } else if (type === 'item_pickup') {
       if (this.onItemPickup) {
         this.onItemPickup(payload);
+      }
+    } else if (type === 'corpse_spawn') {
+      if (this.onCorpseSpawn) {
+        this.onCorpseSpawn(payload);
       }
     }
   }
@@ -219,6 +228,11 @@ export class NetworkManager {
   // Envia evento de item coletado do chão em Tempo Real
   sendItemPickup(itemId) {
     this.sendBroadcast('item_pickup', { id: itemId, collectorId: this.localPlayer.id });
+  }
+
+  // Envia evento de criação de corpo no chão em Tempo Real
+  sendCorpseSpawn(corpseData) {
+    this.sendBroadcast('corpse_spawn', corpseData);
   }
 
   sendChat(text) {

@@ -11,6 +11,7 @@ import { HudUI } from './ui/hudUI.js';
 import { CONFIG } from './config.js';
 import { RadialMenu } from './ui/radialMenu.js';
 import { Pathfinder } from './engine/pathfinder.js';
+import { CorpseManager } from './engine/corpseManager.js';
 
 class GameEngine {
   constructor() {
@@ -20,6 +21,7 @@ class GameEngine {
     this.monsterManager = new MonsterManager(this.gameMap);
     this.npcManager = new NpcManager(this.gameMap);
     this.itemManager = new ItemManager(this.gameMap);
+    this.corpseManager = new CorpseManager(this.gameMap);
     
     this.localPlayer = null;
     this.remotePlayers = new Map();
@@ -78,6 +80,7 @@ class GameEngine {
       (itemPayload) => this.itemManager.addGroundItem(itemPayload),
       (pickupPayload) => this.itemManager.removeGroundItem(pickupPayload.id)
     );
+    this.network.onCorpseSpawn = (corpseData) => this.corpseManager.spawnCorpse(corpseData);
     this.network.connect('map-1');
 
     this.hud = new HudUI(
@@ -132,12 +135,33 @@ class GameEngine {
           const leveledUp = this.localPlayer.addXp(gainedXp);
           this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
 
-          // Gerar loot do rato no chão e notificar rede
-          const loot = this.itemManager.spawnMonsterLoot('rat', targetRat.gridX, targetRat.gridY, this.network);
-          if (loot.length > 0) {
-            const itemNames = loot.map(i => i.itemConfig.name).join(', ');
-            this.hud.addChatMessage('Sistema', `💰 O monstro dropou: <strong>${itemNames}</strong>!`, true);
+          // Gerar loot do monstro para ser armazenado DENTRO do corpo!
+          const monsterLoot = [
+            { itemId: 'gold', quantity: Math.floor(Math.random() * 8) + 3 }
+          ];
+
+          if (Math.random() < 0.45) {
+            monsterLoot.push({ itemId: 'health_potion', quantity: 1, itemConfig: CONFIG.ITEMS['health_potion'] });
           }
+          if (Math.random() < 0.25) {
+            monsterLoot.push({ itemId: 'rat_tail', quantity: 1, itemConfig: CONFIG.ITEMS['rat_tail'] });
+          }
+
+          const corpseData = {
+            ownerName: targetRat.name,
+            entityType: 'monster',
+            gridX: targetRat.gridX,
+            gridY: targetRat.gridY,
+            loot: monsterLoot,
+            createdAt: Date.now()
+          };
+
+          const spawnedCorpse = this.corpseManager.spawnCorpse(corpseData);
+          if (this.network) {
+            this.network.sendCorpseSpawn(spawnedCorpse);
+          }
+
+          this.hud.addChatMessage('Sistema', `💀 <strong>${targetRat.name}</strong> morreu! Clique no corpo para saquear os itens.`, true);
 
           if (leveledUp) {
             this.hud.addChatMessage('Sistema', `✨ <strong>LEVEL UP!</strong> Você alcançou o Nível ${this.localPlayer.level}! Sua vida foi restaurada!`, true);
@@ -395,6 +419,26 @@ class GameEngine {
         return;
       }
 
+      // 1.5. Toque em Corpo / Restos Mortais: Abrir Container e Saquear Loot!
+      if (this.corpseManager && this.localPlayer) {
+        const corpse = this.corpseManager.getCorpseAt(coords.gridX, coords.gridY);
+        if (corpse) {
+          const dist = Math.max(Math.abs(corpse.gridX - this.localPlayer.gridX), Math.abs(corpse.gridY - this.localPlayer.gridY));
+          if (dist <= 1.5) {
+            const result = this.corpseManager.lootCorpse(corpse.id, this.localPlayer);
+            if (result.success) {
+              const lootedNames = result.lootedItems.map(i => i.itemId === 'gold' ? `+${i.quantity} Ouro` : (CONFIG.ITEMS[i.itemId]?.name || i.itemId)).join(', ');
+              this.monsterManager.addFloatingText(`+${lootedNames}`, corpse.gridX, corpse.gridY, '#f6e05e');
+              this.hud.addChatMessage('Sistema', `🎒 Você abriu o corpo de <strong>${corpse.ownerName}</strong> e encontrou: <strong>${lootedNames}</strong>!`, true);
+              this.hud.updatePlayerStats();
+            } else {
+              this.hud.addChatMessage('Sistema', `⚠️ ${result.reason}`, true);
+            }
+            return;
+          }
+        }
+      }
+
       // 2. Toque no Chão: Movimentação Point-and-Click (Busca de Caminho com Pathfinder)
       if (this.localPlayer) {
         const path = Pathfinder.findPath(
@@ -634,6 +678,20 @@ class GameEngine {
           this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
           this.hud.updatePlayerStats();
           if (this.localPlayer.hp <= 0) {
+            if (this.corpseManager) {
+              const playerCorpse = this.corpseManager.spawnCorpse({
+                ownerName: this.localPlayer.name,
+                entityType: 'player',
+                gridX: this.localPlayer.gridX,
+                gridY: this.localPlayer.gridY,
+                loot: [],
+                createdAt: Date.now()
+              });
+              if (this.network) {
+                this.network.sendCorpseSpawn(playerCorpse);
+              }
+            }
+
             this.localPlayer.hp = this.localPlayer.maxHp;
             this.localPlayer.gridX = 16;
             this.localPlayer.gridY = 16;
@@ -645,15 +703,19 @@ class GameEngine {
               this.network.sendMove(16, 16, 'south');
             }
             this.hud.updatePlayerStats();
-            this.hud.addChatMessage('Sistema', '☠️ <strong>Você caiu em batalha!</strong> Renascendo na praça central da vila...', true);
+            this.hud.addChatMessage('Sistema', '☠️ <strong>Você caiu em batalha!</strong> Seu corpo permanece no local enquanto você renasce na praça central...', true);
           }
         }
       );
     }
 
+    if (this.corpseManager) {
+      this.corpseManager.update(now);
+    }
+
     if (this.localPlayer) {
       this.renderer.updateCamera(this.localPlayer);
-      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager, this.npcManager, this.lockedTargetId, this.itemManager);
+      this.renderer.render(this.gameMap, this.localPlayer, this.remotePlayers, this.monsterManager, this.npcManager, this.lockedTargetId, this.itemManager, this.corpseManager);
     }
 
     requestAnimationFrame((n) => this.gameLoop(n));
