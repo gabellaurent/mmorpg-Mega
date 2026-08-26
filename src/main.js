@@ -138,7 +138,9 @@ class GameEngine {
       const maxRange = this.getMaxAttackRange();
       if (dist <= maxRange) {
         this.lastAttackTime = now;
-        const dmg = Math.floor(Math.random() * 9) + 8;
+        const baseDmg = Math.floor(Math.random() * 9) + 8;
+        const bonusDmg = this.localPlayer.getBonusAttack ? this.localPlayer.getBonusAttack() : 0;
+        const dmg = baseDmg + bonusDmg;
         const died = targetRat.takeDamage(dmg);
 
         this.monsterManager.addFloatingText(`-${dmg}`, targetRat.gridX, targetRat.gridY, '#f56565');

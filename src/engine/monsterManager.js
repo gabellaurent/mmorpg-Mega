@@ -230,7 +230,9 @@ export class MonsterManager {
         if (distToTarget === 1 && now - rat.lastAttackTime > 1600) {
           rat.lastAttackTime = now;
           if (currentTarget.id === localPlayer.id) {
-            const dmg = Math.floor(Math.random() * 5) + 3;
+            const rawDmg = Math.floor(Math.random() * 5) + 3;
+            const def = localPlayer.getBonusDefense ? localPlayer.getBonusDefense() : 0;
+            const dmg = Math.max(1, rawDmg - def);
             if (onPlayerTakeDamage) onPlayerTakeDamage(dmg);
             this.addFloatingText(`-${dmg}`, localPlayer.gridX, localPlayer.gridY, '#f56565');
           }

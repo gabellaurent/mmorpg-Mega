@@ -197,4 +197,27 @@ export class Player {
       this.chatBubble = null;
     }, 4000);
   }
+
+  // Retorna o bônus de Ataque concedido por armas/equipamentos no inventário
+  getBonusAttack() {
+    let bonus = 0;
+    if (!this.inventory) return bonus;
+    this.inventory.forEach(slot => {
+      if (slot && slot.itemId) {
+        if (slot.itemId === 'steel_sword') bonus += 8;
+        if (slot.itemId === 'hunting_bow') bonus += 6;
+      }
+    });
+    return bonus;
+  }
+
+  // Retorna o bônus de Defesa concedido por escudos/equipamentos no inventário
+  getBonusDefense() {
+    let bonus = 0;
+    if (!this.inventory) return bonus;
+    this.inventory.forEach(slot => {
+      if (slot && slot.itemId === 'bronze_shield') bonus += 5;
+    });
+    return bonus;
+  }
 }
