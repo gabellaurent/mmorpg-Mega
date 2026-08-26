@@ -1081,63 +1081,81 @@ class SpriteGenerator {
     return canvas;
   }
 
-  // Chão de Caverna (Pedra Escura)
+  // Chão de Caverna Terroso (Tibia Style - Terra/Argila marrom com pedregulhos)
   drawCaveFloorTile(size) {
     const { canvas, ctx } = this.createCanvas(size, size);
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = '#5d4037';
     ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#0f172a';
-    for (let i = 0; i < 25; i++) {
-      ctx.fillRect((i * 11) % size, (i * 17) % size, 3, 3);
+
+    ctx.fillStyle = '#4e342e';
+    for (let i = 0; i < 30; i++) {
+      const px = (i * 13) % size;
+      const py = (i * 19) % size;
+      ctx.fillRect(px, py, 2, 2);
     }
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(10, 12, 14, 2);
-    ctx.fillRect(26, 28, 12, 2);
+
+    ctx.fillStyle = '#795548';
+    const gravel = [[6, 8], [24, 14], [16, 28], [32, 20], [10, 36]];
+    gravel.forEach(([gx, gy]) => {
+      ctx.fillRect(gx, gy, 3, 3);
+      ctx.fillStyle = '#8d6e63';
+      ctx.fillRect(gx + 1, gy + 1, 1, 1);
+    });
+
     return canvas;
   }
 
-  // Parede de Caverna Rochosa Bruta
+  // Parede de Caverna Terrosa de Rocha/Argila Escura (Tibia Style)
   drawCaveWallTile(size) {
     const { canvas, ctx } = this.createCanvas(size, size);
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#26140e';
     ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(4, 4, size - 8, size - 8);
-    ctx.fillStyle = '#475569';
-    ctx.fillRect(6, 6, size - 12, 14);
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(6, 24, size - 12, 14);
+
+    ctx.fillStyle = '#3e2723';
+    ctx.fillRect(3, 3, size - 6, size - 6);
+
+    ctx.fillStyle = '#4e342e';
+    ctx.fillRect(5, 5, size - 10, 14);
+    ctx.fillRect(8, 22, size - 14, 16);
+
+    ctx.fillStyle = '#6d4c41';
+    ctx.fillRect(5, 5, size - 10, 3);
+
     return canvas;
   }
 
-  // Buraco / Entrada de Caverna (Subida / Descida)
+  // Buraco / Entrada de Caverna Terrosa
   drawCaveHoleTile(size) {
     const { canvas, ctx } = this.createCanvas(size, size);
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = '#5d4037';
     ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#000000';
+
+    ctx.fillStyle = '#1a0c08';
     ctx.beginPath();
     ctx.ellipse(size / 2, size / 2, 18, 14, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Degraus ou escada de corda
-    ctx.fillStyle = '#744210';
+
+    ctx.fillStyle = '#8d5b4c';
     ctx.fillRect(size / 2 - 8, size / 2 - 8, 16, 3);
     ctx.fillRect(size / 2 - 8, size / 2 - 2, 16, 3);
     ctx.fillRect(size / 2 - 8, size / 2 + 4, 16, 3);
+
     return canvas;
   }
 
-  // Escada de Pedra (Caverna)
+  // Escada de Pedra/Terra da Caverna
   drawCaveStairsTile(size) {
     const { canvas, ctx } = this.createCanvas(size, size);
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = '#5d4037';
     ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#475569';
+
     for (let i = 0; i < 4; i++) {
-      ctx.fillRect(4, 4 + i * 10, size - 8, 7);
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = '#3e2723';
+      ctx.fillRect(4, 4 + i * 10, size - 8, 8);
+      ctx.fillStyle = '#6d4c41';
       ctx.fillRect(4, 4 + i * 10, size - 8, 2);
-      ctx.fillStyle = '#334155';
+      ctx.fillStyle = '#26140e';
+      ctx.fillRect(4, 10 + i * 10, size - 8, 2);
     }
     return canvas;
   }

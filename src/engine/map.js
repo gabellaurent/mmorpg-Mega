@@ -325,16 +325,45 @@ export class GameMap {
     }
   }
 
-  // Layout da Caverna dos Rotworms (Sub-nível 1 - 24x24)
+  // Layout da Caverna dos Rotworms (Sub-nível 1 - Labirinto de Túneis Terrosos 24x24)
   generateCaveSublevel1() {
     const { TILE_TYPES } = CONFIG;
     this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
 
+    // Matriz 24x24: 1 = Parede Terrosa de Caverna, 0 = Túnel Terroso Passável
+    const caveMatrix = [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1],
+      [1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1],
+      [1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,1,0,0,1,1,1,1,1],
+      [1,1,1,1,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1],
+      [1,1,1,1,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1],
+      [1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,1,1,1,1,1],
+      [1,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,1,0,0,1,1,1,1,1],
+      [1,1,1,0,0,0,1,0,0,1,1,0,0,0,0,0,1,0,0,0,0,1,1,1],
+      [1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1],
+      [1,1,1,0,0,0,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1],
+      [1,1,1,1,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,1,1,1],
+      [1,1,1,1,1,1,1,0,0,0,1,0,0,1,1,0,0,0,0,0,0,1,1,1],
+      [1,1,1,1,1,1,1,0,0,0,1,0,0,1,1,1,1,1,0,0,1,1,1,1],
+      [1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,1,1,1,1],
+      [1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,1,1,1,1],
+      [1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1],
+      [1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ];
+
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        let type = TILE_TYPES.CAVE_FLOOR;
-        let isSolid = false;
-        let spriteKey = 'cave_floor';
+        let isWall = caveMatrix[y][x] === 1;
+        let type = isWall ? TILE_TYPES.CAVE_WALL : TILE_TYPES.CAVE_FLOOR;
+        let isSolid = isWall;
+        let spriteKey = isWall ? 'cave_wall' : 'cave_floor';
 
         // Escada para voltar ao Mapa 2 (Grid X: 4, Y: 4)
         if (x === 4 && y === 4) {
@@ -348,40 +377,57 @@ export class GameMap {
           isSolid = false;
           spriteKey = 'cave_hole';
         }
-        // Paredes Rochosas da Caverna
-        else if (x === 0 || y === 0 || x === 23 || y === 23 || (x >= 8 && x <= 14 && y === 8) || (x === 8 && y >= 9 && y <= 14)) {
-          type = TILE_TYPES.CAVE_WALL;
-          isSolid = true;
-          spriteKey = 'cave_wall';
-        }
 
         this.grid[y][x] = { x, y, type, isSolid, spriteKey };
       }
     }
   }
 
-  // Layout do Abismo Vulcânico (Sub-nível 2 - 24x24)
+  // Layout do Abismo Vulcânico (Sub-nível 2 - Túneis de Magma & Ninho do Boss 24x24)
   generateCaveSublevel2() {
     const { TILE_TYPES } = CONFIG;
     this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
 
+    // Matriz 24x24: 1 = Parede de Obsidiana, 0 = Túnel de Magma
+    const caveMatrix = [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,0,0,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,0,0,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ];
+
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        let type = TILE_TYPES.MAGMA_FLOOR;
-        let isSolid = false;
-        let spriteKey = 'magma_floor';
+        let isWall = caveMatrix[y][x] === 1;
+        let type = isWall ? TILE_TYPES.OBSIDIAN_WALL : TILE_TYPES.MAGMA_FLOOR;
+        let isSolid = isWall;
+        let spriteKey = isWall ? 'obsidian_wall' : 'magma_floor';
 
         // Escada de Pedra para subir ao Sub-nível 1 (Grid X: 4, Y: 4)
         if (x === 4 && y === 4) {
           type = TILE_TYPES.CAVE_STAIRS;
           isSolid = false;
           spriteKey = 'cave_stairs';
-        }
-        // Paredes Vulcânicas de Obsidiana
-        else if (x === 0 || y === 0 || x === 23 || y === 23 || (x >= 10 && x <= 14 && y >= 10 && y <= 14 && !(x === 12 && y === 12))) {
-          type = TILE_TYPES.OBSIDIAN_WALL;
-          isSolid = true;
-          spriteKey = 'obsidian_wall';
         }
 
         this.grid[y][x] = { x, y, type, isSolid, spriteKey };
