@@ -18,6 +18,7 @@ export class Monster {
     this.hp = 30;
     this.maxHp = 30;
     this.isDead = false;
+    this.isAggro = false;
 
     this.lastAiTime = 0;
     this.lastAttackTime = 0;
@@ -30,6 +31,7 @@ export class Monster {
 
     if (this.hp <= 0) {
       this.isDead = true;
+      this.isAggro = false;
       return true;
     }
     return false;
@@ -42,6 +44,7 @@ export class Monster {
     this.renderY = this.spawnY * CONFIG.TILE_SIZE;
     this.hp = this.maxHp;
     this.isDead = false;
+    this.isAggro = false;
   }
 
   update(now) {
@@ -154,9 +157,11 @@ export class MonsterManager {
 
       if (rat.isDead) return;
 
-      const dist = Math.max(Math.abs(rat.gridX - localPlayer.gridX), Math.abs(rat.gridY - localPlayer.gridY));
-      
-      if (dist === 1 && now - rat.lastAttackTime > 1600) {
+      const distToPlayer = Math.max(Math.abs(rat.gridX - localPlayer.gridX), Math.abs(rat.gridY - localPlayer.gridY));
+      const distFromSpawn = Math.max(Math.abs(rat.gridX - rat.spawnX), Math.abs(rat.gridY - rat.spawnY));
+
+      // 1. Ataque se o jogador estiver em quadro adjacente (distância = 1)
+      if (distToPlayer === 1 && now - rat.lastAttackTime > 1600) {
         const dmg = Math.floor(Math.random() * 5) + 3;
         rat.lastAttackTime = now;
 
@@ -165,21 +170,68 @@ export class MonsterManager {
         }
         this.addFloatingText(`-${dmg}`, localPlayer.gridX, localPlayer.gridY, '#f56565');
       } 
-      else if (dist > 1 && now - rat.lastAiTime > 3500) {
-        rat.lastAiTime = now;
-        const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-        const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
-        const nextX = rat.spawnX + dx;
-        const nextY = rat.spawnY + dy;
+      // 2. IA de Perseguição e Movimentação (distância > 1)
+      else if (distToPlayer > 1) {
+        // Entra/Mantém perseguição se o jogador estiver a <= 5 quadros E o monstro a < 6 quadros do seu spawn (Limite de Leash)
+        const canAggro = (distToPlayer <= 5 && distFromSpawn < 6);
 
-        // Validar colisão: monstro não entra em quadros ocupados por jogadores ou outros monstros
-        const isOccupied = typeof isTileOccupiedFn === 'function' 
-          ? isTileOccupiedFn(nextX, nextY, rat.id) 
-          : !this.gameMap.isWalkable(nextX, nextY);
+        if (canAggro) {
+          if (!rat.isAggro) {
+            rat.isAggro = true;
+            this.addFloatingText('❗ Agressivo', rat.gridX, rat.gridY, '#e53e3e');
+          }
 
-        if (!isOccupied) {
-          rat.gridX = nextX;
-          rat.gridY = nextY;
+          // Movimento de Perseguição acelerado (1300ms)
+          if (now - rat.lastAiTime > 1300) {
+            rat.lastAiTime = now;
+
+            const stepX = Math.sign(localPlayer.gridX - rat.gridX);
+            const stepY = Math.sign(localPlayer.gridY - rat.gridY);
+
+            // Testar direções de avanço em direção ao jogador
+            const candidates = [];
+            if (stepX !== 0 && stepY !== 0) {
+              candidates.push({ x: rat.gridX + stepX, y: rat.gridY + stepY });
+            }
+            if (stepX !== 0) candidates.push({ x: rat.gridX + stepX, y: rat.gridY });
+            if (stepY !== 0) candidates.push({ x: rat.gridX, y: rat.gridY + stepY });
+
+            for (const cand of candidates) {
+              const isOccupied = typeof isTileOccupiedFn === 'function' 
+                ? isTileOccupiedFn(cand.x, cand.y, rat.id) 
+                : !this.gameMap.isWalkable(cand.x, cand.y);
+
+              if (!isOccupied) {
+                rat.gridX = cand.x;
+                rat.gridY = cand.y;
+                break;
+              }
+            }
+          }
+        } 
+        else {
+          // Perdeu o agró ou ultrapassou o limite de distância do spawn
+          if (rat.isAggro) {
+            rat.isAggro = false;
+          }
+
+          // Movimentação passeio perto do spawn (a cada 3500ms)
+          if (now - rat.lastAiTime > 3500) {
+            rat.lastAiTime = now;
+            const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+            const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
+            const nextX = rat.spawnX + dx;
+            const nextY = rat.spawnY + dy;
+
+            const isOccupied = typeof isTileOccupiedFn === 'function' 
+              ? isTileOccupiedFn(nextX, nextY, rat.id) 
+              : !this.gameMap.isWalkable(nextX, nextY);
+
+            if (!isOccupied) {
+              rat.gridX = nextX;
+              rat.gridY = nextY;
+            }
+          }
         }
       }
     });
