@@ -102,7 +102,7 @@ class GameEngine {
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
 
-    this.hud.addChatMessage('Sistema', '🌟 <strong>Zero-HUD Ativo:</strong> Tela 100% limpa! Pressione <strong>[I]</strong> (Bolsa), <strong>[M]</strong> (Mapa), <strong>[C]</strong> (Status), <strong>[Tab]</strong> ou Toque Longo no Celular para a Roda Radial!', true);
+    this.hud.addChatMessage('Sistema', '🌟 <strong>Zero-HUD Ativo:</strong> Clique/Toque no seu <strong>Personagem</strong>, ou pressione <strong>[Tab]</strong> / <strong>[I]</strong> para abrir a Roda Radial (Bolsa, Mapa, Status, Chat)!', true);
   }
 
   async hydrateWorldState(mapId = 'map-1') {
@@ -407,6 +407,21 @@ class GameEngine {
 
       const coords = this.getGridCoordsFromClient(e.clientX, e.clientY);
       if (!coords) return;
+
+      // 0. Toque / Clique Direto no Próprio Personagem: Abrir Menu Radial Instantâneo (Celular & PC)!
+      if (this.localPlayer) {
+        const playerCenterX = this.localPlayer.renderX + CONFIG.TILE_SIZE / 2;
+        const playerCenterY = this.localPlayer.renderY + CONFIG.TILE_SIZE / 2;
+        const distToPlayer = Math.hypot(coords.worldX - playerCenterX, coords.worldY - playerCenterY);
+        const sameTile = (this.localPlayer.gridX === coords.gridX && this.localPlayer.gridY === coords.gridY);
+
+        if (sameTile || distToPlayer < CONFIG.TILE_SIZE * 1.1) {
+          if (this.radialMenu) {
+            this.radialMenu.toggle(e.clientX, e.clientY);
+          }
+          return;
+        }
+      }
 
       // 1. Toque em Monstro Vivo: Trava de Mira e Ataque Imediato por Toque!
       let clickedRat = null;
