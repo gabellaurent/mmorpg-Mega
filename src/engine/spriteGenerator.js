@@ -37,6 +37,10 @@ class SpriteGenerator {
     this.cache['wall_wood'] = this.drawWallWoodTile(size);
     this.cache['wood_floor'] = this.drawWoodFloorTile(size);
     this.cache['house_door'] = this.drawHouseDoorTile(size);
+    this.cache['house_bed'] = this.drawHouseBedTile(size);
+    this.cache['house_table'] = this.drawHouseTableTile(size);
+    this.cache['house_fireplace'] = this.drawHouseFireplaceTile(size);
+    this.cache['house_chest'] = this.drawHouseChestTile(size);
 
     // 3. Monstro: Rat (Cave Rat)
     this.cache['rat'] = this.drawRatSprite(size);
@@ -719,6 +723,108 @@ class SpriteGenerator {
     ctx.fillRect(0, 0, 6, size);
     ctx.fillRect(size - 6, 0, 6, size);
     ctx.fillRect(0, 0, size, 6);
+
+    return canvas;
+  }
+
+  drawHouseBedTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const bg = this.drawWoodFloorTile(size);
+    ctx.drawImage(bg, 0, 0);
+
+    // Moldura da Cama de Madeira
+    ctx.fillStyle = '#5c3a21';
+    ctx.fillRect(4, 4, size - 8, size - 8);
+
+    // Colchão Macio com Lençol Vermelho
+    ctx.fillStyle = '#9b2c2c';
+    ctx.fillRect(6, 12, size - 12, size - 18);
+
+    // Travesseiro Branco
+    ctx.fillStyle = '#edf2f7';
+    ctx.fillRect(8, 6, size - 16, 8);
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(8, 12, size - 16, 2);
+
+    // Dobra do Lençol
+    ctx.fillStyle = '#e53e3e';
+    ctx.fillRect(6, 14, size - 12, 4);
+
+    return canvas;
+  }
+
+  drawHouseTableTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const bg = this.drawWoodFloorTile(size);
+    ctx.drawImage(bg, 0, 0);
+
+    // Tampo da Mesa de Madeira
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(6, 6, size - 12, size - 12);
+    ctx.fillStyle = '#975a16';
+    ctx.fillRect(8, 8, size - 16, size - 16);
+
+    // Pernas da Mesa
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(6, size - 8, 4, 4);
+    ctx.fillRect(size - 10, size - 8, 4, 4);
+
+    // Livro Aberto sobre a Mesa
+    ctx.fillStyle = '#3182ce';
+    ctx.fillRect(14, 16, 10, 8);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(16, 17, 6, 6);
+
+    // Vela Acesa
+    ctx.fillStyle = '#f6e05e';
+    ctx.fillRect(28, 14, 4, 8);
+    ctx.fillStyle = '#dd6b20';
+    ctx.fillRect(29, 10, 2, 4);
+
+    return canvas;
+  }
+
+  drawHouseFireplaceTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Estrutura de Pedra da Lareira
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(4, 4, size - 8, size - 8);
+
+    // Cavidade do Fogo
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(8, 14, size - 16, size - 14);
+
+    // Brasas Ardentes e Fogo
+    ctx.fillStyle = '#dd6b20';
+    ctx.fillRect(12, 22, size - 24, 12);
+    ctx.fillStyle = '#f6e05e';
+    ctx.fillRect(16, 18, size - 32, 12);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(20, 20, 8, 6);
+
+    return canvas;
+  }
+
+  drawHouseChestTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const bg = this.drawWoodFloorTile(size);
+    ctx.drawImage(bg, 0, 0);
+
+    // Corpo do Baú de Madeira
+    ctx.fillStyle = '#5c3a21';
+    ctx.fillRect(6, 10, size - 12, size - 16);
+    ctx.fillStyle = '#8c5c36';
+    ctx.fillRect(8, 12, size - 16, size - 20);
+
+    // Fivelas de Bronze/Ferro
+    ctx.fillStyle = '#d69e2e';
+    ctx.fillRect(6, 18, size - 12, 3);
+    ctx.fillRect(8, 10, 3, size - 16);
+    ctx.fillRect(size - 11, 10, 3, size - 16);
+    ctx.fillRect(size / 2 - 2, 17, 4, 5);
 
     return canvas;
   }

@@ -11,6 +11,11 @@ export class GameMap {
     if (mapId === 'map-2') {
       this.name = 'Floresta do Sul';
       this.generateForestMap();
+    } else if (mapId === 'map-house-1') {
+      this.name = 'Interior da Casinha';
+      this.width = 12;
+      this.height = 12;
+      this.generateHouseInteriorMap();
     } else {
       this.mapId = 'map-1';
       this.name = 'Vila Principal';
@@ -70,17 +75,11 @@ export class GameMap {
             isSolid = false;
             spriteKey = 'house_door';
           }
-          // Paredes Externas da Casa (Colisão Sólida)
-          else if (x === 22 || x === 26 || y === 4 || y === 8) {
+          // Paredes e Estrutura Externa da Casa (Construção Sólida por fora)
+          else {
             type = TILE_TYPES.WALL_WOOD;
             isSolid = true;
             spriteKey = 'wall_wood';
-          }
-          // Interior da Casa (Piso de Madeira Navegável)
-          else {
-            type = TILE_TYPES.WOOD_FLOOR;
-            isSolid = false;
-            spriteKey = 'wood_floor';
           }
         }
         // 5. Lago de Água (Grid 5..8 em X, 5..9 em Y)
@@ -187,15 +186,78 @@ export class GameMap {
     }
   }
 
+  // Gera o layout do Mapa: Interior da Casinha (12x12)
+  generateHouseInteriorMap() {
+    const { TILE_TYPES } = CONFIG;
+    this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        let type = TILE_TYPES.WOOD_FLOOR;
+        let isSolid = false;
+        let spriteKey = 'wood_floor';
+
+        // 1. Bordas do Mapa (Fora da Casa)
+        if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+        }
+        // 2. Paredes de Madeira da Casa
+        else if (y === 1 || x === 1 || x === 10 || (y === 10 && x !== 6)) {
+          type = TILE_TYPES.WALL_WOOD;
+          isSolid = true;
+          spriteKey = 'wall_wood';
+        }
+        // 3. Porta de Saída da Casa (Grid X: 6, Y: 11)
+        else if (x === 6 && y === 11) {
+          type = TILE_TYPES.HOUSE_DOOR;
+          isSolid = false;
+          spriteKey = 'house_door';
+        }
+        // 4. Móveis no Interior da Casa
+        else if (x === 6 && y === 2) {
+          type = TILE_TYPES.HOUSE_FIREPLACE;
+          isSolid = true;
+          spriteKey = 'house_fireplace';
+        }
+        else if (x === 3 && y === 3) {
+          type = TILE_TYPES.HOUSE_BED;
+          isSolid = true;
+          spriteKey = 'house_bed';
+        }
+        else if (x === 8 && y === 3) {
+          type = TILE_TYPES.HOUSE_TABLE;
+          isSolid = true;
+          spriteKey = 'house_table';
+        }
+        else if (x === 9 && y === 3) {
+          type = TILE_TYPES.HOUSE_CHEST;
+          isSolid = true;
+          spriteKey = 'house_chest';
+        }
+
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+      }
+    }
+  }
+
   // Retorna informações de transição de mapa se o tile for uma passagem
   getTransition(x, y) {
     if (this.mapId === 'map-1') {
       if ((x === 15 || x === 16) && y === 31) {
         return { targetMapId: 'map-2', targetX: 15, targetY: 1 };
       }
+      if (x === 24 && y === 8) {
+        return { targetMapId: 'map-house-1', targetX: 6, targetY: 10 };
+      }
     } else if (this.mapId === 'map-2') {
       if ((x === 15 || x === 16) && y === 0) {
         return { targetMapId: 'map-1', targetX: 15, targetY: 30 };
+      }
+    } else if (this.mapId === 'map-house-1') {
+      if (x === 6 && y === 11) {
+        return { targetMapId: 'map-1', targetX: 24, targetY: 9 };
       }
     }
     return null;

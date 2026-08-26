@@ -25,11 +25,15 @@ export const CONFIG = {
     GATE: 8,
     WALL_WOOD: 9,
     WOOD_FLOOR: 10,
-    HOUSE_DOOR: 11
+    HOUSE_DOOR: 11,
+    HOUSE_BED: 12,
+    HOUSE_TABLE: 13,
+    HOUSE_FIREPLACE: 14,
+    HOUSE_CHEST: 15
   },
 
   // Flags de Colisão por tipo de Tile
-  SOLID_TILES: [2, 3, 4, 8, 9], // TREE, ROCK, WATER, GATE, WALL_WOOD são sólidos
+  SOLID_TILES: [2, 3, 4, 8, 9, 12, 13, 14, 15], // TREE, ROCK, WATER, GATE, WALL_WOOD, BED, TABLE, FIREPLACE, CHEST são sólidos
 
   // Outfits de Personagens disponíveis
   CLASSES: [
