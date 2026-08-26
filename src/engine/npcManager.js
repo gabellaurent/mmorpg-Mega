@@ -87,15 +87,27 @@ export class NpcManager {
       }));
 
       this.addNpc(new Npc({
-        id: 'merchant_center',
-        name: 'Barnaby',
-        title: 'Mercador da Vila',
+        id: 'merchant_magic',
+        name: 'Mestre Elzar',
+        title: 'Alquimista & Mago',
         type: 'merchant',
-        gridX: 14,
-        gridY: 15,
-        direction: 'east',
-        badgeText: '💰 MERCADOR',
-        badgeColor: '#ecc94b'
+        gridX: 13,
+        gridY: 14,
+        direction: 'south',
+        badgeText: '🧪 POÇÕES & MAGIA',
+        badgeColor: '#9f7aea'
+      }));
+
+      this.addNpc(new Npc({
+        id: 'merchant_armorer',
+        name: 'Ferreiro Borin',
+        title: 'Mestre Armeiro',
+        type: 'merchant',
+        gridX: 18,
+        gridY: 14,
+        direction: 'south',
+        badgeText: '⚔️ ARMAS & ESCUDOS',
+        badgeColor: '#ed8936'
       }));
     }
   }

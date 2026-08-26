@@ -46,8 +46,12 @@ export const CONFIG = {
   ITEMS: {
     gold: { id: 'gold', name: 'Moedas de Ouro', description: 'Moeda de troca usada no reino.', stackable: true, type: 'currency', spriteKey: 'item_gold' },
     health_potion: { id: 'health_potion', name: 'Poção de Vida', description: 'Restaura +35 Pontos de Vida (HP).', stackable: true, type: 'consumable', healHp: 35, spriteKey: 'item_health_potion' },
+    mana_potion: { id: 'mana_potion', name: 'Elixir Mágico', description: 'Restaura +50 HP com energia arcana.', stackable: true, type: 'consumable', healHp: 50, spriteKey: 'item_health_potion' },
     cheese: { id: 'cheese', name: 'Fatia de Queijo', description: 'Restaura +15 Pontos de Vida (HP).', stackable: true, type: 'consumable', healHp: 15, spriteKey: 'item_cheese' },
-    rat_tail: { id: 'rat_tail', name: 'Rabo de Rato', description: 'Item troféu coletado de ratos.', stackable: true, type: 'material', spriteKey: 'item_rat_tail' }
+    rat_tail: { id: 'rat_tail', name: 'Rabo de Rato', description: 'Item troféu coletado de ratos.', stackable: true, type: 'material', spriteKey: 'item_rat_tail' },
+    steel_sword: { id: 'steel_sword', name: 'Espada de Aço', description: 'Lâmina afiada forjada em aço (+8 Ataque).', stackable: false, type: 'equipment', spriteKey: 'item_gold' },
+    bronze_shield: { id: 'bronze_shield', name: 'Escudo de Bronze', description: 'Escudo pesado de bronze (+5 Defesa).', stackable: false, type: 'equipment', spriteKey: 'item_gold' },
+    hunting_bow: { id: 'hunting_bow', name: 'Arco de Caça', description: 'Arco longo de carvalho para tiros à distância.', stackable: false, type: 'equipment', spriteKey: 'item_gold' }
   },
 
   // Tabela de Drops de Monstros

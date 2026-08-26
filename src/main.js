@@ -12,6 +12,7 @@ import { CONFIG } from './config.js';
 import { RadialMenu } from './ui/radialMenu.js';
 import { Pathfinder } from './engine/pathfinder.js';
 import { CorpseManager } from './engine/corpseManager.js';
+import { ShopUI } from './ui/shopUI.js';
 
 class GameEngine {
   constructor() {
@@ -101,6 +102,8 @@ class GameEngine {
       (slotIndex) => this.handleUseItem(slotIndex),
       (slotIndex) => this.handleDropItem(slotIndex)
     );
+
+    this.shopUI = new ShopUI(this.localPlayer, this.monsterManager, this.hud);
 
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
@@ -475,6 +478,16 @@ class GameEngine {
           this.radialMenu.toggle(e.clientX, e.clientY);
         }
         return;
+      }
+
+      // 0.5. Toque / Clique em NPC Comerciante (Abrir Loja de Poções/Armas)
+      if (this.npcManager && this.shopUI) {
+        const npc = this.npcManager.getNpcAt(coords.gridX, coords.gridY);
+        if (npc && (npc.type === 'merchant' || npc.id.startsWith('merchant_'))) {
+          npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
+          this.shopUI.openShop(npc.id);
+          return;
+        }
       }
 
       // 1. Toque em Monstro Vivo (Restrito ao Quadro Exato do GRID onde o Monstro está)!

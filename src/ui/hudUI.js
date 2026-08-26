@@ -373,59 +373,7 @@ export class HudUI {
   }
 
   addChatMessage(sender, text, isSystem = false) {
-    if (isSystem) {
-      this.showSystemBanner(text);
-    }
-  }
-
-  showSystemBanner(htmlText) {
-    let bannerContainer = document.getElementById('system-banner-container');
-    if (!bannerContainer) {
-      bannerContainer = document.createElement('div');
-      bannerContainer.id = 'system-banner-container';
-      bannerContainer.style.cssText = `
-        position: fixed;
-        top: 15px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        z-index: 9999;
-        pointer-events: none;
-      `;
-      document.body.appendChild(bannerContainer);
-    }
-
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid #d69e2e;
-      color: #edf2f7;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 12.5px;
-      font-family: sans-serif;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      opacity: 0;
-      transform: translateY(-8px);
-      transition: all 0.25s ease;
-    `;
-    toast.innerHTML = htmlText;
-
-    bannerContainer.appendChild(toast);
-
-    requestAnimationFrame(() => {
-      toast.style.opacity = '1';
-      toast.style.transform = 'translateY(0)';
-    });
-
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(-8px)';
-      setTimeout(() => toast.remove(), 250);
-    }, 3500);
+    // Alertas flutuantes no topo desativados
   }
 
   updateOnlineList(remotePlayersMap) {
