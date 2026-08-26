@@ -154,6 +154,10 @@ export class NetworkManager {
       if (this.onMonsterMove) {
         this.onMonsterMove(payload);
       }
+    } else if (type === 'player_damage') {
+      if (this.onPlayerDamage) {
+        this.onPlayerDamage(payload);
+      }
     }
   }
 
@@ -202,16 +206,27 @@ export class NetworkManager {
   }
 
   // Envia evento de dano no Monstro em Tempo Real
-  sendMonsterHit(ratId, damage, attackerName) {
+  sendMonsterHit(ratId, damage, currentHp, attackerName) {
     const payload = {
       attackerId: this.localPlayer.id,
       attackerName: attackerName,
       ratId: ratId,
       damage: damage,
+      currentHp: currentHp,
       timestamp: Date.now()
     };
 
     this.sendBroadcast('monster_hit', payload);
+  }
+
+  // Envia evento de dano sofrido pelo Jogador em Tempo Real
+  sendPlayerDamage(damage, currentHp) {
+    this.sendBroadcast('player_damage', {
+      playerId: this.localPlayer.id,
+      damage: damage,
+      currentHp: currentHp,
+      timestamp: Date.now()
+    });
   }
 
   // Envia evento de respawn do Monstro em Tempo Real

@@ -82,6 +82,7 @@ class GameEngine {
     );
     this.network.onCorpseSpawn = (corpseData) => this.corpseManager.spawnCorpse(corpseData);
     this.network.onMonsterMove = (payload) => this.monsterManager.handleRemoteMonsterMove(payload);
+    this.network.onPlayerDamage = (payload) => this.handleRemotePlayerDamage(payload);
     this.currentMapId = 'map-1';
     this.network.connect('map-1');
     this.hydrateWorldState('map-1');
@@ -139,7 +140,7 @@ class GameEngine {
         const died = targetRat.takeDamage(dmg);
 
         this.monsterManager.addFloatingText(`-${dmg}`, targetRat.gridX, targetRat.gridY, '#f56565');
-        this.network.sendMonsterHit(targetRat.id, dmg, this.localPlayer.name);
+        this.network.sendMonsterHit(targetRat.id, dmg, targetRat.hp, this.localPlayer.name);
 
         if (died) {
           this.lockedTargetId = null;
@@ -242,11 +243,32 @@ class GameEngine {
     const rat = this.monsterManager.monsters.get(payload.ratId);
     if (!rat || rat.isDead) return;
 
-    const died = rat.takeDamage(payload.damage);
+    if (payload.currentHp !== undefined) {
+      rat.hp = payload.currentHp;
+      if (rat.hp <= 0) rat.isDead = true;
+    } else {
+      rat.takeDamage(payload.damage);
+    }
+
     this.monsterManager.addFloatingText(`-${payload.damage}`, rat.gridX, rat.gridY, '#f56565');
 
-    if (died && this.hud) {
+    if (rat.isDead && this.hud) {
       this.hud.addChatMessage('Sistema', `⚔️ <strong>${payload.attackerName}</strong> derrotou o <strong>${rat.name}</strong>!`, true);
+    }
+  }
+
+  handleRemotePlayerDamage(payload) {
+    if (payload.playerId === this.localPlayer.id) return;
+    const rPlayer = this.remotePlayers.get(payload.playerId);
+    if (rPlayer) {
+      if (payload.currentHp !== undefined) {
+        rPlayer.hp = payload.currentHp;
+      } else {
+        rPlayer.hp = Math.max(0, rPlayer.hp - payload.damage);
+      }
+      if (this.monsterManager) {
+        this.monsterManager.addFloatingText(`-${payload.damage}`, rPlayer.gridX, rPlayer.gridY, '#f56565');
+      }
     }
   }
 
@@ -701,6 +723,9 @@ class GameEngine {
         (gx, gy, mId) => this.isTileOccupiedByEntity(gx, gy, mId),
         (damageTaken) => {
           this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
+          if (this.network) {
+            this.network.sendPlayerDamage(damageTaken, this.localPlayer.hp);
+          }
           this.hud.updatePlayerStats();
           if (this.localPlayer.hp <= 0) {
             if (this.corpseManager) {
