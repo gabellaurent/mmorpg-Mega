@@ -96,6 +96,33 @@ export class MonsterManager {
     });
   }
 
+  async loadFromDatabase(network, mapId = 'map-1') {
+    if (!network) return;
+    const dbMonsters = await network.loadMonstersFromDatabase(mapId);
+    const now = Date.now();
+
+    dbMonsters.forEach(row => {
+      const monster = this.monsters.get(row.id);
+      if (monster && row.is_dead) {
+        const respawnTime = row.respawn_time ? new Date(row.respawn_time).getTime() : 0;
+        if (now < respawnTime) {
+          monster.isDead = true;
+          monster.hp = 0;
+          const remainingMs = respawnTime - now;
+          setTimeout(() => {
+            monster.respawn();
+            if (network) {
+              network.saveMonsterStateToDatabase(monster.id, false, 0, mapId);
+            }
+          }, remainingMs);
+        } else {
+          monster.respawn();
+          network.saveMonsterStateToDatabase(monster.id, false, 0, mapId);
+        }
+      }
+    });
+  }
+
   addFloatingText(text, gridX, gridY, color = '#f56565') {
     this.floatingTexts.push({
       text,

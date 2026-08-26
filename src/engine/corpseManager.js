@@ -43,6 +43,19 @@ export class CorpseManager {
     return corpse;
   }
 
+  async loadFromDatabase(network, mapId = 'map-1') {
+    if (!network) return;
+    const dbCorpses = await network.loadCorpsesFromDatabase(mapId);
+    dbCorpses.forEach(data => {
+      if (!this.corpses.has(data.id)) {
+        const corpse = new Corpse(data);
+        if (corpse.updateStage(Date.now()) < 3) {
+          this.corpses.set(corpse.id, corpse);
+        }
+      }
+    });
+  }
+
   getCorpseAt(gridX, gridY) {
     for (const corpse of this.corpses.values()) {
       if (corpse.gridX === gridX && corpse.gridY === gridY && corpse.stage < 3) {

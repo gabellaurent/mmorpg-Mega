@@ -81,7 +81,9 @@ class GameEngine {
       (pickupPayload) => this.itemManager.removeGroundItem(pickupPayload.id)
     );
     this.network.onCorpseSpawn = (corpseData) => this.corpseManager.spawnCorpse(corpseData);
+    this.currentMapId = 'map-1';
     this.network.connect('map-1');
+    this.hydrateWorldState('map-1');
 
     this.hud = new HudUI(
       this.localPlayer,
@@ -101,6 +103,15 @@ class GameEngine {
     requestAnimationFrame((now) => this.gameLoop(now));
 
     this.hud.addChatMessage('Sistema', '🌟 <strong>Zero-HUD Ativo:</strong> Tela 100% limpa! Pressione <strong>[I]</strong> (Bolsa), <strong>[M]</strong> (Mapa), <strong>[C]</strong> (Status), <strong>[Tab]</strong> ou Toque Longo no Celular para a Roda Radial!', true);
+  }
+
+  async hydrateWorldState(mapId = 'map-1') {
+    if (this.corpseManager && this.network) {
+      await this.corpseManager.loadFromDatabase(this.network, mapId);
+    }
+    if (this.monsterManager && this.network) {
+      await this.monsterManager.loadFromDatabase(this.network, mapId);
+    }
   }
 
   performAttack(explicitTarget = null) {
@@ -159,6 +170,9 @@ class GameEngine {
           const spawnedCorpse = this.corpseManager.spawnCorpse(corpseData);
           if (this.network) {
             this.network.sendCorpseSpawn(spawnedCorpse);
+            this.network.saveCorpseToDatabase(spawnedCorpse, this.currentMapId || 'map-1');
+            const respawnTime = Date.now() + 8000;
+            this.network.saveMonsterStateToDatabase(targetRat.id, true, respawnTime, this.currentMapId || 'map-1');
           }
 
           this.hud.addChatMessage('Sistema', `💀 <strong>${targetRat.name}</strong> morreu! Clique no corpo para saquear os itens.`, true);
@@ -172,7 +186,10 @@ class GameEngine {
           const ratId = targetRat.id;
           setTimeout(() => {
             targetRat.respawn();
-            this.network.sendMonsterRespawn(ratId);
+            if (this.network) {
+              this.network.sendMonsterRespawn(ratId);
+              this.network.saveMonsterStateToDatabase(ratId, false, 0, this.currentMapId || 'map-1');
+            }
             this.hud.addChatMessage('Sistema', `⚠️ Um <strong>${targetRat.name}</strong> renasceu nos cantos do mapa!`, true);
           }, 8000);
         }
@@ -427,6 +444,9 @@ class GameEngine {
           if (dist <= 1.5) {
             const result = this.corpseManager.lootCorpse(corpse.id, this.localPlayer);
             if (result.success) {
+              if (this.network) {
+                this.network.updateCorpseInDatabase(corpse.id, corpse.loot);
+              }
               const lootedNames = result.lootedItems.map(i => i.itemId === 'gold' ? `+${i.quantity} Ouro` : (CONFIG.ITEMS[i.itemId]?.name || i.itemId)).join(', ');
               this.monsterManager.addFloatingText(`+${lootedNames}`, corpse.gridX, corpse.gridY, '#f6e05e');
               this.hud.addChatMessage('Sistema', `🎒 Você abriu o corpo de <strong>${corpse.ownerName}</strong> e encontrou: <strong>${lootedNames}</strong>!`, true);
@@ -535,6 +555,8 @@ class GameEngine {
     this.monsterManager = new MonsterManager(this.gameMap);
     this.npcManager = new NpcManager(this.gameMap);
     this.itemManager = new ItemManager(this.gameMap);
+    this.corpseManager = new CorpseManager(this.gameMap);
+    this.currentMapId = targetMapId;
 
     this.localPlayer.gridX = targetX;
     this.localPlayer.gridY = targetY;
@@ -550,6 +572,7 @@ class GameEngine {
     if (this.network) {
       this.network.connect(targetMapId);
     }
+    this.hydrateWorldState(targetMapId);
 
     if (this.hud) {
       this.hud.updatePlayerStats();
@@ -689,6 +712,7 @@ class GameEngine {
               });
               if (this.network) {
                 this.network.sendCorpseSpawn(playerCorpse);
+                this.network.saveCorpseToDatabase(playerCorpse, this.currentMapId || 'map-1');
               }
             }
 

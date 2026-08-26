@@ -298,4 +298,104 @@ export class NetworkManager {
       console.error('Erro ao salvar no banco:', err);
     }
   }
+
+  // Salvar corpo no banco de dados Supabase
+  async saveCorpseToDatabase(corpse, mapId = 'map-1') {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      await supabase.from('world_corpses').upsert({
+        id: corpse.id,
+        map_id: mapId,
+        owner_name: corpse.ownerName,
+        entity_type: corpse.entityType,
+        grid_x: corpse.gridX,
+        grid_y: corpse.gridY,
+        loot: corpse.loot || [],
+        created_at: new Date(corpse.createdAt).toISOString()
+      });
+    } catch (err) {
+      console.error('Erro ao salvar corpo no banco:', err);
+    }
+  }
+
+  // Atualizar/Remover corpo no banco de dados
+  async updateCorpseInDatabase(corpseId, lootRemaining) {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      if (lootRemaining.length === 0) {
+        await supabase.from('world_corpses').delete().eq('id', corpseId);
+      } else {
+        await supabase.from('world_corpses').update({ loot: lootRemaining }).eq('id', corpseId);
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar corpo no banco:', err);
+    }
+  }
+
+  // Carregar corpos ativos (< 5 minutos) do mapa
+  async loadCorpsesFromDatabase(mapId = 'map-1') {
+    if (!isSupabaseConfigured || !supabase) return [];
+    try {
+      const fiveMinutesAgo = new Date(Date.now() - 300000).toISOString();
+      const { data, error } = await supabase
+        .from('world_corpses')
+        .select('*')
+        .eq('map_id', mapId)
+        .gte('created_at', fiveMinutesAgo);
+
+      if (error) {
+        console.error('Erro ao carregar corpos:', error);
+        return [];
+      }
+
+      return (data || []).map(row => ({
+        id: row.id,
+        ownerName: row.owner_name,
+        entityType: row.entity_type,
+        gridX: row.grid_x,
+        gridY: row.grid_y,
+        loot: row.loot || [],
+        createdAt: new Date(row.created_at).getTime()
+      }));
+    } catch (err) {
+      console.error('Erro ao carregar corpos do banco:', err);
+      return [];
+    }
+  }
+
+  // Persistir estado de vida/morte de monstro no banco
+  async saveMonsterStateToDatabase(ratId, isDead, respawnTime, mapId = 'map-1') {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      await supabase.from('world_monsters').upsert({
+        id: ratId,
+        map_id: mapId,
+        is_dead: isDead,
+        death_time: isDead ? new Date().toISOString() : null,
+        respawn_time: isDead ? new Date(respawnTime).toISOString() : null
+      });
+    } catch (err) {
+      console.error('Erro ao salvar estado de monstro no banco:', err);
+    }
+  }
+
+  // Carregar estados dos monstros do banco
+  async loadMonstersFromDatabase(mapId = 'map-1') {
+    if (!isSupabaseConfigured || !supabase) return [];
+    try {
+      const { data, error } = await supabase
+        .from('world_monsters')
+        .select('*')
+        .eq('map_id', mapId);
+
+      if (error) {
+        console.error('Erro ao carregar estado de monstros:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.error('Erro ao carregar monstros do banco:', err);
+      return [];
+    }
+  }
 }
