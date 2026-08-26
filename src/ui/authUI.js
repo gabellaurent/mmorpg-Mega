@@ -78,6 +78,8 @@ export class AuthUI {
             <button id="btn-login-account" class="btn-primary" style="width: 100%;">CARREGAR PERSONAGEM</button>
           </div>
         </div>
+
+        <a href="./sprite-editor.html" style="display: block; text-align: center; text-decoration: none; margin-top: 16px; padding: 10px; font-weight: bold; background-color: #1a202c; color: #ecc94b; border-radius: 6px; border: 1px solid #d69e2e;">🎨 Abrir Editor de Sprites & Pixel Art</a>
       </div>
     `;
 

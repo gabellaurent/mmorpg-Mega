@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🎨 Editor de Sprites & Pixel Art - MMORPG 2D</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Folha de Estilos CSS -->
+  <link rel="stylesheet" href="./style.css" />
+
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #f0f6fc;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .editor-header {
+      text-align: center;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #21262d;
+      padding-bottom: 15px;
+    }
+
+    .editor-header h1 {
+      font-family: 'Cinzel', serif;
+      color: #ecc94b;
+      font-size: 1.8rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-back {
+      background-color: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      padding: 8px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+      background-color: #30363d;
+      color: #fff;
+    }
+
+    .editor-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .editor-card {
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    .toolbar-section {
+      flex: 1;
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tool-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tool-group label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b949e;
+    }
+
+    select, input[type="text"] {
+      background-color: #0d1117;
+      border: 1px solid #30363d;
+      color: #f0f6fc;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .tool-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .btn-tool {
+      background-color: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-tool:hover {
+      background-color: #30363d;
+      color: #fff;
+    }
+
+    .btn-tool.active {
+      background-color: #238636;
+      border-color: #2ea043;
+      color: #fff;
+    }
+
+    .color-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: none;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: 2px solid #30363d;
+      border-radius: 8px;
+    }
+
+    .palette-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.1s;
+    }
+
+    .swatch:hover {
+      transform: scale(1.2);
+      border-color: #fff;
+    }
+
+    .canvas-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #pixel-canvas {
+      background-color: #1a1a1a;
+      border: 2px solid #30363d;
+      border-radius: 6px;
+      cursor: crosshair;
+      image-rendering: pixelated;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    }
+
+    .preview-section {
+      flex: 1;
+      min-width: 250px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .preview-box {
+      background-color: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .preview-canvas-wrapper {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .preview-canvas {
+      image-rendering: pixelated;
+      border: 1px solid #30363d;
+      background-color: #1a1a1a;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn-action {
+      background-color: #238636;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-action:hover {
+      background-color: #2ea043;
+    }
+
+    .btn-secondary {
+      background-color: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+    }
+
+    .btn-secondary:hover {
+      background-color: #30363d;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="editor-header">
+    <h1>🎨 Editor de Sprites & Pixel Art</h1>
+    <a href="./index.html" class="btn-back">⬅️ Voltar ao Jogo</a>
+  </header>
+
+  <main class="editor-container">
+
+    <!-- Painel de Ferramentas e Presets -->
+    <section class="editor-card toolbar-section">
+      <div class="tool-group">
+        <label for="sprite-select">📦 Selecionar Sprite do Jogo:</label>
+        <select id="sprite-select">
+          <optgroup label="🌱 Terrenos & Grama">
+            <option value="grass_0">Grama Padrão (grass_0)</option>
+            <option value="grass_dry">Grama Seca/Dourada (grass_dry)</option>
+            <option value="grass_dark">Grama Escura (grass_dark)</option>
+            <option value="grass_moss">Grama Musgosa (grass_moss)</option>
+            <option value="cobble">Paralelepípedo (cobble)</option>
+            <option value="dirt">Trilha de Terra (dirt)</option>
+            <option value="cave_floor">Chão de Caverna (cave_floor)</option>
+            <option value="magma_floor">Chão Vulcânico (magma_floor)</option>
+          </optgroup>
+          <optgroup label="🌸 Plantas, Flores & Árvores">
+            <option value="flowers_red">Flores Vermelhas</option>
+            <option value="flowers_blue">Flores Azuis</option>
+            <option value="flowers_purple">Flores Roxas</option>
+            <option value="bush_berry">Arbusto com Amoras</option>
+            <option value="bush_large">Arbusto Grande Folhado</option>
+            <option value="tall_grass">Grama Alta em Alto Relevo</option>
+            <option value="tree_trunk">Tronco de Árvore Tradicional</option>
+            <option value="tree_canopy">Copa de Árvore Tradicional</option>
+            <option value="tree_pine_canopy">Copa de Pinheiro Conífera</option>
+          </optgroup>
+          <optgroup label="🐀 Monstros & NPCs">
+            <option value="rat">Rato (Cave Rat)</option>
+            <option value="rotworm">Rotworm (Larva de Caverna)</option>
+            <option value="demon_boss">🔥 Guardião de Magma (Boss)</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="tool-group">
+        <label>🛠️ Ferramenta:</label>
+        <div class="tool-buttons">
+          <button id="tool-pencil" class="btn-tool active">✏️ Lápis</button>
+          <button id="tool-bucket" class="btn-tool">🪣 Balde</button>
+          <button id="tool-eraser" class="btn-tool">🧽 Borracha</button>
+          <button id="tool-picker" class="btn-tool">🧪 Conta-gotas</button>
+        </div>
+      </div>
+
+      <div class="tool-group">
+        <label>🎨 Seletor de Cor:</label>
+        <div class="color-picker-wrapper">
+          <input type="color" id="color-input" value="#48bb78">
+          <span id="color-hex" style="font-family: monospace; font-weight: bold;">#48bb78</span>
+        </div>
+      </div>
+
+      <div class="tool-group">
+        <label>🎨 Paleta Rápida MMORPG:</label>
+        <div class="palette-swatches" id="palette">
+          <!-- Swatches de cores inseridas dinamicamente via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Canvas Principal de Edição de Pixel Art -->
+    <section class="editor-card canvas-section">
+      <canvas id="pixel-canvas" width="384" height="384"></canvas>
+      <div style="font-size: 0.85rem; color: #8b949e;">Grid: <span id="grid-dim">32x32</span> pixels</div>
+    </section>
+
+    <!-- Painel de Pré-visualização e Exportação -->
+    <section class="editor-card preview-section">
+      <div class="preview-box">
+        <label style="font-size: 0.85rem; font-weight: bold; color: #8b949e;">👁️ Pré-Visualização no Tamanho do Jogo:</label>
+        <div class="preview-canvas-wrapper">
+          <div style="text-align: center;">
+            <canvas id="preview-1x" class="preview-canvas" width="48" height="48"></canvas>
+            <div style="font-size: 0.75rem; color: #8b949e; margin-top: 4px;">Escala 1x (48px)</div>
+          </div>
+          <div style="text-align: center;">
+            <canvas id="preview-2x" class="preview-canvas" width="96" height="96"></canvas>
+            <div style="font-size: 0.75rem; color: #8b949e; margin-top: 4px;">Escala 2x (96px)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="btn-download" class="btn-action">💾 Baixar Imagem PNG</button>
+        <button id="btn-copy-code" class="btn-action btn-secondary">📋 Copiar Código DataURI</button>
+        <button id="btn-clear" class="btn-action btn-secondary" style="color: #f85149; border-color: #f85149;">🧹 Limpar Tela</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="./src/editor/spriteEditorApp.js"></script>
+</body>
+</html>
