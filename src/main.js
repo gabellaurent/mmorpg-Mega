@@ -429,10 +429,18 @@ class GameEngine {
 
       if (clickedRat) {
         if (touchHoldTimer) clearTimeout(touchHoldTimer);
-        this.lockedTargetId = clickedRat.id;
         if (this.localPlayer) this.localPlayer.clearPath();
-        const dist = Math.max(Math.abs(clickedRat.gridX - this.localPlayer.gridX), Math.abs(clickedRat.gridY - this.localPlayer.gridY));
-        this.hud.addChatMessage('Sistema', `🎯 <strong>MIRA TRAVADA:</strong> <strong>${clickedRat.name}</strong> selecionado!`, true);
+
+        if (this.lockedTargetId === clickedRat.id) {
+          // Clique no monstro já selecionado -> Destrava a mira e cancela o ataque!
+          this.lockedTargetId = null;
+          this.hud.addChatMessage('Sistema', `🛑 Mira destravada de <strong>${clickedRat.name}</strong>.`, true);
+        } else {
+          // Clique em novo monstro -> Trava a mira e inicia ataque!
+          this.lockedTargetId = clickedRat.id;
+          const dist = Math.max(Math.abs(clickedRat.gridX - this.localPlayer.gridX), Math.abs(clickedRat.gridY - this.localPlayer.gridY));
+          this.hud.addChatMessage('Sistema', `🎯 <strong>MIRA TRAVADA:</strong> <strong>${clickedRat.name}</strong> selecionado!`, true);
+        }
         return;
       }
 
