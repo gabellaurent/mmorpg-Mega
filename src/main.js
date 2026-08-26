@@ -176,20 +176,32 @@ class GameEngine {
 
         if (died) {
           this.lockedTargetId = null;
-          const gainedXp = 25;
+          const gainedXp = targetRat.xpReward || 25;
           const leveledUp = this.localPlayer.addXp(gainedXp);
           this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
 
-          // Gerar loot do monstro para ser armazenado DENTRO do corpo!
-          const monsterLoot = [
-            { itemId: 'gold', quantity: Math.floor(Math.random() * 8) + 3 }
-          ];
-
-          if (Math.random() < 0.45) {
-            monsterLoot.push({ itemId: 'health_potion', quantity: 1, itemConfig: CONFIG.ITEMS['health_potion'] });
-          }
-          if (Math.random() < 0.25) {
-            monsterLoot.push({ itemId: 'rat_tail', quantity: 1, itemConfig: CONFIG.ITEMS['rat_tail'] });
+          // Gerar loot do monstro de acordo com o tipo
+          const monsterLoot = [];
+          if (targetRat.spriteKey === 'demon_boss') {
+            monsterLoot.push({ itemId: 'gold', quantity: Math.floor(Math.random() * 80) + 50 });
+            monsterLoot.push({ itemId: 'mana_potion', quantity: 3, itemConfig: CONFIG.ITEMS['mana_potion'] });
+            monsterLoot.push({ itemId: 'steel_sword', quantity: 1, itemConfig: CONFIG.ITEMS['steel_sword'] });
+          } else if (targetRat.spriteKey === 'rotworm') {
+            monsterLoot.push({ itemId: 'gold', quantity: Math.floor(Math.random() * 20) + 8 });
+            if (Math.random() < 0.6) {
+              monsterLoot.push({ itemId: 'cheese', quantity: 2, itemConfig: CONFIG.ITEMS['cheese'] });
+            }
+            if (Math.random() < 0.4) {
+              monsterLoot.push({ itemId: 'health_potion', quantity: 1, itemConfig: CONFIG.ITEMS['health_potion'] });
+            }
+          } else {
+            monsterLoot.push({ itemId: 'gold', quantity: Math.floor(Math.random() * 8) + 3 });
+            if (Math.random() < 0.45) {
+              monsterLoot.push({ itemId: 'health_potion', quantity: 1, itemConfig: CONFIG.ITEMS['health_potion'] });
+            }
+            if (Math.random() < 0.25) {
+              monsterLoot.push({ itemId: 'rat_tail', quantity: 1, itemConfig: CONFIG.ITEMS['rat_tail'] });
+            }
           }
 
           const corpseData = {
@@ -754,7 +766,13 @@ class GameEngine {
     if (this.hud) {
       this.hud.updatePlayerStats();
       if (targetMapId === 'map-2') {
-        this.hud.addChatMessage('Sistema', '🌲 Você entrou na <strong>Floresta do Sul</strong>! Cuidado com os ratos selvagens pela vegetação!', true);
+        this.hud.addChatMessage('Sistema', '🌲 Você entrou na <strong>Floresta do Sul</strong>! Há um buraco de caverna misterioso por aqui...', true);
+      } else if (targetMapId === 'map-cave-1') {
+        this.hud.addChatMessage('Sistema', '🕳️ Você desceu para a <strong>Caverna dos Rotworms (Sub-1)</strong>! Cuidado com as larvas gigantes subterrâneas!', true);
+      } else if (targetMapId === 'map-cave-2') {
+        this.hud.addChatMessage('Sistema', '🔥 Você desceu para o <strong>Abismo Vulcânico (Sub-2)</strong>! Alerta: O imponente Guardião de Magma habita este abismo!', true);
+      } else if (targetMapId === 'map-house-1') {
+        this.hud.addChatMessage('Sistema', '🏠 Você entrou na <strong>Casinha da Vila</strong>!', true);
       } else {
         this.hud.addChatMessage('Sistema', '🏰 Você retornou à <strong>Vila Principal</strong>!', true);
       }

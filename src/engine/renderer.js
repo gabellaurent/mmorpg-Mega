@@ -363,7 +363,7 @@ export class Renderer {
       ctx.restore();
     }
 
-    const ratImg = spriteGen.get('rat');
+    const ratImg = spriteGen.get(rat.spriteKey || 'rat');
     ctx.drawImage(ratImg, rx, ry, tileSize, tileSize);
 
     const cx = rat.renderX + tileSize / 2;

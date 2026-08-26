@@ -11,6 +11,16 @@ export class GameMap {
     if (mapId === 'map-2') {
       this.name = 'Floresta do Sul';
       this.generateForestMap();
+    } else if (mapId === 'map-cave-1') {
+      this.name = 'Caverna dos Rotworms (Sub-1)';
+      this.width = 24;
+      this.height = 24;
+      this.generateCaveSublevel1();
+    } else if (mapId === 'map-cave-2') {
+      this.name = 'Abismo Vulcânico (Sub-2)';
+      this.width = 24;
+      this.height = 24;
+      this.generateCaveSublevel2();
     } else if (mapId === 'map-house-1') {
       this.name = 'Interior da Casinha';
       this.width = 12;
@@ -192,6 +202,12 @@ export class GameMap {
           spriteKey = 'tree_pine_trunk';
           canopyKey = 'tree_pine_canopy';
         }
+        // 3.5. Entrada / Buraco da Caverna dos Rotworms (Grid X: 10, Y: 10)
+        else if (x === 10 && y === 10) {
+          type = TILE_TYPES.CAVE_HOLE;
+          isSolid = false;
+          spriteKey = 'cave_hole';
+        }
         // 4. Aglomerados de Árvores Selvagens na Floresta
         else if (x >= 3 && x <= 7 && y >= 3 && y <= 6) {
           type = TILE_TYPES.TREE;
@@ -309,6 +325,70 @@ export class GameMap {
     }
   }
 
+  // Layout da Caverna dos Rotworms (Sub-nível 1 - 24x24)
+  generateCaveSublevel1() {
+    const { TILE_TYPES } = CONFIG;
+    this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        let type = TILE_TYPES.CAVE_FLOOR;
+        let isSolid = false;
+        let spriteKey = 'cave_floor';
+
+        // Escada para voltar ao Mapa 2 (Grid X: 4, Y: 4)
+        if (x === 4 && y === 4) {
+          type = TILE_TYPES.CAVE_STAIRS;
+          isSolid = false;
+          spriteKey = 'cave_stairs';
+        }
+        // Buraco/Alçapão para descer ao Sub-nível 2 (Grid X: 18, Y: 18)
+        else if (x === 18 && y === 18) {
+          type = TILE_TYPES.CAVE_HOLE;
+          isSolid = false;
+          spriteKey = 'cave_hole';
+        }
+        // Paredes Rochosas da Caverna
+        else if (x === 0 || y === 0 || x === 23 || y === 23 || (x >= 8 && x <= 14 && y === 8) || (x === 8 && y >= 9 && y <= 14)) {
+          type = TILE_TYPES.CAVE_WALL;
+          isSolid = true;
+          spriteKey = 'cave_wall';
+        }
+
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+      }
+    }
+  }
+
+  // Layout do Abismo Vulcânico (Sub-nível 2 - 24x24)
+  generateCaveSublevel2() {
+    const { TILE_TYPES } = CONFIG;
+    this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        let type = TILE_TYPES.MAGMA_FLOOR;
+        let isSolid = false;
+        let spriteKey = 'magma_floor';
+
+        // Escada de Pedra para subir ao Sub-nível 1 (Grid X: 4, Y: 4)
+        if (x === 4 && y === 4) {
+          type = TILE_TYPES.CAVE_STAIRS;
+          isSolid = false;
+          spriteKey = 'cave_stairs';
+        }
+        // Paredes Vulcânicas de Obsidiana
+        else if (x === 0 || y === 0 || x === 23 || y === 23 || (x >= 10 && x <= 14 && y >= 10 && y <= 14 && !(x === 12 && y === 12))) {
+          type = TILE_TYPES.OBSIDIAN_WALL;
+          isSolid = true;
+          spriteKey = 'obsidian_wall';
+        }
+
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+      }
+    }
+  }
+
   // Retorna informações de transição de mapa se o tile for uma passagem
   getTransition(x, y) {
     if (this.mapId === 'map-1') {
@@ -321,6 +401,20 @@ export class GameMap {
     } else if (this.mapId === 'map-2') {
       if ((x === 15 || x === 16) && y === 0) {
         return { targetMapId: 'map-1', targetX: 15, targetY: 30 };
+      }
+      if (x === 10 && y === 10) {
+        return { targetMapId: 'map-cave-1', targetX: 4, targetY: 4 };
+      }
+    } else if (this.mapId === 'map-cave-1') {
+      if (x === 4 && y === 4) {
+        return { targetMapId: 'map-2', targetX: 10, targetY: 11 };
+      }
+      if (x === 18 && y === 18) {
+        return { targetMapId: 'map-cave-2', targetX: 4, targetY: 4 };
+      }
+    } else if (this.mapId === 'map-cave-2') {
+      if (x === 4 && y === 4) {
+        return { targetMapId: 'map-cave-1', targetX: 18, targetY: 17 };
       }
     } else if (this.mapId === 'map-house-1') {
       if (x === 6 && y === 10) {

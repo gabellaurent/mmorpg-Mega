@@ -29,11 +29,17 @@ export const CONFIG = {
     HOUSE_BED: 12,
     HOUSE_TABLE: 13,
     HOUSE_FIREPLACE: 14,
-    HOUSE_CHEST: 15
+    HOUSE_CHEST: 15,
+    CAVE_FLOOR: 17,
+    CAVE_WALL: 18,
+    CAVE_HOLE: 19,
+    CAVE_STAIRS: 20,
+    MAGMA_FLOOR: 21,
+    OBSIDIAN_WALL: 22
   },
 
   // Flags de Colisão por tipo de Tile
-  SOLID_TILES: [2, 3, 4, 8, 9, 12, 13, 14, 15], // TREE, ROCK, WATER, GATE, WALL_WOOD, BED, TABLE, FIREPLACE, CHEST são sólidos
+  SOLID_TILES: [2, 3, 4, 8, 9, 12, 13, 14, 15, 18, 22], // TREE, ROCK, WATER, GATE, WALL_WOOD, BED, TABLE, FIREPLACE, CHEST são sólidos
 
   // Outfits de Personagens disponíveis
   CLASSES: [

@@ -2,7 +2,7 @@
 import { CONFIG } from '../config.js';
 
 export class Monster {
-  constructor(id, name, spawnX, spawnY) {
+  constructor(id, name, spawnX, spawnY, options = {}) {
     this.id = id;
     this.name = name;
     this.spawnX = spawnX;
@@ -14,9 +14,14 @@ export class Monster {
     this.renderX = spawnX * CONFIG.TILE_SIZE;
     this.renderY = spawnY * CONFIG.TILE_SIZE;
 
-    this.level = 2;
-    this.hp = 30;
-    this.maxHp = 30;
+    this.level = options.level || 2;
+    this.hp = options.hp || 30;
+    this.maxHp = options.hp || 30;
+    this.minDmg = options.minDmg || 3;
+    this.maxDmg = options.maxDmg || 7;
+    this.xpReward = options.xpReward || 25;
+    this.spriteKey = options.spriteKey || 'rat';
+
     this.isDead = false;
     this.isAggro = false;
     this.targetPlayerId = null;
@@ -77,28 +82,43 @@ export class MonsterManager {
     if (mapId === 'map-2') {
       // 9 Ratos Selvagens Espalhados pela Floresta do Sul
       spawns = [
-        { id: 'f_rat_1', name: 'Rato Selvagem', x: 6, y: 8 },
-        { id: 'f_rat_2', name: 'Rato Selvagem', x: 25, y: 8 },
-        { id: 'f_rat_3', name: 'Rato Selvagem', x: 10, y: 14 },
-        { id: 'f_rat_4', name: 'Rato Selvagem', x: 21, y: 14 },
-        { id: 'f_rat_5', name: 'Rato da Floresta', x: 8, y: 22 },
-        { id: 'f_rat_6', name: 'Rato da Floresta', x: 24, y: 22 },
-        { id: 'f_rat_7', name: 'Rato da Floresta', x: 16, y: 26 },
-        { id: 'f_rat_8', name: 'Rato da Floresta', x: 14, y: 8 },
-        { id: 'f_rat_9', name: 'Rato da Floresta', x: 27, y: 16 }
+        { id: 'f_rat_1', name: 'Rato Selvagem', x: 6, y: 8, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
+        { id: 'f_rat_2', name: 'Rato Selvagem', x: 25, y: 8, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
+        { id: 'f_rat_3', name: 'Rato Selvagem', x: 10, y: 14, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
+        { id: 'f_rat_4', name: 'Rato Selvagem', x: 21, y: 14, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
+        { id: 'f_rat_5', name: 'Rato da Floresta', x: 8, y: 22, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
+        { id: 'f_rat_6', name: 'Rato da Floresta', x: 24, y: 22, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
+        { id: 'f_rat_7', name: 'Rato da Floresta', x: 16, y: 26, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
+        { id: 'f_rat_8', name: 'Rato da Floresta', x: 14, y: 8, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
+        { id: 'f_rat_9', name: 'Rato da Floresta', x: 27, y: 16, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } }
+      ];
+    } else if (mapId === 'map-cave-1') {
+      // Sub-nível 1: Caverna dos Rotworms (6 Rotworms)
+      spawns = [
+        { id: 'rw_1', name: 'Rotworm', x: 6, y: 6, options: { hp: 65, minDmg: 7, maxDmg: 13, xpReward: 45, spriteKey: 'rotworm' } },
+        { id: 'rw_2', name: 'Rotworm', x: 16, y: 6, options: { hp: 65, minDmg: 7, maxDmg: 13, xpReward: 45, spriteKey: 'rotworm' } },
+        { id: 'rw_3', name: 'Rotworm', x: 10, y: 12, options: { hp: 65, minDmg: 7, maxDmg: 13, xpReward: 45, spriteKey: 'rotworm' } },
+        { id: 'rw_4', name: 'Rotworm', x: 18, y: 12, options: { hp: 65, minDmg: 7, maxDmg: 13, xpReward: 45, spriteKey: 'rotworm' } },
+        { id: 'rw_5', name: 'Rotworm', x: 6, y: 18, options: { hp: 65, minDmg: 7, maxDmg: 13, xpReward: 45, spriteKey: 'rotworm' } },
+        { id: 'rw_6', name: 'Rotworm', x: 14, y: 18, options: { hp: 65, minDmg: 7, maxDmg: 13, xpReward: 45, spriteKey: 'rotworm' } }
+      ];
+    } else if (mapId === 'map-cave-2') {
+      // Sub-nível 2: Abismo Vulcânico (1 BOSS Guardião de Magma)
+      spawns = [
+        { id: 'boss_magma', name: '🔥 Guardião de Magma', x: 12, y: 12, options: { hp: 240, minDmg: 18, maxDmg: 28, xpReward: 160, spriteKey: 'demon_boss' } }
       ];
     } else {
       // 4 Cave Rats nos cantos do Mapa 1 (Vila)
       spawns = [
-        { id: 'rat_nw', name: 'Cave Rat', x: 4, y: 4 },
-        { id: 'rat_ne', name: 'Cave Rat', x: 27, y: 4 },
-        { id: 'rat_sw', name: 'Cave Rat', x: 4, y: 27 },
-        { id: 'rat_se', name: 'Cave Rat', x: 27, y: 27 }
+        { id: 'rat_nw', name: 'Cave Rat', x: 4, y: 4, options: { hp: 30, minDmg: 3, maxDmg: 6, xpReward: 25, spriteKey: 'rat' } },
+        { id: 'rat_ne', name: 'Cave Rat', x: 27, y: 4, options: { hp: 30, minDmg: 3, maxDmg: 6, xpReward: 25, spriteKey: 'rat' } },
+        { id: 'rat_sw', name: 'Cave Rat', x: 4, y: 27, options: { hp: 30, minDmg: 3, maxDmg: 6, xpReward: 25, spriteKey: 'rat' } },
+        { id: 'rat_se', name: 'Cave Rat', x: 27, y: 27, options: { hp: 30, minDmg: 3, maxDmg: 6, xpReward: 25, spriteKey: 'rat' } }
       ];
     }
 
     spawns.forEach(s => {
-      this.monsters.set(s.id, new Monster(s.id, s.name, s.x, s.y));
+      this.monsters.set(s.id, new Monster(s.id, s.name, s.x, s.y, s.options));
     });
   }
 
@@ -230,7 +250,9 @@ export class MonsterManager {
         if (distToTarget === 1 && now - rat.lastAttackTime > 1600) {
           rat.lastAttackTime = now;
           if (currentTarget.id === localPlayer.id) {
-            const rawDmg = Math.floor(Math.random() * 5) + 3;
+            const minD = rat.minDmg || 3;
+            const maxD = rat.maxDmg || 7;
+            const rawDmg = Math.floor(Math.random() * (maxD - minD + 1)) + minD;
             const def = localPlayer.getBonusDefense ? localPlayer.getBonusDefense() : 0;
             const dmg = Math.max(1, rawDmg - def);
             if (onPlayerTakeDamage) onPlayerTakeDamage(dmg);

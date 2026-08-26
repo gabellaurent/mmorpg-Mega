@@ -58,8 +58,18 @@ class SpriteGenerator {
     this.cache['house_chest'] = this.drawHouseChestTile(size);
     this.cache['void'] = this.drawVoidTile(size);
 
-    // 3. Monstro: Rat (Cave Rat)
+    // Tiles de Caverna & Magma (Sub-níveis 1 e 2)
+    this.cache['cave_floor'] = this.drawCaveFloorTile(size);
+    this.cache['cave_wall'] = this.drawCaveWallTile(size);
+    this.cache['cave_hole'] = this.drawCaveHoleTile(size);
+    this.cache['cave_stairs'] = this.drawCaveStairsTile(size);
+    this.cache['magma_floor'] = this.drawMagmaFloorTile(size);
+    this.cache['obsidian_wall'] = this.drawObsidianWallTile(size);
+
+    // 3. Monstros: Rat, Rotworm e Guardião de Magma (Boss)
     this.cache['rat'] = this.drawRatSprite(size);
+    this.cache['rotworm'] = this.drawRotwormSprite(size);
+    this.cache['demon_boss'] = this.drawDemonBossSprite(size);
 
     // 4. Personagens e NPCs
     CONFIG.CLASSES.forEach(cls => {
@@ -1068,6 +1078,171 @@ class SpriteGenerator {
     const { canvas, ctx } = this.createCanvas(size, size);
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, size, size);
+    return canvas;
+  }
+
+  // Chão de Caverna (Pedra Escura)
+  drawCaveFloorTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#0f172a';
+    for (let i = 0; i < 25; i++) {
+      ctx.fillRect((i * 11) % size, (i * 17) % size, 3, 3);
+    }
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(10, 12, 14, 2);
+    ctx.fillRect(26, 28, 12, 2);
+    return canvas;
+  }
+
+  // Parede de Caverna Rochosa Bruta
+  drawCaveWallTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(4, 4, size - 8, size - 8);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(6, 6, size - 12, 14);
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(6, 24, size - 12, 14);
+    return canvas;
+  }
+
+  // Buraco / Entrada de Caverna (Subida / Descida)
+  drawCaveHoleTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.ellipse(size / 2, size / 2, 18, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Degraus ou escada de corda
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(size / 2 - 8, size / 2 - 8, 16, 3);
+    ctx.fillRect(size / 2 - 8, size / 2 - 2, 16, 3);
+    ctx.fillRect(size / 2 - 8, size / 2 + 4, 16, 3);
+    return canvas;
+  }
+
+  // Escada de Pedra (Caverna)
+  drawCaveStairsTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#475569';
+    for (let i = 0; i < 4; i++) {
+      ctx.fillRect(4, 4 + i * 10, size - 8, 7);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(4, 4 + i * 10, size - 8, 2);
+      ctx.fillStyle = '#334155';
+    }
+    return canvas;
+  }
+
+  // Chão de Magma / Rocha Vulcânica (Sub-nível 2)
+  drawMagmaFloorTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = '#1a0c0c';
+    ctx.fillRect(0, 0, size, size);
+    // Veios de Lava Incandescente
+    ctx.fillStyle = '#c53030';
+    ctx.fillRect(4, 10, 28, 4);
+    ctx.fillRect(20, 14, 4, 20);
+    ctx.fillStyle = '#dd6b20';
+    ctx.fillRect(6, 11, 20, 2);
+    ctx.fillStyle = '#f6e05e';
+    ctx.fillRect(8, 11, 10, 1);
+    return canvas;
+  }
+
+  // Parede de Obsidiana (Sub-nível 2)
+  drawObsidianWallTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = '#090d16';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#1e1b4b';
+    ctx.fillRect(4, 4, size - 8, size - 8);
+    ctx.fillStyle = '#991b1b';
+    ctx.fillRect(6, 6, size - 12, 4);
+    ctx.fillRect(6, size - 10, size - 12, 4);
+    return canvas;
+  }
+
+  // Sprite Pixel-Art do Monstro ROTWORM (Larva Subterrânea Gigante Tibia Style)
+  drawRotwormSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2 + 4;
+
+    // Sombra no chão
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 10, 16, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Corpo segmentado de anéis do Rotworm (Vermelho-amarronzado)
+    const segments = [
+      { x: cx - 12, y: cy + 4, r: 7, c: '#742a2a' },
+      { x: cx - 6, y: cy + 2, r: 9, c: '#9b2c2c' },
+      { x: cx, y: cy, r: 10, c: '#c53030' },
+      { x: cx + 6, y: cy - 2, r: 9, c: '#9b2c2c' },
+      { x: cx + 12, y: cy - 4, r: 7, c: '#742a2a' }
+    ];
+
+    segments.forEach(s => {
+      ctx.fillStyle = s.c;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Mandíbulas e Boca de Rotworm
+    ctx.fillStyle = '#feb2b2';
+    ctx.beginPath();
+    ctx.arc(cx + 12, cy - 4, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx + 14, cy - 6, 2, 2);
+    ctx.fillRect(cx + 14, cy - 2, 2, 2);
+
+    return canvas;
+  }
+
+  // Sprite Pixel-Art do BOSS: Guardião de Magma / Demônio Abissal
+  drawDemonBossSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // Sombra do Boss
+    ctx.fillStyle = 'rgba(229, 62, 62, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 14, 20, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Corpo Imponente Vulcânico
+    ctx.fillStyle = '#742a2a';
+    ctx.fillRect(cx - 14, cy - 10, 28, 26);
+    ctx.fillStyle = '#9b2c2c';
+    ctx.fillRect(cx - 10, cy - 6, 20, 20);
+
+    // Chifres de Obsidiana
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(cx - 16, cy - 18, 6, 12);
+    ctx.fillRect(cx + 10, cy - 18, 6, 12);
+    ctx.fillRect(cx - 18, cy - 22, 4, 6);
+    ctx.fillRect(cx + 14, cy - 22, 4, 6);
+
+    // Núcleo e Olhos de Magma Incandescente
+    ctx.fillStyle = '#dd6b20';
+    ctx.fillRect(cx - 6, cy + 2, 12, 10);
+    ctx.fillStyle = '#f6e05e';
+    ctx.fillRect(cx - 8, cy - 8, 4, 4); // Olho esquerdo
+    ctx.fillRect(cx + 4, cy - 8, 4, 4);  // Olho direito
+
     return canvas;
   }
 
