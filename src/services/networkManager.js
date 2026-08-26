@@ -329,20 +329,131 @@ export class NetworkManager {
     });
   }
 
-  async savePositionToDatabase() {
-    if (!isSupabaseConfigured || !supabase || !this.localPlayer.characterId) return;
+  async hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  async registerAccount(username, password, playerData) {
+    if (!isSupabaseConfigured || !supabase) {
+      return { success: false, message: 'Supabase não está configurado neste ambiente.' };
+    }
 
     try {
-      await supabase
-        .from('characters')
-        .update({
-          x: this.localPlayer.gridX,
-          y: this.localPlayer.gridY,
-          direction: this.localPlayer.direction,
-          hp: this.localPlayer.hp,
-          level: this.localPlayer.level
-        })
-        .eq('id', this.localPlayer.characterId);
+      const cleanUsername = username.trim();
+      if (!cleanUsername || cleanUsername.length < 3) {
+        return { success: false, message: 'O nome de usuário deve ter pelo menos 3 caracteres.' };
+      }
+      if (!password || password.length < 4) {
+        return { success: false, message: 'A senha deve ter pelo menos 4 caracteres.' };
+      }
+
+      const { data: existing } = await supabase
+        .from('players')
+        .select('id')
+        .ilike('username', cleanUsername)
+        .maybeSingle();
+
+      if (existing) {
+        return { success: false, message: 'Este nome de usuário já está em uso por outro jogador.' };
+      }
+
+      const passwordHash = await this.hashPassword(password);
+      const insertData = {
+        username: cleanUsername,
+        password_hash: passwordHash,
+        level: playerData.level || 1,
+        experience: playerData.xp || 0,
+        hp: playerData.hp || 100,
+        gold: playerData.gold || 0,
+        inventory: playerData.inventory || Array(24).fill(null),
+        sprite_id: playerData.spriteId || 'knight',
+        x: playerData.gridX || 16,
+        y: playerData.gridY || 16
+      };
+
+      const { data: created, error } = await supabase
+        .from('players')
+        .insert([insertData])
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Erro ao registrar jogador:', error);
+        return { success: false, message: 'Erro ao criar conta no banco de dados.' };
+      }
+
+      if (this.localPlayer) {
+        this.localPlayer.dbId = created.id;
+        this.localPlayer.isRegistered = true;
+        this.localPlayer.name = cleanUsername;
+      }
+
+      return { success: true, player: created };
+    } catch (err) {
+      console.error('Erro no cadastro:', err);
+      return { success: false, message: 'Falha inesperada ao tentar cadastrar conta.' };
+    }
+  }
+
+  async loginAccount(username, password) {
+    if (!isSupabaseConfigured || !supabase) {
+      return { success: false, message: 'Supabase não está configurado neste ambiente.' };
+    }
+
+    try {
+      const cleanUsername = username.trim();
+      const passwordHash = await this.hashPassword(password);
+
+      const { data: player, error } = await supabase
+        .from('players')
+        .select('*')
+        .ilike('username', cleanUsername)
+        .eq('password_hash', passwordHash)
+        .maybeSingle();
+
+      if (error || !player) {
+        return { success: false, message: 'Usuário ou senha incorretos.' };
+      }
+
+      return { success: true, playerData: player };
+    } catch (err) {
+      console.error('Erro no login:', err);
+      return { success: false, message: 'Falha ao conectar com o banco de dados.' };
+    }
+  }
+
+  async savePositionToDatabase() {
+    if (!isSupabaseConfigured || !supabase || !this.localPlayer) return;
+
+    const dbId = this.localPlayer.dbId;
+    if (!dbId && !this.localPlayer.isRegistered) return;
+
+    try {
+      const updatePayload = {
+        level: this.localPlayer.level,
+        experience: this.localPlayer.xp,
+        hp: this.localPlayer.hp,
+        gold: this.localPlayer.gold,
+        inventory: this.localPlayer.inventory,
+        x: this.localPlayer.gridX,
+        y: this.localPlayer.gridY
+      };
+
+      if (dbId) {
+        await supabase
+          .from('players')
+          .update(updatePayload)
+          .eq('id', dbId);
+      } else if (this.localPlayer.name) {
+        await supabase
+          .from('players')
+          .update(updatePayload)
+          .ilike('username', this.localPlayer.name);
+      }
     } catch (err) {
       console.error('Erro ao salvar no banco:', err);
     }

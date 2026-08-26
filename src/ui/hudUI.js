@@ -2,13 +2,14 @@ import { CONFIG } from '../config.js';
 import { spriteGen } from '../engine/spriteGenerator.js';
 
 export class HudUI {
-  constructor(localPlayer, onSendChat, onToggleGrid, onAttack, onUseItem, onDropItem) {
+  constructor(localPlayer, onSendChat, onToggleGrid, onAttack, onUseItem, onDropItem, onRegisterAccount) {
     this.localPlayer = localPlayer;
     this.onSendChat = onSendChat;
     this.onToggleGrid = onToggleGrid;
     this.onAttack = onAttack;
     this.onUseItem = onUseItem;
     this.onDropItem = onDropItem;
+    this.onRegisterAccount = onRegisterAccount;
 
     this.container = document.getElementById('hud-container');
     this.remotePlayersMap = new Map();
@@ -51,6 +52,41 @@ export class HudUI {
             <span>Coordenadas:</span>
             <span>📍 X:<strong id="hud-coord-x">16</strong> Y:<strong id="hud-coord-y">16</strong></span>
           </div>
+          <div class="status-save-container" style="margin-top: 14px; border-top: 1px solid var(--panel-border); padding-top: 10px; text-align: center;">
+            <button id="btn-open-save-modal" class="btn-save-progress" style="width: 100%; padding: 8px; background: linear-gradient(135deg, #48bb78, #2f855a); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">
+              💾 Salvar Progresso / Criar Conta
+            </button>
+            <span id="save-status-badge" style="display: block; font-size: 11px; color: #a0aec0; margin-top: 6px;">Modo Visitante (Não Salvo)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Flutuante: Salvar Progresso / Criar Conta -->
+      <div class="hud-modal hidden" id="save-account-modal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99999; width: 320px; pointer-events: auto; background: var(--panel-bg); border: 2px solid var(--accent-gold); border-radius: 12px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 8px; margin-bottom: 12px;">
+          <span style="font-weight: bold; color: var(--accent-gold);">💾 Salvar Progresso no Banco</span>
+          <button class="btn-close-window" id="btn-close-save-account" style="background: transparent; border: none; color: white; font-size: 18px; cursor: pointer;">✖</button>
+        </div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.4;">
+            Crie um <strong>Usuário</strong> e <strong>Senha</strong> para salvar seu nível, XP, ouro e itens no banco de dados Supabase!
+          </p>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: bold; color: var(--accent-gold);">Nome de Usuário</label>
+            <input type="text" id="save-username-input" placeholder="Ex: Lord_Kael" style="padding: 8px; border-radius: 6px; border: 1px solid var(--panel-border); background: #1a202c; color: white; width: 100%; box-sizing: border-box;" maxlength="20" required />
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: bold; color: var(--accent-gold);">Senha</label>
+            <input type="password" id="save-password-input" placeholder="Digite uma senha" style="padding: 8px; border-radius: 6px; border: 1px solid var(--panel-border); background: #1a202c; color: white; width: 100%; box-sizing: border-box;" maxlength="32" required />
+          </div>
+
+          <div id="save-account-error" class="hidden" style="color: #f56565; font-size: 12px; font-weight: bold;"></div>
+
+          <button id="btn-submit-save-account" style="padding: 10px; background: linear-gradient(135deg, #48bb78, #2f855a); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;">
+            VINCULAR & SALVAR AGORA
+          </button>
         </div>
       </div>
 
@@ -199,6 +235,55 @@ export class HudUI {
     if (closeChatBtn) closeChatBtn.addEventListener('click', () => this.toggleChat(false));
     if (closeShopBtn) closeShopBtn.addEventListener('click', () => this.closeShop());
 
+    const openSaveModalBtn = this.container.querySelector('#btn-open-save-modal');
+    const closeSaveModalBtn = this.container.querySelector('#btn-close-save-account');
+    const submitSaveModalBtn = this.container.querySelector('#btn-submit-save-account');
+    const saveError = this.container.querySelector('#save-account-error');
+
+    if (openSaveModalBtn) {
+      openSaveModalBtn.addEventListener('click', () => this.toggleSaveAccountModal(true));
+    }
+    if (closeSaveModalBtn) {
+      closeSaveModalBtn.addEventListener('click', () => this.toggleSaveAccountModal(false));
+    }
+
+    if (submitSaveModalBtn) {
+      submitSaveModalBtn.addEventListener('click', async () => {
+        const usernameInput = this.container.querySelector('#save-username-input');
+        const passwordInput = this.container.querySelector('#save-password-input');
+        const username = usernameInput ? usernameInput.value.trim() : '';
+        const password = passwordInput ? passwordInput.value.trim() : '';
+
+        if (!username || !password) {
+          if (saveError) {
+            saveError.textContent = 'Preencha o nome de usuário e a senha.';
+            saveError.classList.remove('hidden');
+          }
+          return;
+        }
+
+        submitSaveModalBtn.disabled = true;
+        submitSaveModalBtn.textContent = 'Salvando...';
+        if (saveError) saveError.classList.add('hidden');
+
+        if (this.onRegisterAccount) {
+          const result = await this.onRegisterAccount(username, password);
+          if (result && result.success) {
+            this.toggleSaveAccountModal(false);
+            this.updatePlayerStats();
+            this.addChatMessage('Sistema', '💾 <strong>Conta vinculada com sucesso!</strong> Seu progresso foi salvo no banco de dados Supabase.', true);
+          } else {
+            if (saveError) {
+              saveError.textContent = result?.message || 'Erro ao vincular conta.';
+              saveError.classList.remove('hidden');
+            }
+            submitSaveModalBtn.disabled = false;
+            submitSaveModalBtn.textContent = 'VINCULAR & SALVAR AGORA';
+          }
+        }
+      });
+    }
+
     if (shopModalCard) {
       shopModalCard.addEventListener('click', (e) => {
         if (e.target === shopModalCard) {
@@ -255,6 +340,24 @@ export class HudUI {
     this.toggleStatus(false);
     this.toggleMap(false);
     this.toggleChat(false);
+    this.toggleSaveAccountModal(false);
+    this.closeShop();
+  }
+
+  toggleSaveAccountModal(forceState = null) {
+    const card = this.container.querySelector('#save-account-modal');
+    if (!card) return;
+    const isHidden = card.classList.contains('hidden');
+    const newState = forceState !== null ? forceState : isHidden;
+    if (newState) {
+      card.classList.remove('hidden');
+      const usernameInput = this.container.querySelector('#save-username-input');
+      if (usernameInput && !usernameInput.value && this.localPlayer) {
+        usernameInput.value = this.localPlayer.name || '';
+      }
+    } else {
+      card.classList.add('hidden');
+    }
   }
 
   toggleStatus(forceState = null) {
@@ -430,6 +533,20 @@ export class HudUI {
     if (invBadgeEl) {
       const occupied = this.localPlayer.inventory.filter(slot => slot !== null).length;
       invBadgeEl.textContent = `${occupied}/24`;
+    }
+
+    const saveBadge = this.container.querySelector('#save-status-badge');
+    const saveBtn = this.container.querySelector('#btn-open-save-modal');
+    if (saveBadge) {
+      if (this.localPlayer && this.localPlayer.isRegistered) {
+        saveBadge.textContent = '🟢 Conta Salva no Banco (Conectado)';
+        saveBadge.style.color = '#48bb78';
+        if (saveBtn) saveBtn.style.display = 'none';
+      } else {
+        saveBadge.textContent = 'Modo Visitante (Não Salvo)';
+        saveBadge.style.color = '#a0aec0';
+        if (saveBtn) saveBtn.style.display = 'block';
+      }
     }
 
     this.renderMinimap();

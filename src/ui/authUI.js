@@ -3,9 +3,11 @@ import { supabase, isSupabaseConfigured } from '../services/supabaseClient.js';
 import { CONFIG } from '../config.js';
 
 export class AuthUI {
-  constructor(onStartGame) {
+  constructor(onStartGame, onLoginAccount) {
     this.onStartGame = onStartGame;
+    this.onLoginAccount = onLoginAccount;
     this.container = document.getElementById('auth-container');
+    this.currentTab = 'guest';
     this.init();
   }
 
@@ -24,28 +26,57 @@ export class AuthUI {
         </div>
 
         <div class="sandbox-banner">
-          🟢 <strong>Rede Multiplayer Ativa:</strong> Você pode abrir esta URL em <strong>múltiplas abas ou navegadores</strong> para ver os jogadores andando em tempo real!
+          🟢 <strong>Rede Multiplayer Ativa:</strong> Jogue como visitante ou faça login para carregar seu progresso salvo!
+        </div>
+
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab ${this.currentTab === 'guest' ? 'active' : ''}" id="tab-guest">
+            🚀 Novo Herói (Visitante)
+          </button>
+          <button type="button" class="auth-tab ${this.currentTab === 'login' ? 'active' : ''}" id="tab-login">
+            🔑 Já Tenho Conta
+          </button>
         </div>
 
         <div id="auth-forms">
-          <div class="form-group">
-            <label>Nome do Herói / Personagem</label>
-            <input type="text" id="player-name-input" placeholder="Ex: Lord_Kael" value="Heroi_${randomHeroNumber}" maxlength="16" required />
-          </div>
-
-          <div class="form-group">
-            <label>Selecione sua Classe / Outfit</label>
-            <div class="class-selector">
-              ${CONFIG.CLASSES.map((cls, idx) => `
-                <div class="class-card ${idx === 0 ? 'selected' : ''}" data-class-id="${cls.id}">
-                  <div class="class-name">${cls.name}</div>
-                  <div class="class-desc">${cls.description}</div>
-                </div>
-              `).join('')}
+          <!-- Formulário Visitante -->
+          <div id="form-guest" class="${this.currentTab === 'guest' ? '' : 'hidden'}">
+            <div class="form-group">
+              <label>Nome do Herói / Personagem</label>
+              <input type="text" id="player-name-input" placeholder="Ex: Lord_Kael" value="Heroi_${randomHeroNumber}" maxlength="16" required />
             </div>
+
+            <div class="form-group">
+              <label>Selecione sua Classe / Outfit</label>
+              <div class="class-selector">
+                ${CONFIG.CLASSES.map((cls, idx) => `
+                  <div class="class-card ${idx === 0 ? 'selected' : ''}" data-class-id="${cls.id}">
+                    <div class="class-name">${cls.name}</div>
+                    <div class="class-desc">${cls.description}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <button id="btn-enter-game" class="btn-primary" style="width: 100%;">ENTRAR NO MUNDO</button>
           </div>
 
-          <button id="btn-enter-game" class="btn-primary">ENTRAR NO MUNDO</button>
+          <!-- Formulário Login -->
+          <div id="form-login" class="${this.currentTab === 'login' ? '' : 'hidden'}">
+            <div class="form-group">
+              <label>Nome de Usuário</label>
+              <input type="text" id="login-username-input" placeholder="Seu nome de usuário cadastrado" maxlength="20" required />
+            </div>
+
+            <div class="form-group">
+              <label>Senha</label>
+              <input type="password" id="login-password-input" placeholder="Sua senha secreta" maxlength="32" required />
+            </div>
+
+            <div id="login-error-msg" class="auth-error-msg hidden" style="color: #f56565; margin-bottom: 12px; font-weight: bold; font-size: 13px;"></div>
+
+            <button id="btn-login-account" class="btn-primary" style="width: 100%;">CARREGAR PERSONAGEM</button>
+          </div>
         </div>
       </div>
     `;
@@ -54,6 +85,27 @@ export class AuthUI {
   }
 
   attachEvents() {
+    const tabGuest = this.container.querySelector('#tab-guest');
+    const tabLogin = this.container.querySelector('#tab-login');
+    const formGuest = this.container.querySelector('#form-guest');
+    const formLogin = this.container.querySelector('#form-login');
+
+    tabGuest.addEventListener('click', () => {
+      this.currentTab = 'guest';
+      tabGuest.classList.add('active');
+      tabLogin.classList.remove('active');
+      formGuest.classList.remove('hidden');
+      formLogin.classList.add('hidden');
+    });
+
+    tabLogin.addEventListener('click', () => {
+      this.currentTab = 'login';
+      tabLogin.classList.add('active');
+      tabGuest.classList.remove('active');
+      formLogin.classList.remove('hidden');
+      formGuest.classList.add('hidden');
+    });
+
     const cards = this.container.querySelectorAll('.class-card');
     cards.forEach(card => {
       card.addEventListener('click', () => {
@@ -69,19 +121,67 @@ export class AuthUI {
       const selectedCard = this.container.querySelector('.class-card.selected');
       const spriteId = selectedCard ? selectedCard.getAttribute('data-class-id') : 'knight';
 
-      // Posição de nascimento aleatória na praça central (para evitar sobreposição de personagens)
-      const spawnX = 14 + Math.floor(Math.random() * 5); // 14 a 18
-      const spawnY = 14 + Math.floor(Math.random() * 5); // 14 a 18
+      const spawnX = 14 + Math.floor(Math.random() * 5);
+      const spawnY = 14 + Math.floor(Math.random() * 5);
 
-      this.container.classList.add('hidden');
-      this.container.style.display = 'none'; // Esconder completamente da árvore DOM
+      this.hide();
 
       this.onStartGame({
         name,
         spriteId,
         x: spawnX,
-        y: spawnY
+        y: spawnY,
+        isRegistered: false
       });
     });
+
+    const loginBtn = this.container.querySelector('#btn-login-account');
+    const errorMsg = this.container.querySelector('#login-error-msg');
+
+    loginBtn.addEventListener('click', async () => {
+      const username = this.container.querySelector('#login-username-input').value.trim();
+      const password = this.container.querySelector('#login-password-input').value.trim();
+
+      if (!username || !password) {
+        errorMsg.textContent = 'Preencha o nome de usuário e a senha.';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Carregando...';
+      errorMsg.classList.add('hidden');
+
+      if (this.onLoginAccount) {
+        const result = await this.onLoginAccount(username, password);
+        if (result && result.success) {
+          this.hide();
+          this.onStartGame({
+            dbId: result.playerData.id,
+            name: result.playerData.username,
+            spriteId: result.playerData.sprite_id || 'knight',
+            level: result.playerData.level || 1,
+            xp: Number(result.playerData.experience || 0),
+            hp: result.playerData.hp || 100,
+            maxHp: 100 + ((result.playerData.level || 1) - 1) * 20,
+            gold: Number(result.playerData.gold || 0),
+            inventory: result.playerData.inventory || Array(24).fill(null),
+            x: result.playerData.x || 16,
+            y: result.playerData.y || 16,
+            isRegistered: true
+          });
+        } else {
+          errorMsg.textContent = result?.message || 'Falha ao autenticar.';
+          errorMsg.classList.remove('hidden');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'CARREGAR PERSONAGEM';
+        }
+      }
+    });
+  }
+
+  hide() {
+    this.container.classList.add('hidden');
+    this.container.style.display = 'none';
   }
 }

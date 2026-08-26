@@ -979,3 +979,37 @@ html, body {
 
 .radial-icon { font-size: 20px; }
 .radial-label { font-size: 9px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000; }
+
+/* Estilos de Abas do Modal de Autenticação (Visitante vs Login) */
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  border-radius: 6px 6px 0 0;
+}
+
+.auth-tab.active {
+  color: var(--accent-gold);
+  border-bottom-color: var(--accent-gold);
+  background: rgba(214, 158, 46, 0.1);
+}
+
+.auth-tab:hover:not(.active) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}

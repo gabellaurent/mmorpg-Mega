@@ -45,18 +45,30 @@ class GameEngine {
     this.renderer.resize();
     window.addEventListener('resize', () => this.renderer.resize());
 
-    new AuthUI((characterData) => this.startGame(characterData));
+    new AuthUI(
+      (characterData) => this.startGame(characterData),
+      async (username, password) => {
+        const tempNetwork = this.network || new NetworkManager(null);
+        return await tempNetwork.loginAccount(username, password);
+      }
+    );
   }
 
   startGame(characterData) {
     this.localPlayer = new Player({
+      id: characterData.dbId ? `player_${characterData.dbId}` : undefined,
+      dbId: characterData.dbId || null,
+      isRegistered: !!characterData.isRegistered,
       name: characterData.name,
-      spriteId: characterData.spriteId,
-      x: characterData.x,
-      y: characterData.y,
-      level: 1,
-      hp: 100,
-      maxHp: 100
+      spriteId: characterData.spriteId || 'knight',
+      x: characterData.x !== undefined ? characterData.x : 16,
+      y: characterData.y !== undefined ? characterData.y : 16,
+      level: characterData.level || 1,
+      xp: characterData.xp || 0,
+      hp: characterData.hp || 100,
+      maxHp: characterData.maxHp || (100 + ((characterData.level || 1) - 1) * 20),
+      gold: characterData.gold || 0,
+      inventory: characterData.inventory || Array(24).fill(null)
     });
 
     this.radialMenu = new RadialMenu((action) => {
@@ -99,7 +111,23 @@ class GameEngine {
       },
       () => {},
       (slotIndex) => this.handleUseItem(slotIndex),
-      (slotIndex) => this.handleDropItem(slotIndex)
+      (slotIndex) => this.handleDropItem(slotIndex),
+      async (username, password) => {
+        const result = await this.network.registerAccount(username, password, {
+          level: this.localPlayer.level,
+          xp: this.localPlayer.xp,
+          hp: this.localPlayer.hp,
+          gold: this.localPlayer.gold,
+          inventory: this.localPlayer.inventory,
+          spriteId: this.localPlayer.spriteId,
+          gridX: this.localPlayer.gridX,
+          gridY: this.localPlayer.gridY
+        });
+        if (result && result.success) {
+          await this.network.savePositionToDatabase();
+        }
+        return result;
+      }
     );
 
     this.gameStartTime = Date.now();

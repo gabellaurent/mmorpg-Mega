@@ -4,6 +4,8 @@ import { CONFIG } from '../config.js';
 export class Player {
   constructor(data) {
     this.id = data.id || 'player_' + Math.random().toString(36).substr(2, 9);
+    this.dbId = data.dbId || null;
+    this.isRegistered = !!data.isRegistered || !!data.dbId;
     this.name = data.name || 'Heroi';
     this.spriteId = data.spriteId || 'knight';
     
