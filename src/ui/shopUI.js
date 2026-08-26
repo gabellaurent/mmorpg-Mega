@@ -42,32 +42,20 @@ export class ShopUI {
 
     this.container = document.createElement('div');
     this.container.id = 'shop-modal-container';
-    this.container.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(4px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      font-family: system-ui, -apple-system, sans-serif;
-    `;
+    this.container.className = 'shop-modal-container';
 
     const openTime = Date.now();
 
     // Fechar a loja ao clicar no fundo escuro fora do card (após o clique inicial)
     this.container.onclick = (e) => {
-      if (Date.now() - openTime < 250) return; // Ignora cliques imediatos do instante de abertura
+      if (Date.now() - openTime < 300) return; // Ignora cliques imediatos do instante de abertura
       if (e.target === this.container) {
         this.closeShop();
       }
     };
 
-    document.body.appendChild(this.container);
+    const targetParent = document.getElementById('app') || document.body;
+    targetParent.appendChild(this.container);
 
     try {
       this.renderModal();
@@ -88,7 +76,7 @@ export class ShopUI {
   renderModal() {
     if (!this.container || !this.activeShop) return;
 
-    const gold = this.localPlayer.gold || 0;
+    const gold = (this.localPlayer && typeof this.localPlayer.gold === 'number') ? this.localPlayer.gold : 0;
 
     let itemsHtml = '';
     this.activeShop.items.forEach(itemData => {
@@ -96,14 +84,12 @@ export class ShopUI {
       if (!itemConfig) return;
 
       const canAfford = gold >= itemData.price;
-      const btnStyle = canAfford
-        ? 'background: linear-gradient(135deg, #d69e2e, #b7791f); color: #fff; cursor: pointer;'
-        : 'background: #4a5568; color: #a0aec0; cursor: not-allowed; opacity: 0.6;';
+      const btnClass = canAfford ? 'shop-buy-btn can-afford' : 'shop-buy-btn cannot-afford';
 
       itemsHtml += `
-        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 10px; gap: 12px;">
+        <div class="shop-item-row">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 36px; height: 36px; background: rgba(15, 23, 42, 0.8); border: 1px solid #d69e2e; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+            <div class="shop-item-icon">
               ${itemConfig.type === 'consumable' ? '🧪' : itemConfig.type === 'equipment' ? '⚔️' : '📦'}
             </div>
             <div>
@@ -111,7 +97,7 @@ export class ShopUI {
               <div style="color: #a0aec0; font-size: 11px;">${itemConfig.description}</div>
             </div>
           </div>
-          <button data-item-id="${itemData.itemId}" data-price="${itemData.price}" class="buy-btn" style="${btnStyle} border: none; padding: 7px 14px; border-radius: 6px; font-weight: bold; font-size: 12px; transition: transform 0.1s;">
+          <button data-item-id="${itemData.itemId}" data-price="${itemData.price}" class="${btnClass}">
             💰 ${itemData.price} Ouro
           </button>
         </div>
@@ -119,21 +105,21 @@ export class ShopUI {
     });
 
     this.container.innerHTML = `
-      <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #d69e2e; width: 90%; max-width: 440px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); color: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
+      <div class="shop-card">
+        <div class="shop-header">
           <div>
-            <h3 style="margin: 0; font-size: 16px; color: #f6e05e;">${this.activeShop.title}</h3>
-            <div style="font-size: 11.5px; color: #cbd5e0; margin-top: 2px;">Comerciante: ${this.activeShop.ownerName}</div>
+            <h3 class="shop-title">${this.activeShop.title}</h3>
+            <div class="shop-owner">Comerciante: ${this.activeShop.ownerName}</div>
           </div>
-          <button id="close-shop-btn" style="background: transparent; border: none; color: #a0aec0; font-size: 20px; cursor: pointer; padding: 0 6px;">✕</button>
+          <button id="close-shop-btn" class="shop-close-btn" title="Fechar (ESC)">✕</button>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(214, 158, 46, 0.12); border: 1px solid #d69e2e; padding: 8px 12px; border-radius: 8px; margin-bottom: 14px;">
+        <div class="shop-balance-bar">
           <span style="font-size: 12px; color: #cbd5e0;">Seu Saldo Atual:</span>
           <span style="font-size: 14px; font-weight: bold; color: #f6e05e;">💰 ${gold} Ouro</span>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 260px; overflow-y: auto;">
+        <div class="shop-items-list">
           ${itemsHtml}
         </div>
       </div>
@@ -145,8 +131,9 @@ export class ShopUI {
       closeBtn.onclick = () => this.closeShop();
     }
 
-    this.container.querySelectorAll('.buy-btn').forEach(btn => {
+    this.container.querySelectorAll('.shop-buy-btn.can-afford').forEach(btn => {
       btn.onclick = (e) => {
+        e.stopPropagation();
         const itemId = e.currentTarget.getAttribute('data-item-id');
         const price = parseInt(e.currentTarget.getAttribute('data-price'), 10);
         this.buyItem(itemId, price);
