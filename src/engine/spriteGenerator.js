@@ -34,6 +34,9 @@ class SpriteGenerator {
     this.cache['flowers'] = this.drawFlowersTile(size);
     this.cache['portal'] = this.drawPortalTile(size);
     this.cache['gate_pillar'] = this.drawGatePillarTile(size);
+    this.cache['wall_wood'] = this.drawWallWoodTile(size);
+    this.cache['wood_floor'] = this.drawWoodFloorTile(size);
+    this.cache['house_door'] = this.drawHouseDoorTile(size);
 
     // 3. Monstro: Rat (Cave Rat)
     this.cache['rat'] = this.drawRatSprite(size);
@@ -636,6 +639,86 @@ class SpriteGenerator {
     ctx.moveTo(cx - 10, cy + 8);
     ctx.quadraticCurveTo(cx - 2, cy - 10, cx + 10, cy + 4);
     ctx.stroke();
+
+    return canvas;
+  }
+
+  drawWallWoodTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Base de Pedra
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(0, 0, size, size);
+
+    // Tijolos de Pedra na base (12px)
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(2, 34, 20, 12);
+    ctx.fillRect(24, 34, 22, 12);
+
+    // Estrutura de Madeira Rústica
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(0, 0, size, 32);
+
+    // Tábuas de Madeira Verticais
+    ctx.fillStyle = '#975a16';
+    ctx.fillRect(2, 2, 12, 28);
+    ctx.fillRect(18, 2, 12, 28);
+    ctx.fillRect(34, 2, 12, 28);
+
+    // Divisões e Sombras
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(0, 0, size, 2);
+    ctx.fillRect(0, 30, size, 4);
+    ctx.fillRect(14, 0, 4, 30);
+    ctx.fillRect(30, 0, 4, 30);
+
+    return canvas;
+  }
+
+  drawWoodFloorTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Assoalho Quente de Madeira
+    ctx.fillStyle = '#8c5c36';
+    ctx.fillRect(0, 0, size, size);
+
+    // Tábuas Horizontais
+    const plankHeight = size / 4; // 12px cada
+    for (let i = 0; i < 4; i++) {
+      const y = i * plankHeight;
+      ctx.fillStyle = i % 2 === 0 ? '#9b683c' : '#7d502c';
+      ctx.fillRect(0, y, size, plankHeight - 2);
+
+      // Sombra da tábua
+      ctx.fillStyle = '#4a2f16';
+      ctx.fillRect(0, y + plankHeight - 2, size, 2);
+
+      // Pregos de ferro
+      ctx.fillStyle = '#2d1a0b';
+      const offset = (i * 7) % 12;
+      ctx.fillRect(4 + offset, y + 4, 2, 2);
+      ctx.fillRect(size - 8 + (offset % 4), y + 4, 2, 2);
+    }
+
+    return canvas;
+  }
+
+  drawHouseDoorTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Assoalho de Madeira na entrada
+    ctx.fillStyle = '#8c5c36';
+    ctx.fillRect(0, 0, size, size);
+
+    // Tapete Vermelho de Boas-Vindas na porta
+    ctx.fillStyle = '#9b2c2c';
+    ctx.fillRect(6, 12, size - 12, size - 20);
+    ctx.fillStyle = '#d69e2e'; // Borda dourada do tapete
+    ctx.fillRect(6, 12, size - 12, 2);
+    ctx.fillRect(6, size - 10, size - 12, 2);
+
+    // Moldura da Porta de Madeira Aberta nas laterais
+    ctx.fillStyle = '#4a3525';
+    ctx.fillRect(0, 0, 6, size);
+    ctx.fillRect(size - 6, 0, 6, size);
+    ctx.fillRect(0, 0, size, 6);
 
     return canvas;
   }

@@ -62,6 +62,27 @@ export class GameMap {
             spriteKey = 'portal';
           }
         } 
+        // 4.5. Casinha Medieval da Vila (Grid X: 22..26, Y: 4..8)
+        else if (x >= 22 && x <= 26 && y >= 4 && y <= 8) {
+          // Porta da Casa (Entrada Aberta)
+          if (x === 24 && y === 8) {
+            type = TILE_TYPES.HOUSE_DOOR;
+            isSolid = false;
+            spriteKey = 'house_door';
+          }
+          // Paredes Externas da Casa (Colisão Sólida)
+          else if (x === 22 || x === 26 || y === 4 || y === 8) {
+            type = TILE_TYPES.WALL_WOOD;
+            isSolid = true;
+            spriteKey = 'wall_wood';
+          }
+          // Interior da Casa (Piso de Madeira Navegável)
+          else {
+            type = TILE_TYPES.WOOD_FLOOR;
+            isSolid = false;
+            spriteKey = 'wood_floor';
+          }
+        }
         // 5. Lago de Água (Grid 5..8 em X, 5..9 em Y)
         else if (x >= 5 && x <= 8 && y >= 5 && y <= 9) {
           type = TILE_TYPES.WATER;
