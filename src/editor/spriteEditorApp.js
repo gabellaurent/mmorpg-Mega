@@ -22,6 +22,8 @@ class SpriteEditorApp {
       '#ffffff', '#cbd5e0', '#718096', '#2d3748', '#000000'  // Metais/Cinzas
     ];
 
+    spriteGen.init();
+
     this.initDOM();
     this.initPalette();
     this.initEvents();

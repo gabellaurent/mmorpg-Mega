@@ -4,6 +4,7 @@ import { CONFIG } from '../config.js';
 class SpriteGenerator {
   constructor() {
     this.cache = {};
+    this.initialized = false;
   }
 
   createCanvas(width, height) {
@@ -16,6 +17,8 @@ class SpriteGenerator {
   }
 
   init() {
+    if (this.initialized) return;
+    this.initialized = true;
     const size = CONFIG.TILE_SIZE;
 
     // 1. Tiles de Terreno
@@ -1265,6 +1268,9 @@ class SpriteGenerator {
   }
 
   get(key) {
+    if (!this.initialized) {
+      this.init();
+    }
     return this.cache[key] || this.cache['grass_0'];
   }
 }
