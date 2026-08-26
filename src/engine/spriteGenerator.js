@@ -34,15 +34,9 @@ class SpriteGenerator {
     this.cache['tree_trunk'] = this.drawTreeTrunk(size);
     this.cache['tree_canopy'] = this.drawTreeCanopy(size * 1.6);
 
-    // Modelos de Árvores Especiais
+    // Modelos de Árvores Especiais (Pinheiros Coníferas)
     this.cache['tree_pine_trunk'] = this.drawTreeTrunk(size);
     this.cache['tree_pine_canopy'] = this.drawTreePineCanopy(size * 1.6);
-
-    this.cache['tree_autumn_trunk'] = this.drawTreeTrunk(size);
-    this.cache['tree_autumn_canopy'] = this.drawTreeAutumnCanopy(size * 1.6);
-
-    this.cache['tree_magic_trunk'] = this.drawTreeMagicTrunk(size);
-    this.cache['tree_magic_canopy'] = this.drawTreeMagicCanopy(size * 1.6);
 
     this.cache['rock'] = this.drawRockTile(size);
     this.cache['flowers'] = this.drawFlowersTile(size);
@@ -50,6 +44,8 @@ class SpriteGenerator {
     this.cache['flowers_blue'] = this.drawFlowersTileVariant(size, '#4299e1', '#63b3ed');
     this.cache['flowers_purple'] = this.drawFlowersTileVariant(size, '#9f7aea', '#b794f4');
     this.cache['bush_berry'] = this.drawBerryBushTile(size);
+    this.cache['bush_large'] = this.drawBigBushTile(size);
+    this.cache['tall_grass'] = this.drawTallGrassTile(size);
 
     this.cache['portal'] = this.drawPortalTile(size);
     this.cache['gate_pillar'] = this.drawGatePillarTile(size);
@@ -231,6 +227,60 @@ class SpriteGenerator {
       ctx.fill();
       ctx.fillStyle = '#fed7d7';
       ctx.fillRect(b.x - 1, b.y - 1, 1, 1);
+    });
+    return canvas;
+  }
+
+  // Arbusto Grande Folhado de Alto Relevo (Passável)
+  drawBigBushTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.drawImage(this.cache['grass_0'], 0, 0);
+    // Sombra do arbusto grande
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(size / 2, size - 5, size / 2.1, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Moita grande folhada volumosa em gradientes de verde
+    ctx.fillStyle = '#1c4532';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2 + 2, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#276749';
+    ctx.beginPath();
+    ctx.arc(size / 2 - 6, size / 2 - 4, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#2f855a';
+    ctx.beginPath();
+    ctx.arc(size / 2 + 6, size / 2 - 2, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#48bb78';
+    ctx.beginPath();
+    ctx.arc(size / 2 - 2, size / 2 - 8, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#9ae6b4';
+    ctx.beginPath();
+    ctx.arc(size / 2 - 4, size / 2 - 10, 4, 0, Math.PI * 2);
+    ctx.fill();
+    return canvas;
+  }
+
+  // Grama Alta de Alto Relevo Densas (Estilo Pokemon / Zelda - Passável)
+  drawTallGrassTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.drawImage(this.cache['grass_0'], 0, 0);
+    // Ramos de Grama Alta Densos em Alto Relevo
+    const tufts = [
+      { x: 6, y: 12, h: 28, w: 6, c: '#2f855a', highlight: '#68d391' },
+      { x: 14, y: 8, h: 32, w: 7, c: '#276749', highlight: '#9ae6b4' },
+      { x: 22, y: 10, h: 30, w: 6, c: '#38a169', highlight: '#48bb78' },
+      { x: 30, y: 14, h: 26, w: 6, c: '#2f855a', highlight: '#68d391' },
+      { x: 38, y: 18, h: 22, w: 5, c: '#276749', highlight: '#48bb78' },
+    ];
+    tufts.forEach(t => {
+      ctx.fillStyle = t.c;
+      ctx.fillRect(t.x, size - t.h, t.w, t.h);
+      ctx.fillStyle = t.highlight;
+      ctx.fillRect(t.x + 1, size - t.h, 2, t.h - 4);
     });
     return canvas;
   }

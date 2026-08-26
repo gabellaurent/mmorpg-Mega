@@ -89,7 +89,7 @@ export class GameMap {
           isSolid = true;
           spriteKey = 'water_0';
         }
-        // 6. Árvores e Rochas no Mapa
+        // 6. Árvores, Arbustos e Gramas no Mapa
         else if (
           (x === 4 && y === 14) || (x === 4 && y === 15) || (x === 5 && y === 15) ||
           (x === 22 && y === 24) || (x === 23 && y === 24) || (x === 24 && y === 25)
@@ -102,24 +102,34 @@ export class GameMap {
         else if ((x === 25 && y === 8) || (x === 26 && y === 8) || (x === 25 && y === 9)) {
           type = TILE_TYPES.TREE;
           isSolid = true;
-          spriteKey = 'tree_autumn_trunk';
-          canopyKey = 'tree_autumn_canopy';
+          spriteKey = 'tree_trunk';
+          canopyKey = 'tree_canopy';
         }
         else if ((x === 10 && y === 26) || (x === 11 && y === 26)) {
           type = TILE_TYPES.TREE;
           isSolid = true;
-          spriteKey = 'tree_magic_trunk';
-          canopyKey = 'tree_magic_canopy';
+          spriteKey = 'tree_pine_trunk';
+          canopyKey = 'tree_pine_canopy';
         }
         else if ((x === 8 && y === 18) || (x === 24 && y === 18) || (x === 18 && y === 6)) {
           type = TILE_TYPES.ROCK;
           isSolid = true;
           spriteKey = 'rock';
         }
-        else if (x === 7 && y === 18) {
+        // Arbustos Maiores e Gramas Altas em Alto Relevo (TOTALMENTE PASSÁVEIS - isSolid = false)
+        else if (
+          (x === 7 && y === 18) || (x === 8 && y === 19) ||
+          (x === 20 && y === 8) || (x === 21 && y === 8) ||
+          (x === 10 && y === 24) || (x === 11 && y === 24)
+        ) {
           type = TILE_TYPES.BUSH;
           isSolid = false;
-          spriteKey = 'bush_berry';
+          spriteKey = 'bush_large';
+        }
+        else if ((x % 4 === 0 && y % 5 === 0 && x > 2 && y > 2)) {
+          type = TILE_TYPES.BUSH;
+          isSolid = false;
+          spriteKey = 'tall_grass';
         }
         else if (x % 6 === 0 && y % 7 === 0) {
           type = TILE_TYPES.FLOWERS;
@@ -192,14 +202,14 @@ export class GameMap {
         else if (x >= 23 && x <= 28 && y >= 3 && y <= 8) {
           type = TILE_TYPES.TREE;
           isSolid = true;
-          spriteKey = 'tree_autumn_trunk';
-          canopyKey = 'tree_autumn_canopy';
+          spriteKey = 'tree_trunk';
+          canopyKey = 'tree_canopy';
         }
         else if (x >= 3 && x <= 9 && y >= 20 && y <= 25) {
           type = TILE_TYPES.TREE;
           isSolid = true;
-          spriteKey = 'tree_magic_trunk';
-          canopyKey = 'tree_magic_canopy';
+          spriteKey = 'tree_pine_trunk';
+          canopyKey = 'tree_pine_canopy';
         }
         else if (x >= 22 && x <= 28 && y >= 20 && y <= 26) {
           type = TILE_TYPES.TREE;
@@ -226,18 +236,16 @@ export class GameMap {
           isSolid = true;
           spriteKey = 'rock';
         }
-        // 6. Clareiras com Flores e Arbustos
-        else if (x % 4 === 0 && y % 6 === 0) {
-          type = TILE_TYPES.FLOWERS;
-          spriteKey = 'flowers_purple';
-        }
-        else if (x % 5 === 0 && y % 4 === 0) {
-          type = TILE_TYPES.FLOWERS;
-          spriteKey = 'flowers_blue';
-        }
-        else if (x % 7 === 0 && y % 5 === 0) {
+        // 6. Clareiras com Arbustos Grandes e Grama Alta em Alto Relevo (PASSÁVEIS)
+        else if (x % 4 === 0 && y % 5 === 0) {
           type = TILE_TYPES.BUSH;
-          spriteKey = 'bush_berry';
+          isSolid = false;
+          spriteKey = 'bush_large';
+        }
+        else if (x % 3 === 0 && y % 4 === 0) {
+          type = TILE_TYPES.BUSH;
+          isSolid = false;
+          spriteKey = 'tall_grass';
         }
 
         this.grid[y][x] = { x, y, type, isSolid, spriteKey };
