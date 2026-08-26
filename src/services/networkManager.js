@@ -363,6 +363,7 @@ export class NetworkManager {
 
       const passwordHash = await this.hashPassword(password);
       const insertData = {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : undefined,
         username: cleanUsername,
         password_hash: passwordHash,
         level: playerData.level || 1,
@@ -374,6 +375,7 @@ export class NetworkManager {
         x: playerData.gridX || 16,
         y: playerData.gridY || 16
       };
+      if (!insertData.id) delete insertData.id;
 
       const { data: created, error } = await supabase
         .from('players')
