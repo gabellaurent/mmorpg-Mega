@@ -408,35 +408,20 @@ class GameEngine {
       const coords = this.getGridCoordsFromClient(e.clientX, e.clientY);
       if (!coords) return;
 
-      // 0. Toque / Clique Direto no Próprio Personagem: Abrir Menu Radial Instantâneo (Celular & PC)!
-      if (this.localPlayer) {
-        const playerCenterX = this.localPlayer.renderX + CONFIG.TILE_SIZE / 2;
-        const playerCenterY = this.localPlayer.renderY + CONFIG.TILE_SIZE / 2;
-        const distToPlayer = Math.hypot(coords.worldX - playerCenterX, coords.worldY - playerCenterY);
-        const sameTile = (this.localPlayer.gridX === coords.gridX && this.localPlayer.gridY === coords.gridY);
-
-        if (sameTile || distToPlayer < CONFIG.TILE_SIZE * 1.1) {
-          if (this.radialMenu) {
-            this.radialMenu.toggle(e.clientX, e.clientY);
-          }
-          return;
+      // 0. Toque / Clique Direto no Próprio Personagem (Restrito ao Quadro Exato do GRID)!
+      if (this.localPlayer && this.localPlayer.gridX === coords.gridX && this.localPlayer.gridY === coords.gridY) {
+        if (this.radialMenu) {
+          this.radialMenu.toggle(e.clientX, e.clientY);
         }
+        return;
       }
 
-      // 1. Toque em Monstro Vivo: Trava de Mira e Ataque Imediato por Toque!
+      // 1. Toque em Monstro Vivo (Restrito ao Quadro Exato do GRID onde o Monstro está)!
       let clickedRat = null;
-      let minDistance = 999;
 
       if (this.monsterManager) {
         this.monsterManager.monsters.forEach(rat => {
-          if (rat.isDead) return;
-          const sameTile = (rat.gridX === coords.gridX && rat.gridY === coords.gridY);
-          const rx = rat.renderX + CONFIG.TILE_SIZE / 2;
-          const ry = rat.renderY + CONFIG.TILE_SIZE / 2;
-          const pixelDist = Math.hypot(coords.worldX - rx, coords.worldY - ry);
-
-          if ((sameTile || pixelDist < CONFIG.TILE_SIZE * 1.2) && pixelDist < minDistance) {
-            minDistance = pixelDist;
+          if (!rat.isDead && rat.gridX === coords.gridX && rat.gridY === coords.gridY) {
             clickedRat = rat;
           }
         });
@@ -509,15 +494,7 @@ class GameEngine {
     let minDistance = 999;
 
     this.monsterManager.monsters.forEach(rat => {
-      if (rat.isDead) return;
-
-      const sameTile = (rat.gridX === coords.gridX && rat.gridY === coords.gridY);
-      const rx = rat.renderX + CONFIG.TILE_SIZE / 2;
-      const ry = rat.renderY + CONFIG.TILE_SIZE / 2;
-      const pixelDist = Math.hypot(coords.worldX - rx, coords.worldY - ry);
-
-      if ((sameTile || pixelDist < CONFIG.TILE_SIZE * 1.2) && pixelDist < minDistance) {
-        minDistance = pixelDist;
+      if (!rat.isDead && rat.gridX === coords.gridX && rat.gridY === coords.gridY) {
         clickedRat = rat;
       }
     });
