@@ -429,6 +429,26 @@ class GameEngine {
     let dragStartCoords = null;
     let draggedCorpse = null;
 
+    // Atualização dinâmica do Cursor do Mouse no Canvas (Mãozinha / Garrinha ao Arrastar)
+    this.canvas.addEventListener('pointermove', (e) => {
+      const coords = this.getGridCoordsFromClient(e.clientX, e.clientY);
+      if (!coords || !this.corpseManager || !this.localPlayer) return;
+
+      if (draggedCorpse) {
+        this.canvas.style.cursor = 'grabbing';
+      } else {
+        const corpseUnderMouse = this.corpseManager.getCorpseAt(coords.gridX, coords.gridY);
+        if (corpseUnderMouse) {
+          const distToPlayer = Math.max(Math.abs(corpseUnderMouse.gridX - this.localPlayer.gridX), Math.abs(corpseUnderMouse.gridY - this.localPlayer.gridY));
+          if (distToPlayer <= 1.5) {
+            this.canvas.style.cursor = 'grab';
+            return;
+          }
+        }
+        this.canvas.style.cursor = 'crosshair';
+      }
+    });
+
     // Captura de Toque / Clique Esquerdo EXCLUSIVAMENTE dentro do Canvas do Jogo
     this.canvas.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
@@ -439,6 +459,12 @@ class GameEngine {
       dragStartCoords = coords;
       if (this.corpseManager) {
         draggedCorpse = this.corpseManager.getCorpseAt(coords.gridX, coords.gridY);
+        if (draggedCorpse) {
+          const distToPlayer = Math.max(Math.abs(draggedCorpse.gridX - this.localPlayer.gridX), Math.abs(draggedCorpse.gridY - this.localPlayer.gridY));
+          if (distToPlayer <= 1.5) {
+            this.canvas.style.cursor = 'grabbing';
+          }
+        }
       } else {
         draggedCorpse = null;
       }
@@ -483,6 +509,8 @@ class GameEngine {
     // Evento PointerUp: Processar Clique Simples (Caminhar/Saquear) ou Arraste (Drag & Drop de Corpos)
     this.canvas.addEventListener('pointerup', (e) => {
       if (e.button !== 0) return;
+      this.canvas.style.cursor = 'crosshair';
+
       if (!dragStartCoords || !this.localPlayer) {
         dragStartCoords = null;
         draggedCorpse = null;
