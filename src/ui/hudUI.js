@@ -98,18 +98,11 @@ export class HudUI {
         </div>
       </div>
 
-      <!-- Modal Flutuante: Chat Global em Tempo Real [Enter] -->
-      <div class="hud-modal chat-card hidden" id="chat-card">
-        <div class="modal-header">
-          <span>💬 Chat do Mundo</span>
-          <button class="btn-close-window" id="btn-close-chat">✖</button>
-        </div>
-        <div class="chat-messages" id="chat-messages">
-          <div class="chat-msg system">🎮 Pressione <strong>[I]</strong> (Bolsa), <strong>[M]</strong> (Mapa), <strong>[C]</strong> (Status) ou Toque Longo no Celular para o Menu Radial!</div>
-        </div>
+      <!-- Barra Flutuante de Entrada do Chat Zero-HUD [Enter] -->
+      <div class="chat-card hidden" id="chat-card">
         <form class="chat-input-form" id="chat-form">
           <input type="text" id="chat-input" placeholder="Digite uma mensagem..." maxlength="80" autocomplete="off" />
-          <button type="submit" class="btn-send">Enviar</button>
+          <button type="submit" class="btn-send">Enviar ↵</button>
         </form>
       </div>
     `;
@@ -129,6 +122,8 @@ export class HudUI {
         this.onSendChat(text);
         chatInput.value = '';
       }
+      chatInput.blur();
+      this.toggleChat(false);
     });
 
     const toggleGridBtn = this.container.querySelector('#btn-toggle-grid');
@@ -224,13 +219,17 @@ export class HudUI {
 
   toggleChat(forceState = null) {
     const card = this.container.querySelector('#chat-card');
-    if (!card) return;
+    const input = this.container.querySelector('#chat-input');
+    if (!card || !input) return;
+
     const isHidden = card.classList.contains('hidden');
     const newState = forceState !== null ? forceState : isHidden;
     if (newState) {
       card.classList.remove('hidden');
+      setTimeout(() => input.focus(), 30);
     } else {
       card.classList.add('hidden');
+      input.blur();
     }
   }
 
@@ -374,20 +373,59 @@ export class HudUI {
   }
 
   addChatMessage(sender, text, isSystem = false) {
-    const chatMsgs = this.container.querySelector('#chat-messages');
-    if (!chatMsgs) return;
-
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `chat-msg ${isSystem ? 'system' : ''}`;
-    
     if (isSystem) {
-      msgDiv.innerHTML = text;
-    } else {
-      msgDiv.innerHTML = `<strong>${sender}:</strong> ${this.escapeHtml(text)}`;
+      this.showSystemBanner(text);
+    }
+  }
+
+  showSystemBanner(htmlText) {
+    let bannerContainer = document.getElementById('system-banner-container');
+    if (!bannerContainer) {
+      bannerContainer = document.createElement('div');
+      bannerContainer.id = 'system-banner-container';
+      bannerContainer.style.cssText = `
+        position: fixed;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        z-index: 9999;
+        pointer-events: none;
+      `;
+      document.body.appendChild(bannerContainer);
     }
 
-    chatMsgs.appendChild(msgDiv);
-    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid #d69e2e;
+      color: #edf2f7;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-family: sans-serif;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: all 0.25s ease;
+    `;
+    toast.innerHTML = htmlText;
+
+    bannerContainer.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-8px)';
+      setTimeout(() => toast.remove(), 250);
+    }, 3500);
   }
 
   updateOnlineList(remotePlayersMap) {

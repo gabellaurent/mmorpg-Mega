@@ -441,41 +441,36 @@ html, body {
   font-weight: 700;
 }
 
-/* Chat Global (Bottom Left) */
+/* Chat Flutuante Zero-HUD (Bottom Center) */
 .chat-card {
-  grid-column: 1;
-  grid-row: 3;
-  width: 380px;
-  height: 180px;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 460px;
+  background: rgba(18, 24, 38, 0.95);
+  border: 1.5px solid var(--accent-gold);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 10000;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  font-size: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-right: 6px;
-}
-
-.chat-msg {
-  color: var(--text-main);
-  word-break: break-word;
-}
-
-.chat-msg.system {
-  color: #a0aec0;
-  font-style: italic;
+.chat-card.hidden {
+  display: none !important;
 }
 
 .chat-input-form {
   display: flex;
-  gap: 6px;
-  margin-top: 8px;
+  width: 100%;
+  gap: 8px;
+  align-items: center;
 }
 
 .chat-input-form input {
@@ -483,10 +478,15 @@ html, body {
   background: #1a202c;
   border: 1px solid var(--panel-border);
   color: #fff;
-  padding: 8px 10px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
   outline: none;
+}
+
+.chat-input-form input:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 8px rgba(214, 158, 46, 0.4);
 }
 
 .btn-send {
@@ -494,10 +494,27 @@ html, body {
   color: #000;
   font-weight: 700;
   border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-send:hover {
+  background: var(--accent-gold-hover);
+}
+
+@media (max-width: 768px) {
+  .chat-card {
+    bottom: 10px;
+    width: 94%;
+    padding: 6px 10px;
+  }
+  .chat-input-form input {
+    font-size: 16px;
+    padding: 8px 12px;
+  }
 }
 
 /* D-Pad Virtual para Telas Touch */
