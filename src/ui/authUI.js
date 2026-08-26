@@ -40,7 +40,7 @@ export class AuthUI {
 
         <div id="auth-forms">
           <!-- Formulário Visitante -->
-          <div id="form-guest" class="${this.currentTab === 'guest' ? '' : 'hidden'}">
+          <div id="form-guest" class="${this.currentTab === 'guest' ? '' : 'hidden'}" style="${this.currentTab === 'guest' ? 'display: block;' : 'display: none;'}">
             <div class="form-group">
               <label>Nome do Herói / Personagem</label>
               <input type="text" id="player-name-input" placeholder="Ex: Lord_Kael" value="Heroi_${randomHeroNumber}" maxlength="16" required />
@@ -62,7 +62,7 @@ export class AuthUI {
           </div>
 
           <!-- Formulário Login -->
-          <div id="form-login" class="${this.currentTab === 'login' ? '' : 'hidden'}">
+          <div id="form-login" class="${this.currentTab === 'login' ? '' : 'hidden'}" style="${this.currentTab === 'login' ? 'display: block;' : 'display: none;'}">
             <div class="form-group">
               <label>Nome de Usuário</label>
               <input type="text" id="login-username-input" placeholder="Seu nome de usuário cadastrado" maxlength="20" required />
@@ -95,7 +95,9 @@ export class AuthUI {
       tabGuest.classList.add('active');
       tabLogin.classList.remove('active');
       formGuest.classList.remove('hidden');
+      formGuest.style.display = 'block';
       formLogin.classList.add('hidden');
+      formLogin.style.display = 'none';
     });
 
     tabLogin.addEventListener('click', () => {
@@ -103,7 +105,9 @@ export class AuthUI {
       tabLogin.classList.add('active');
       tabGuest.classList.remove('active');
       formLogin.classList.remove('hidden');
+      formLogin.style.display = 'block';
       formGuest.classList.add('hidden');
+      formGuest.style.display = 'none';
     });
 
     const cards = this.container.querySelectorAll('.class-card');

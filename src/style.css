@@ -30,6 +30,10 @@ html, body {
   color: var(--text-main);
 }
 
+.hidden {
+  display: none !important;
+}
+
 #app {
   position: relative;
   width: 100vw;
