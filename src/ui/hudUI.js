@@ -107,7 +107,7 @@ export class HudUI {
       </div>
 
       <!-- Modal Flutuante: Loja de Poções, Magias, Armas e Escudos -->
-      <div class="shop-modal-container hidden" id="shop-modal-card" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; z-index: 100000; pointer-events: auto; font-family: system-ui, -apple-system, sans-serif; box-sizing: border-box;">
+      <div class="shop-modal-container hidden" id="shop-modal-card" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(6px); display: none; justify-content: center; align-items: center; z-index: 100000; pointer-events: auto; font-family: system-ui, -apple-system, sans-serif; box-sizing: border-box;">
         <div class="shop-card" style="background: rgba(15, 23, 42, 0.98); border: 2px solid #d69e2e; width: 92%; max-width: 440px; border-radius: 16px; padding: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.9); color: #fff; position: relative; z-index: 100001; box-sizing: border-box;">
           <div class="shop-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 12px; margin-bottom: 16px;">
             <div>
@@ -528,12 +528,14 @@ export class HudUI {
 
     this.renderShopModal();
     modalCard.classList.remove('hidden');
+    modalCard.style.display = 'flex';
   }
 
   closeShop() {
     const modalCard = this.container.querySelector('#shop-modal-card');
     if (modalCard) {
       modalCard.classList.add('hidden');
+      modalCard.style.display = 'none';
     }
     this.activeShop = null;
   }
