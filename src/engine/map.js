@@ -197,23 +197,23 @@ export class GameMap {
         let isSolid = false;
         let spriteKey = 'wood_floor';
 
-        // 1. Bordas do Mapa (Fora da Casa)
-        if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
-          type = TILE_TYPES.TREE;
-          isSolid = true;
-          spriteKey = 'tree_trunk';
+        // 1. Porta de Saída da Casa (Grid X: 6, Y: 10)
+        if (x === 6 && y === 10) {
+          type = TILE_TYPES.HOUSE_DOOR;
+          isSolid = false;
+          spriteKey = 'house_door';
         }
-        // 2. Paredes de Madeira da Casa
-        else if (y === 1 || x === 1 || x === 10 || (y === 10 && x !== 6)) {
+        // 2. Paredes de Madeira da Casa (Borda do Cômodo)
+        else if (y === 1 || x === 1 || x === 10 || y === 10) {
           type = TILE_TYPES.WALL_WOOD;
           isSolid = true;
           spriteKey = 'wall_wood';
         }
-        // 3. Porta de Saída da Casa (Grid X: 6, Y: 11)
-        else if (x === 6 && y === 11) {
-          type = TILE_TYPES.HOUSE_DOOR;
-          isSolid = false;
-          spriteKey = 'house_door';
+        // 3. Fundo Preto (Vazio / Void) em Volta da Casa
+        else if (x === 0 || y === 0 || x === 11 || y === 11) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'void';
         }
         // 4. Móveis no Interior da Casa
         else if (x === 6 && y === 2) {
@@ -249,14 +249,14 @@ export class GameMap {
         return { targetMapId: 'map-2', targetX: 15, targetY: 1 };
       }
       if (x === 24 && y === 8) {
-        return { targetMapId: 'map-house-1', targetX: 6, targetY: 10 };
+        return { targetMapId: 'map-house-1', targetX: 6, targetY: 9 };
       }
     } else if (this.mapId === 'map-2') {
       if ((x === 15 || x === 16) && y === 0) {
         return { targetMapId: 'map-1', targetX: 15, targetY: 30 };
       }
     } else if (this.mapId === 'map-house-1') {
-      if (x === 6 && y === 11) {
+      if (x === 6 && y === 10) {
         return { targetMapId: 'map-1', targetX: 24, targetY: 9 };
       }
     }

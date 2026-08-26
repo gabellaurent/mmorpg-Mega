@@ -41,6 +41,7 @@ class SpriteGenerator {
     this.cache['house_table'] = this.drawHouseTableTile(size);
     this.cache['house_fireplace'] = this.drawHouseFireplaceTile(size);
     this.cache['house_chest'] = this.drawHouseChestTile(size);
+    this.cache['void'] = this.drawVoidTile(size);
 
     // 3. Monstro: Rat (Cave Rat)
     this.cache['rat'] = this.drawRatSprite(size);
@@ -826,6 +827,13 @@ class SpriteGenerator {
     ctx.fillRect(size - 11, 10, 3, size - 16);
     ctx.fillRect(size / 2 - 2, 17, 4, 5);
 
+    return canvas;
+  }
+
+  drawVoidTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, size, size);
     return canvas;
   }
 
