@@ -478,47 +478,12 @@ class GameEngine {
         }
         return;
       }
-
-      // 1.5. Toque em Corpo / Restos Mortais: Saquear Loot (Permite continuar para andar até o quadro do corpo!)
-      if (this.corpseManager && this.localPlayer) {
-        const corpse = this.corpseManager.getCorpseAt(coords.gridX, coords.gridY);
-        if (corpse) {
-          const dist = Math.max(Math.abs(corpse.gridX - this.localPlayer.gridX), Math.abs(corpse.gridY - this.localPlayer.gridY));
-          if (dist <= 1.5) {
-            const result = this.corpseManager.lootCorpse(corpse.id, this.localPlayer);
-            if (result.success) {
-              if (this.network) {
-                this.network.updateCorpseInDatabase(corpse.id, corpse.loot);
-              }
-              const lootedNames = result.lootedItems.map(i => i.itemId === 'gold' ? `+${i.quantity} Ouro` : (CONFIG.ITEMS[i.itemId]?.name || i.itemId)).join(', ');
-              this.monsterManager.addFloatingText(`+${lootedNames}`, corpse.gridX, corpse.gridY, '#f6e05e');
-              this.hud.addChatMessage('Sistema', `🎒 Você abriu o corpo de <strong>${corpse.ownerName}</strong> e encontrou: <strong>${lootedNames}</strong>!`, true);
-              this.hud.updatePlayerStats();
-            }
-          }
-        }
-      }
-
-      // 2. Toque no Chão / Corpo: Movimentação Point-and-Click (Busca de Caminho com Pathfinder)
-      if (this.localPlayer) {
-        const path = Pathfinder.findPath(
-          this.localPlayer.gridX,
-          this.localPlayer.gridY,
-          coords.gridX,
-          coords.gridY,
-          (x, y) => !this.isTileOccupiedByEntity(x, y, this.localPlayer.id)
-        );
-
-        if (path && path.length > 0) {
-          this.localPlayer.setPath(path);
-        }
-      }
     });
 
-    // Evento PointerUp: Finalizar Arraste (Drag & Drop) de Corpos e Itens
+    // Evento PointerUp: Processar Clique Simples (Caminhar/Saquear) ou Arraste (Drag & Drop de Corpos)
     this.canvas.addEventListener('pointerup', (e) => {
       if (e.button !== 0) return;
-      if (!dragStartCoords || !draggedCorpse || !this.localPlayer || !this.corpseManager) {
+      if (!dragStartCoords || !this.localPlayer) {
         dragStartCoords = null;
         draggedCorpse = null;
         return;
@@ -531,29 +496,66 @@ class GameEngine {
         return;
       }
 
-      // Se o ponteiro foi solto em um quadro diferente do quadro inicial
+      // CASO A: O ponteiro foi arrastado e solto em um quadro DIFERENTE -> Ação de Drag & Drop de Corpo!
       if (endCoords.gridX !== dragStartCoords.gridX || endCoords.gridY !== dragStartCoords.gridY) {
-        const distToPlayer = Math.max(Math.abs(draggedCorpse.gridX - this.localPlayer.gridX), Math.abs(draggedCorpse.gridY - this.localPlayer.gridY));
-        const dragDist = Math.max(Math.abs(endCoords.gridX - dragStartCoords.gridX), Math.abs(endCoords.gridY - dragStartCoords.gridY));
-        const isWalkable = this.gameMap ? this.gameMap.isWalkable(endCoords.gridX, endCoords.gridY) : true;
+        if (draggedCorpse && this.corpseManager) {
+          const distToPlayer = Math.max(Math.abs(draggedCorpse.gridX - this.localPlayer.gridX), Math.abs(draggedCorpse.gridY - this.localPlayer.gridY));
+          const dragDist = Math.max(Math.abs(endCoords.gridX - dragStartCoords.gridX), Math.abs(endCoords.gridY - dragStartCoords.gridY));
+          const isWalkable = this.gameMap ? this.gameMap.isWalkable(endCoords.gridX, endCoords.gridY) : true;
 
-        // Regra de Arraste: Jogador perto do corpo (<= 1.5), destino adjacente ao corpo (<= 1.5) e terreno livre
-        if (distToPlayer <= 1.5 && dragDist <= 1.5 && isWalkable) {
-          const corpseId = draggedCorpse.id;
-          const newX = endCoords.gridX;
-          const newY = endCoords.gridY;
+          // Regra de Arraste: Jogador perto do corpo (<= 1.5), destino adjacente ao corpo (<= 1.5) e terreno livre
+          if (distToPlayer <= 1.5 && dragDist <= 1.5 && isWalkable) {
+            const corpseId = draggedCorpse.id;
+            const newX = endCoords.gridX;
+            const newY = endCoords.gridY;
 
-          this.corpseManager.moveCorpse(corpseId, newX, newY);
+            this.corpseManager.moveCorpse(corpseId, newX, newY);
 
-          if (this.network) {
-            this.network.sendCorpseMove(corpseId, newX, newY);
-            this.network.updateCorpsePositionInDatabase(corpseId, newX, newY);
+            if (this.network) {
+              this.network.sendCorpseMove(corpseId, newX, newY);
+              this.network.updateCorpsePositionInDatabase(corpseId, newX, newY);
+            }
+
+            if (this.monsterManager) {
+              this.monsterManager.addFloatingText('🧲 Arrastou', newX, newY, '#63b3ed');
+            }
+            this.hud.addChatMessage('Sistema', '🧲 Você arrastou um corpo no chão!', true);
           }
-
-          if (this.monsterManager) {
-            this.monsterManager.addFloatingText('🧲 Arrastou', newX, newY, '#63b3ed');
+        }
+      }
+      // CASO B: Clique Simples (soltou no MESMO quadro onde clicou) -> Caminhar e/ou Saquear!
+      else {
+        // Se houver um corpo no quadro clicado: saquear se estiver adjacente
+        if (this.corpseManager) {
+          const corpse = this.corpseManager.getCorpseAt(endCoords.gridX, endCoords.gridY);
+          if (corpse) {
+            const dist = Math.max(Math.abs(corpse.gridX - this.localPlayer.gridX), Math.abs(corpse.gridY - this.localPlayer.gridY));
+            if (dist <= 1.5) {
+              const result = this.corpseManager.lootCorpse(corpse.id, this.localPlayer);
+              if (result.success) {
+                if (this.network) {
+                  this.network.updateCorpseInDatabase(corpse.id, corpse.loot);
+                }
+                const lootedNames = result.lootedItems.map(i => i.itemId === 'gold' ? `+${i.quantity} Ouro` : (CONFIG.ITEMS[i.itemId]?.name || i.itemId)).join(', ');
+                this.monsterManager.addFloatingText(`+${lootedNames}`, corpse.gridX, corpse.gridY, '#f6e05e');
+                this.hud.addChatMessage('Sistema', `🎒 Você abriu o corpo de <strong>${corpse.ownerName}</strong> e encontrou: <strong>${lootedNames}</strong>!`, true);
+                this.hud.updatePlayerStats();
+              }
+            }
           }
-          this.hud.addChatMessage('Sistema', '🧲 Você arrastou um corpo no chão!', true);
+        }
+
+        // Caminhada Point-and-Click até o quadro desejado
+        const path = Pathfinder.findPath(
+          this.localPlayer.gridX,
+          this.localPlayer.gridY,
+          endCoords.gridX,
+          endCoords.gridY,
+          (x, y) => !this.isTileOccupiedByEntity(x, y, this.localPlayer.id)
+        );
+
+        if (path && path.length > 0) {
+          this.localPlayer.setPath(path);
         }
       }
 
