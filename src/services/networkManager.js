@@ -367,15 +367,11 @@ export class NetworkManager {
     }
   }
 
-  // Atualizar/Remover corpo no banco de dados
+  // Atualizar loot do corpo no banco de dados (preserva o corpo durante os 5 minutos de decomposição)
   async updateCorpseInDatabase(corpseId, lootRemaining) {
     if (!isSupabaseConfigured || !supabase) return;
     try {
-      if (lootRemaining.length === 0) {
-        await supabase.from('world_corpses').delete().eq('id', corpseId);
-      } else {
-        await supabase.from('world_corpses').update({ loot: lootRemaining }).eq('id', corpseId);
-      }
+      await supabase.from('world_corpses').update({ loot: lootRemaining }).eq('id', corpseId);
     } catch (err) {
       console.error('Erro ao atualizar corpo no banco:', err);
     }
