@@ -102,6 +102,7 @@ class GameEngine {
       (slotIndex) => this.handleDropItem(slotIndex)
     );
 
+    this.gameStartTime = Date.now();
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
 
@@ -452,6 +453,7 @@ class GameEngine {
     // Captura de Toque / Clique Esquerdo EXCLUSIVAMENTE dentro do Canvas do Jogo
     this.canvas.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
+      if (this.gameStartTime && Date.now() - this.gameStartTime < 600) return;
 
       const coords = this.getGridCoordsFromClient(e.clientX, e.clientY);
       if (!coords) return;
@@ -477,28 +479,22 @@ class GameEngine {
         return;
       }
 
-      // 0.5. Toque / Clique em NPC Comerciante (Abrir Loja de Poções/Armas)
-      if (this.npcManager && this.hud) {
-        let npc = this.npcManager.getNpcAt(coords.gridX, coords.gridY);
-        if (!npc) {
-          // Checa se o jogador clicou adjacente ao comerciante (dist <= 1.5)
-          for (const n of this.npcManager.npcs.values()) {
-            if (n.type === 'merchant' || n.id.startsWith('merchant_')) {
-              const d = Math.max(Math.abs(n.gridX - coords.gridX), Math.abs(n.gridY - coords.gridY));
-              if (d <= 1.5) { npc = n; break; }
-            }
-          }
-        }
+      // 0.5. Toque / Clique em NPC Comerciante (Abrir Loja de Poções/Armas se o Jogador estiver perto)
+      if (this.npcManager && this.hud && this.localPlayer) {
+        const npc = this.npcManager.getNpcAt(coords.gridX, coords.gridY);
         if (npc && (npc.type === 'merchant' || npc.id.startsWith('merchant_'))) {
-          if (touchHoldTimer) clearTimeout(touchHoldTimer);
-          if (this.localPlayer) this.localPlayer.clearPath();
-          if (this.radialMenu) this.radialMenu.close();
-          npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
-          const shopId = this.hud.shops[npc.id] ? npc.id : 'merchant_magic';
-          this.hud.openShop(shopId, this.monsterManager);
-          dragStartCoords = null;
-          draggedCorpse = null;
-          return;
+          const distToPlayer = Math.max(Math.abs(npc.gridX - this.localPlayer.gridX), Math.abs(npc.gridY - this.localPlayer.gridY));
+          if (distToPlayer <= 2.5) {
+            if (touchHoldTimer) clearTimeout(touchHoldTimer);
+            if (this.localPlayer) this.localPlayer.clearPath();
+            if (this.radialMenu) this.radialMenu.close();
+            npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
+            const shopId = this.hud.shops[npc.id] ? npc.id : 'merchant_magic';
+            this.hud.openShop(shopId, this.monsterManager);
+            dragStartCoords = null;
+            draggedCorpse = null;
+            return;
+          }
         }
       }
 
@@ -534,6 +530,7 @@ class GameEngine {
     // Evento PointerUp: Processar Clique Simples (Caminhar/Saquear) ou Arraste (Drag & Drop de Corpos)
     this.canvas.addEventListener('pointerup', (e) => {
       if (e.button !== 0) return;
+      if (this.gameStartTime && Date.now() - this.gameStartTime < 600) return;
       this.canvas.style.cursor = 'crosshair';
 
       if (!dragStartCoords || !this.localPlayer) {
@@ -579,24 +576,19 @@ class GameEngine {
       // CASO B: Clique Simples (soltou no MESMO quadro onde clicou) -> Caminhar, Saquear ou Abrir Loja!
       else {
         // Se houver um NPC Comerciante no quadro clicado: Abrir Loja!
-        if (this.npcManager && this.hud) {
-          let npc = this.npcManager.getNpcAt(endCoords.gridX, endCoords.gridY);
-          if (!npc) {
-            for (const n of this.npcManager.npcs.values()) {
-              if (n.type === 'merchant' || n.id.startsWith('merchant_')) {
-                const d = Math.max(Math.abs(n.gridX - endCoords.gridX), Math.abs(n.gridY - endCoords.gridY));
-                if (d <= 1.5) { npc = n; break; }
-              }
-            }
-          }
+        if (this.npcManager && this.hud && this.localPlayer) {
+          const npc = this.npcManager.getNpcAt(endCoords.gridX, endCoords.gridY);
           if (npc && (npc.type === 'merchant' || npc.id.startsWith('merchant_'))) {
-            if (this.localPlayer) this.localPlayer.clearPath();
-            npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
-            const shopId = this.hud.shops[npc.id] ? npc.id : 'merchant_magic';
-            this.hud.openShop(shopId, this.monsterManager);
-            dragStartCoords = null;
-            draggedCorpse = null;
-            return;
+            const distToPlayer = Math.max(Math.abs(npc.gridX - this.localPlayer.gridX), Math.abs(npc.gridY - this.localPlayer.gridY));
+            if (distToPlayer <= 2.5) {
+              if (this.localPlayer) this.localPlayer.clearPath();
+              npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
+              const shopId = this.hud.shops[npc.id] ? npc.id : 'merchant_magic';
+              this.hud.openShop(shopId, this.monsterManager);
+              dragStartCoords = null;
+              draggedCorpse = null;
+              return;
+            }
           }
         }
 
