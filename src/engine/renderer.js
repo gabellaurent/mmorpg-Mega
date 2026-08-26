@@ -179,7 +179,6 @@ export class Renderer {
     }
 
     // PASSO 5: Copas das Árvores e Estrutura Superior do Portão Sul
-    const canopyImg = spriteGen.get('tree_canopy');
     const canopySize = tileSize * 1.6;
     const canopyOffset = (canopySize - tileSize) / 2;
 
@@ -187,6 +186,8 @@ export class Renderer {
       for (let x = startCol; x <= endCol; x++) {
         const tile = gameMap.getTile(x, y);
         if (tile && tile.type === CONFIG.TILE_TYPES.TREE) {
+          const cKey = tile.canopyKey || 'tree_canopy';
+          const canopyImg = spriteGen.get(cKey) || spriteGen.get('tree_canopy');
           ctx.drawImage(
             canopyImg, 
             x * tileSize - canopyOffset, 

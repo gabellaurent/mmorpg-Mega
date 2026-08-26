@@ -91,25 +91,52 @@ export class GameMap {
         // 6. Árvores e Rochas no Mapa
         else if (
           (x === 4 && y === 14) || (x === 4 && y === 15) || (x === 5 && y === 15) ||
-          (x === 25 && y === 8) || (x === 26 && y === 8) || (x === 25 && y === 9) ||
-          (x === 22 && y === 24) || (x === 23 && y === 24) || (x === 24 && y === 25) ||
-          (x === 10 && y === 26) || (x === 11 && y === 26)
+          (x === 22 && y === 24) || (x === 23 && y === 24) || (x === 24 && y === 25)
         ) {
           type = TILE_TYPES.TREE;
           isSolid = true;
-          spriteKey = 'tree_trunk';
+          spriteKey = 'tree_pine_trunk';
+          canopyKey = 'tree_pine_canopy';
+        }
+        else if ((x === 25 && y === 8) || (x === 26 && y === 8) || (x === 25 && y === 9)) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_autumn_trunk';
+          canopyKey = 'tree_autumn_canopy';
+        }
+        else if ((x === 10 && y === 26) || (x === 11 && y === 26)) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_magic_trunk';
+          canopyKey = 'tree_magic_canopy';
         }
         else if ((x === 8 && y === 18) || (x === 24 && y === 18) || (x === 18 && y === 6)) {
           type = TILE_TYPES.ROCK;
           isSolid = true;
           spriteKey = 'rock';
         }
-        else if ((x % 5 === 0 && y % 7 === 0) || (x % 9 === 0 && y % 4 === 0)) {
+        else if (x === 7 && y === 18) {
+          type = TILE_TYPES.BUSH;
+          isSolid = false;
+          spriteKey = 'bush_berry';
+        }
+        else if (x % 6 === 0 && y % 7 === 0) {
           type = TILE_TYPES.FLOWERS;
-          spriteKey = 'flowers';
+          spriteKey = 'flowers_blue';
+        }
+        else if (x % 5 === 0 && y % 8 === 0) {
+          type = TILE_TYPES.FLOWERS;
+          spriteKey = 'flowers_red';
+        }
+        else if (x % 7 === 0 && y % 5 === 0) {
+          type = TILE_TYPES.FLOWERS;
+          spriteKey = 'flowers_purple';
+        }
+        else if ((x + y) % 9 === 0) {
+          spriteKey = 'grass_moss';
         }
 
-        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey, canopyKey };
       }
     }
   }
@@ -124,7 +151,8 @@ export class GameMap {
         const variant = (x * 11 + y * 17) % 3;
         let type = TILE_TYPES.GRASS;
         let isSolid = false;
-        let spriteKey = `grass_${variant}`;
+        let spriteKey = (x + y) % 2 === 0 ? 'grass_dark' : `grass_${variant}`;
+        let canopyKey = 'tree_canopy';
 
         // 1. Portão Norte de Entrada/Saída para a Vila (Grid X:14..17, Y:0)
         if ((x === 15 || x === 16) && y === 0) {
@@ -150,20 +178,42 @@ export class GameMap {
         else if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
           type = TILE_TYPES.TREE;
           isSolid = true;
-          spriteKey = 'tree_trunk';
+          spriteKey = 'tree_pine_trunk';
+          canopyKey = 'tree_pine_canopy';
         }
         // 4. Aglomerados de Árvores Selvagens na Floresta
+        else if (x >= 3 && x <= 7 && y >= 3 && y <= 6) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_pine_trunk';
+          canopyKey = 'tree_pine_canopy';
+        }
+        else if (x >= 23 && x <= 28 && y >= 3 && y <= 8) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_autumn_trunk';
+          canopyKey = 'tree_autumn_canopy';
+        }
+        else if (x >= 3 && x <= 9 && y >= 20 && y <= 25) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_magic_trunk';
+          canopyKey = 'tree_magic_canopy';
+        }
+        else if (x >= 22 && x <= 28 && y >= 20 && y <= 26) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+          canopyKey = 'tree_canopy';
+        }
         else if (
-          (x >= 3 && x <= 7 && y >= 3 && y <= 6) ||
-          (x >= 23 && x <= 28 && y >= 3 && y <= 8) ||
-          (x >= 3 && x <= 9 && y >= 20 && y <= 25) ||
-          (x >= 22 && x <= 28 && y >= 20 && y <= 26) ||
           (x === 10 && y === 10) || (x === 11 && y === 10) || (x === 20 && y === 10) ||
           (x === 10 && y === 20) || (x === 21 && y === 18)
         ) {
           type = TILE_TYPES.TREE;
           isSolid = true;
-          spriteKey = 'tree_trunk';
+          spriteKey = 'tree_pine_trunk';
+          canopyKey = 'tree_pine_canopy';
         }
         // 5. Rochas Místicas Espalhadas
         else if (
@@ -175,10 +225,18 @@ export class GameMap {
           isSolid = true;
           spriteKey = 'rock';
         }
-        // 6. Clareiras com Flores
-        else if ((x % 3 === 0 && y % 5 === 0) || (x % 7 === 0 && y % 3 === 0)) {
+        // 6. Clareiras com Flores e Arbustos
+        else if (x % 4 === 0 && y % 6 === 0) {
           type = TILE_TYPES.FLOWERS;
-          spriteKey = 'flowers';
+          spriteKey = 'flowers_purple';
+        }
+        else if (x % 5 === 0 && y % 4 === 0) {
+          type = TILE_TYPES.FLOWERS;
+          spriteKey = 'flowers_blue';
+        }
+        else if (x % 7 === 0 && y % 5 === 0) {
+          type = TILE_TYPES.BUSH;
+          spriteKey = 'bush_berry';
         }
 
         this.grid[y][x] = { x, y, type, isSolid, spriteKey };

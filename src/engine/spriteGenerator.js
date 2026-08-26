@@ -22,16 +22,35 @@ class SpriteGenerator {
     this.cache['grass_0'] = this.drawGrassTile(size, 0);
     this.cache['grass_1'] = this.drawGrassTile(size, 1);
     this.cache['grass_2'] = this.drawGrassTile(size, 2);
+    this.cache['grass_dry'] = this.drawGrassTile(size, 'dry');
+    this.cache['grass_dark'] = this.drawGrassTile(size, 'dark');
+    this.cache['grass_moss'] = this.drawGrassTile(size, 'moss');
     this.cache['cobble'] = this.drawCobbleTile(size);
     this.cache['dirt'] = this.drawDirtTile(size);
     this.cache['water_0'] = this.drawWaterTile(size, 0);
     this.cache['water_1'] = this.drawWaterTile(size, 1);
 
-    // 2. Obstáculos e Estruturas
+    // 2. Obstáculos, Plantas e Estruturas
     this.cache['tree_trunk'] = this.drawTreeTrunk(size);
     this.cache['tree_canopy'] = this.drawTreeCanopy(size * 1.6);
+
+    // Modelos de Árvores Especiais
+    this.cache['tree_pine_trunk'] = this.drawTreeTrunk(size);
+    this.cache['tree_pine_canopy'] = this.drawTreePineCanopy(size * 1.6);
+
+    this.cache['tree_autumn_trunk'] = this.drawTreeTrunk(size);
+    this.cache['tree_autumn_canopy'] = this.drawTreeAutumnCanopy(size * 1.6);
+
+    this.cache['tree_magic_trunk'] = this.drawTreeMagicTrunk(size);
+    this.cache['tree_magic_canopy'] = this.drawTreeMagicCanopy(size * 1.6);
+
     this.cache['rock'] = this.drawRockTile(size);
     this.cache['flowers'] = this.drawFlowersTile(size);
+    this.cache['flowers_red'] = this.drawFlowersTileVariant(size, '#f56565', '#e53e3e');
+    this.cache['flowers_blue'] = this.drawFlowersTileVariant(size, '#4299e1', '#63b3ed');
+    this.cache['flowers_purple'] = this.drawFlowersTileVariant(size, '#9f7aea', '#b794f4');
+    this.cache['bush_berry'] = this.drawBerryBushTile(size);
+
     this.cache['portal'] = this.drawPortalTile(size);
     this.cache['gate_pillar'] = this.drawGatePillarTile(size);
     this.cache['wall_wood'] = this.drawWallWoodTile(size);
@@ -62,18 +81,39 @@ class SpriteGenerator {
 
   drawGrassTile(size, variant) {
     const { canvas, ctx } = this.createCanvas(size, size);
-    const baseColors = ['#48bb78', '#38a169', '#2f855a'];
-    ctx.fillStyle = baseColors[variant % baseColors.length];
+    let baseColor = '#48bb78';
+    let speckleColor = '#276749';
+    let bladeColor = '#68d391';
+
+    if (variant === 'dry') {
+      baseColor = '#d69e2e';
+      speckleColor = '#8c5f17';
+      bladeColor = '#ecc94b';
+    } else if (variant === 'dark') {
+      baseColor = '#22543d';
+      speckleColor = '#143827';
+      bladeColor = '#2f855a';
+    } else if (variant === 'moss') {
+      baseColor = '#38a169';
+      speckleColor = '#22543d';
+      bladeColor = '#9ae6b4';
+    } else {
+      const baseColors = ['#48bb78', '#38a169', '#2f855a'];
+      baseColor = baseColors[variant % baseColors.length];
+    }
+
+    ctx.fillStyle = baseColor;
     ctx.fillRect(0, 0, size, size);
 
-    ctx.fillStyle = '#276749';
+    ctx.fillStyle = speckleColor;
     for (let i = 0; i < size * 3; i++) {
-      const px = Math.floor(Math.sin(i * 12.3 + variant) * size / 2 + size / 2);
-      const py = Math.floor(Math.cos(i * 7.8 + variant) * size / 2 + size / 2);
+      const seed = (typeof variant === 'number') ? variant : 5;
+      const px = Math.floor(Math.sin(i * 12.3 + seed) * size / 2 + size / 2);
+      const py = Math.floor(Math.cos(i * 7.8 + seed) * size / 2 + size / 2);
       ctx.fillRect(px, py, 2, 2);
     }
 
-    ctx.fillStyle = '#68d391';
+    ctx.fillStyle = bladeColor;
     const blades = [[4, 8], [12, 20], [24, 6], [28, 22], [16, 14], [8, 28]];
     blades.forEach(([x, y]) => {
       ctx.fillRect(x, y, 2, 6);
@@ -148,6 +188,53 @@ class SpriteGenerator {
     return canvas;
   }
 
+  drawFlowersTileVariant(size, petalColor, centerColor) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.drawImage(this.cache['grass_0'], 0, 0);
+    const flowerPositions = [
+      { x: 8, y: 10 },
+      { x: 26, y: 14 },
+      { x: 16, y: 28 },
+      { x: 30, y: 32 },
+      { x: 10, y: 36 }
+    ];
+    flowerPositions.forEach(f => {
+      ctx.fillStyle = petalColor;
+      ctx.fillRect(f.x - 3, f.y - 1, 8, 4);
+      ctx.fillRect(f.x - 1, f.y - 3, 4, 8);
+      ctx.fillStyle = centerColor;
+      ctx.fillRect(f.x, f.y, 2, 2);
+    });
+    return canvas;
+  }
+
+  drawBerryBushTile(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.drawImage(this.cache['grass_0'], 0, 0);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(size / 2, size - 6, 18, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#2f855a';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#48bb78';
+    ctx.beginPath();
+    ctx.arc(size / 2 - 4, size / 2 - 4, 10, 0, Math.PI * 2);
+    ctx.fill();
+    const berries = [{ x: 16, y: 18 }, { x: 28, y: 20 }, { x: 22, y: 30 }, { x: 30, y: 28 }, { x: 18, y: 28 }];
+    berries.forEach(b => {
+      ctx.fillStyle = '#e53e3e';
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fed7d7';
+      ctx.fillRect(b.x - 1, b.y - 1, 1, 1);
+    });
+    return canvas;
+  }
+
   drawRockTile(size) {
     const { canvas, ctx } = this.createCanvas(size, size);
     ctx.drawImage(this.cache['grass_0'], 0, 0);
@@ -187,6 +274,103 @@ class SpriteGenerator {
     ctx.beginPath();
     ctx.arc(cx - 8, cy - 8, width / 3.4, 0, Math.PI * 2);
     ctx.fill();
+    return canvas;
+  }
+
+  drawTreePineCanopy(width) {
+    const height = width;
+    const { canvas, ctx } = this.createCanvas(width, height);
+    const cx = width / 2;
+    ctx.fillStyle = '#1c4532';
+    ctx.beginPath();
+    ctx.moveTo(cx, 4);
+    ctx.lineTo(cx + 26, width - 8);
+    ctx.lineTo(cx - 26, width - 8);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#22543d';
+    ctx.beginPath();
+    ctx.moveTo(cx, 12);
+    ctx.lineTo(cx + 22, width - 18);
+    ctx.lineTo(cx - 22, width - 18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#2f855a';
+    ctx.beginPath();
+    ctx.moveTo(cx, 20);
+    ctx.lineTo(cx + 16, width - 30);
+    ctx.lineTo(cx - 16, width - 30);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#68d391';
+    ctx.fillRect(cx - 2, 8, 4, 8);
+    return canvas;
+  }
+
+  drawTreeAutumnCanopy(width) {
+    const height = width;
+    const { canvas, ctx } = this.createCanvas(width, height);
+    const cx = width / 2;
+    const cy = height / 2;
+    ctx.fillStyle = '#c05621';
+    ctx.beginPath();
+    ctx.arc(cx, cy, width / 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#dd6b20';
+    ctx.beginPath();
+    ctx.arc(cx - 6, cy - 6, width / 2.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ed8936';
+    ctx.beginPath();
+    ctx.arc(cx - 10, cy - 10, width / 3.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f6e05e';
+    ctx.beginPath();
+    ctx.arc(cx - 12, cy - 12, width / 5, 0, Math.PI * 2);
+    ctx.fill();
+    return canvas;
+  }
+
+  drawTreeMagicTrunk(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.drawImage(this.cache['grass_0'], 0, 0);
+    ctx.fillStyle = 'rgba(128, 90, 213, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(size / 2, size - 4, 18, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(size / 2 - 8, 12, 16, 32);
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(size / 2 - 6, 14, 4, 28);
+    return canvas;
+  }
+
+  drawTreeMagicCanopy(width) {
+    const height = width;
+    const { canvas, ctx } = this.createCanvas(width, height);
+    const cx = width / 2;
+    const cy = height / 2;
+    ctx.fillStyle = '#553c9a';
+    ctx.beginPath();
+    ctx.arc(cx, cy, width / 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#805ad5';
+    ctx.beginPath();
+    ctx.arc(cx - 6, cy - 6, width / 2.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#9f7aea';
+    ctx.beginPath();
+    ctx.arc(cx - 10, cy - 10, width / 3.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e9d8a6';
+    const sparkles = [{ x: cx - 14, y: cy - 14 }, { x: cx + 10, y: cy - 8 }, { x: cx - 6, y: cy + 12 }];
+    sparkles.forEach(sp => {
+      ctx.fillRect(sp.x - 2, sp.y, 5, 1);
+      ctx.fillRect(sp.x, sp.y - 2, 1, 5);
+    });
     return canvas;
   }
 
