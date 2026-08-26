@@ -65,6 +65,16 @@ export class CorpseManager {
     return null;
   }
 
+  moveCorpse(corpseId, newX, newY) {
+    const corpse = this.corpses.get(corpseId);
+    if (corpse) {
+      corpse.gridX = newX;
+      corpse.gridY = newY;
+      return true;
+    }
+    return false;
+  }
+
   update(now = Date.now()) {
     for (const [id, corpse] of this.corpses.entries()) {
       const stage = corpse.updateStage(now);

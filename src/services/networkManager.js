@@ -150,6 +150,10 @@ export class NetworkManager {
       if (this.onCorpseSpawn) {
         this.onCorpseSpawn(payload);
       }
+    } else if (type === 'corpse_move') {
+      if (this.onCorpseMove) {
+        this.onCorpseMove(payload);
+      }
     } else if (type === 'monster_move') {
       if (this.onMonsterMove) {
         this.onMonsterMove(payload);
@@ -252,6 +256,21 @@ export class NetworkManager {
   // Envia evento de criação de corpo no chão em Tempo Real
   sendCorpseSpawn(corpseData) {
     this.sendBroadcast('corpse_spawn', corpseData);
+  }
+
+  // Envia evento de movimentação/arraste de corpo em Tempo Real
+  sendCorpseMove(corpseId, gridX, gridY) {
+    this.sendBroadcast('corpse_move', { corpseId, gridX, gridY, senderId: this.localPlayer.id });
+  }
+
+  // Atualizar posição do corpo no banco de dados Supabase
+  async updateCorpsePositionInDatabase(corpseId, gridX, gridY) {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      await supabase.from('world_corpses').update({ grid_x: gridX, grid_y: gridY }).eq('id', corpseId);
+    } catch (err) {
+      console.error('Erro ao atualizar posição do corpo no banco:', err);
+    }
   }
 
   // Envia movimento e alvo do monstro em Tempo Real
