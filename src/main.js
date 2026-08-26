@@ -484,8 +484,13 @@ class GameEngine {
       if (this.npcManager && this.shopUI) {
         const npc = this.npcManager.getNpcAt(coords.gridX, coords.gridY);
         if (npc && (npc.type === 'merchant' || npc.id.startsWith('merchant_'))) {
+          if (touchHoldTimer) clearTimeout(touchHoldTimer);
+          if (this.localPlayer) this.localPlayer.clearPath();
+          dragStartCoords = null;
+          draggedCorpse = null;
           npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
-          this.shopUI.openShop(npc.id);
+          const shopId = this.shopUI.shops[npc.id] ? npc.id : 'merchant_magic';
+          this.shopUI.openShop(shopId);
           return;
         }
       }

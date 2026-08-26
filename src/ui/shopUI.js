@@ -34,7 +34,7 @@ export class ShopUI {
   }
 
   openShop(shopId) {
-    const shopData = this.shops[shopId];
+    const shopData = this.shops[shopId] || this.shops['merchant_magic'];
     if (!shopData) return;
 
     this.activeShop = shopData;
@@ -57,8 +57,20 @@ export class ShopUI {
       font-family: system-ui, -apple-system, sans-serif;
     `;
 
-    this.renderModal();
+    // Fechar a loja ao clicar no fundo escuro fora do card
+    this.container.onclick = (e) => {
+      if (e.target === this.container) {
+        this.closeShop();
+      }
+    };
+
     document.body.appendChild(this.container);
+
+    try {
+      this.renderModal();
+    } catch (err) {
+      console.error('Erro ao renderizar modal da loja:', err);
+    }
   }
 
   closeShop() {
