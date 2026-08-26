@@ -107,22 +107,22 @@ export class HudUI {
       </div>
 
       <!-- Modal Flutuante: Loja de Poções, Magias, Armas e Escudos -->
-      <div class="shop-modal-container hidden" id="shop-modal-card">
-        <div class="shop-card">
-          <div class="shop-header">
+      <div class="shop-modal-container hidden" id="shop-modal-card" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; z-index: 100000; pointer-events: auto; font-family: system-ui, -apple-system, sans-serif; box-sizing: border-box;">
+        <div class="shop-card" style="background: rgba(15, 23, 42, 0.98); border: 2px solid #d69e2e; width: 92%; max-width: 440px; border-radius: 16px; padding: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.9); color: #fff; position: relative; z-index: 100001; box-sizing: border-box;">
+          <div class="shop-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 12px; margin-bottom: 16px;">
             <div>
-              <h3 class="shop-title" id="shop-card-title">🧪 Loja do Comerciante</h3>
-              <div class="shop-owner" id="shop-card-owner">Comerciante: Mestre Elzar</div>
+              <h3 class="shop-title" id="shop-card-title" style="margin: 0; font-size: 16px; color: #f6e05e; font-family: 'Cinzel', Georgia, serif; letter-spacing: 0.5px;">🧪 Loja do Comerciante</h3>
+              <div class="shop-owner" id="shop-card-owner" style="font-size: 11.5px; color: #cbd5e0; margin-top: 2px;">Comerciante: Mestre Elzar</div>
             </div>
-            <button class="shop-close-btn" id="btn-close-shop" title="Fechar (Esc)">✕</button>
+            <button class="shop-close-btn" id="btn-close-shop" title="Fechar (Esc)" style="background: transparent; border: none; color: #a0aec0; font-size: 22px; cursor: pointer; padding: 0 6px;">✕</button>
           </div>
 
-          <div class="shop-balance-bar">
+          <div class="shop-balance-bar" style="display: flex; justify-content: space-between; align-items: center; background: rgba(214, 158, 46, 0.12); border: 1px solid #d69e2e; padding: 8px 14px; border-radius: 8px; margin-bottom: 14px;">
             <span style="font-size: 12px; color: #cbd5e0;">Seu Saldo Atual:</span>
             <span style="font-size: 14px; font-weight: bold; color: #f6e05e;" id="shop-card-gold">💰 0 Ouro</span>
           </div>
 
-          <div class="shop-items-list" id="shop-card-items-list"></div>
+          <div class="shop-items-list" id="shop-card-items-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 260px; overflow-y: auto;"></div>
         </div>
       </div>
     `;
@@ -555,11 +555,14 @@ export class HudUI {
 
       const canAfford = playerGold >= itemData.price;
       const btnClass = canAfford ? 'shop-buy-btn can-afford' : 'shop-buy-btn cannot-afford';
+      const btnStyle = canAfford
+        ? 'background: linear-gradient(135deg, #d69e2e, #b7791f); color: #fff; cursor: pointer; box-shadow: 0 2px 8px rgba(214, 158, 46, 0.4);'
+        : 'background: #4a5568; color: #a0aec0; cursor: not-allowed; opacity: 0.6;';
 
       itemsHtml += `
-        <div class="shop-item-row">
+        <div class="shop-item-row" style="display: flex; align-items: center; justify-content: space-between; background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 10px; gap: 12px;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div class="shop-item-icon">
+            <div class="shop-item-icon" style="width: 36px; height: 36px; background: rgba(15, 23, 42, 0.8); border: 1px solid #d69e2e; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">
               ${itemConfig.type === 'consumable' ? '🧪' : itemConfig.type === 'equipment' ? '⚔️' : '📦'}
             </div>
             <div>
@@ -567,7 +570,7 @@ export class HudUI {
               <div style="color: #a0aec0; font-size: 11px;">${itemConfig.description}</div>
             </div>
           </div>
-          <button data-item-id="${itemData.itemId}" data-price="${itemData.price}" class="${btnClass}">
+          <button data-item-id="${itemData.itemId}" data-price="${itemData.price}" class="${btnClass}" style="${btnStyle} border: none; padding: 7px 14px; border-radius: 6px; font-weight: bold; font-size: 12px; white-space: nowrap; flex-shrink: 0;">
             💰 ${itemData.price} Ouro
           </button>
         </div>
