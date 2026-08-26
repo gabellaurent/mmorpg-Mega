@@ -12,7 +12,6 @@ import { CONFIG } from './config.js';
 import { RadialMenu } from './ui/radialMenu.js';
 import { Pathfinder } from './engine/pathfinder.js';
 import { CorpseManager } from './engine/corpseManager.js';
-import { ShopUI } from './ui/shopUI.js';
 
 class GameEngine {
   constructor() {
@@ -102,8 +101,6 @@ class GameEngine {
       (slotIndex) => this.handleUseItem(slotIndex),
       (slotIndex) => this.handleDropItem(slotIndex)
     );
-
-    this.shopUI = new ShopUI(this.localPlayer, this.monsterManager, this.hud);
 
     this.setupControls();
     requestAnimationFrame((now) => this.gameLoop(now));
@@ -481,15 +478,24 @@ class GameEngine {
       }
 
       // 0.5. Toque / Clique em NPC Comerciante (Abrir Loja de Poções/Armas)
-      if (this.npcManager && this.shopUI) {
-        const npc = this.npcManager.getNpcAt(coords.gridX, coords.gridY);
+      if (this.npcManager && this.hud) {
+        let npc = this.npcManager.getNpcAt(coords.gridX, coords.gridY);
+        if (!npc) {
+          // Checa se o jogador clicou adjacente ao comerciante (dist <= 1.5)
+          for (const n of this.npcManager.npcs.values()) {
+            if (n.type === 'merchant' || n.id.startsWith('merchant_')) {
+              const d = Math.max(Math.abs(n.gridX - coords.gridX), Math.abs(n.gridY - coords.gridY));
+              if (d <= 1.5) { npc = n; break; }
+            }
+          }
+        }
         if (npc && (npc.type === 'merchant' || npc.id.startsWith('merchant_'))) {
           if (touchHoldTimer) clearTimeout(touchHoldTimer);
           if (this.localPlayer) this.localPlayer.clearPath();
           if (this.radialMenu) this.radialMenu.close();
           npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
-          const shopId = this.shopUI.shops[npc.id] ? npc.id : 'merchant_magic';
-          this.shopUI.openShop(shopId);
+          const shopId = this.hud.shops[npc.id] ? npc.id : 'merchant_magic';
+          this.hud.openShop(shopId, this.monsterManager);
           dragStartCoords = null;
           draggedCorpse = null;
           return;
@@ -573,13 +579,21 @@ class GameEngine {
       // CASO B: Clique Simples (soltou no MESMO quadro onde clicou) -> Caminhar, Saquear ou Abrir Loja!
       else {
         // Se houver um NPC Comerciante no quadro clicado: Abrir Loja!
-        if (this.npcManager && this.shopUI) {
-          const npc = this.npcManager.getNpcAt(endCoords.gridX, endCoords.gridY);
+        if (this.npcManager && this.hud) {
+          let npc = this.npcManager.getNpcAt(endCoords.gridX, endCoords.gridY);
+          if (!npc) {
+            for (const n of this.npcManager.npcs.values()) {
+              if (n.type === 'merchant' || n.id.startsWith('merchant_')) {
+                const d = Math.max(Math.abs(n.gridX - endCoords.gridX), Math.abs(n.gridY - endCoords.gridY));
+                if (d <= 1.5) { npc = n; break; }
+              }
+            }
+          }
           if (npc && (npc.type === 'merchant' || npc.id.startsWith('merchant_'))) {
             if (this.localPlayer) this.localPlayer.clearPath();
             npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
-            const shopId = this.shopUI.shops[npc.id] ? npc.id : 'merchant_magic';
-            this.shopUI.openShop(shopId);
+            const shopId = this.hud.shops[npc.id] ? npc.id : 'merchant_magic';
+            this.hud.openShop(shopId, this.monsterManager);
             dragStartCoords = null;
             draggedCorpse = null;
             return;

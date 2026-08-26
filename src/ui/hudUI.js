@@ -105,7 +105,53 @@ export class HudUI {
           <button type="submit" class="btn-send">Enviar ↵</button>
         </form>
       </div>
+
+      <!-- Modal Flutuante: Loja de Poções, Magias, Armas e Escudos -->
+      <div class="shop-modal-container hidden" id="shop-modal-card">
+        <div class="shop-card">
+          <div class="shop-header">
+            <div>
+              <h3 class="shop-title" id="shop-card-title">🧪 Loja do Comerciante</h3>
+              <div class="shop-owner" id="shop-card-owner">Comerciante: Mestre Elzar</div>
+            </div>
+            <button class="shop-close-btn" id="btn-close-shop" title="Fechar (Esc)">✕</button>
+          </div>
+
+          <div class="shop-balance-bar">
+            <span style="font-size: 12px; color: #cbd5e0;">Seu Saldo Atual:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #f6e05e;" id="shop-card-gold">💰 0 Ouro</span>
+          </div>
+
+          <div class="shop-items-list" id="shop-card-items-list"></div>
+        </div>
+      </div>
     `;
+
+    this.shops = {
+      merchant_magic: {
+        id: 'merchant_magic',
+        title: '🧪 Loja de Poções & Magia',
+        ownerName: 'Mestre Elzar (Alquimista & Mago)',
+        items: [
+          { itemId: 'health_potion', price: 10 },
+          { itemId: 'mana_potion', price: 25 },
+          { itemId: 'cheese', price: 5 }
+        ]
+      },
+      merchant_armorer: {
+        id: 'merchant_armorer',
+        title: '⚔️ Loja de Armas & Escudos',
+        ownerName: 'Ferreiro Borin (Mestre Armeiro)',
+        items: [
+          { itemId: 'steel_sword', price: 50 },
+          { itemId: 'bronze_shield', price: 40 },
+          { itemId: 'hunting_bow', price: 45 }
+        ]
+      }
+    };
+
+    this.activeShop = null;
+    this.monsterManagerRef = null;
 
     this.attachEvents();
     this.updatePlayerStats();
@@ -144,11 +190,22 @@ export class HudUI {
     const closeStatusBtn = this.container.querySelector('#btn-close-status');
     const closeMapBtn = this.container.querySelector('#btn-close-map');
     const closeChatBtn = this.container.querySelector('#btn-close-chat');
+    const closeShopBtn = this.container.querySelector('#btn-close-shop');
+    const shopModalCard = this.container.querySelector('#shop-modal-card');
 
     if (closeInvBtn) closeInvBtn.addEventListener('click', () => this.toggleInventory(false));
     if (closeStatusBtn) closeStatusBtn.addEventListener('click', () => this.toggleStatus(false));
     if (closeMapBtn) closeMapBtn.addEventListener('click', () => this.toggleMap(false));
     if (closeChatBtn) closeChatBtn.addEventListener('click', () => this.toggleChat(false));
+    if (closeShopBtn) closeShopBtn.addEventListener('click', () => this.closeShop());
+
+    if (shopModalCard) {
+      shopModalCard.addEventListener('click', (e) => {
+        if (e.target === shopModalCard) {
+          this.closeShop();
+        }
+      });
+    }
 
     // Teclas de atalho diretas no PC: I (Mochila), M (Mapa), C (Status), Enter (Chat), Esc (Fechar Tudo)
     window.addEventListener('keydown', (e) => {
@@ -168,8 +225,17 @@ export class HudUI {
         if (e.key === 'Escape') {
           document.activeElement.blur();
           this.toggleChat(false);
+          this.closeShop();
         }
         return;
+      }
+
+      if (e.key === 'Escape') {
+        this.toggleInventory(false);
+        this.toggleStatus(false);
+        this.toggleMap(false);
+        this.toggleChat(false);
+        this.closeShop();
       }
 
       if (e.key === 'i' || e.key === 'I') {
@@ -370,6 +436,9 @@ export class HudUI {
     if (this.isInventoryOpen) {
       this.renderInventory();
     }
+    if (this.activeShop) {
+      this.renderShopModal();
+    }
   }
 
   addChatMessage(sender, text, isSystem = false) {
@@ -439,5 +508,113 @@ export class HudUI {
     return str.replace(/[&<>"']/g, m => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
     })[m]);
+  }
+
+  openShop(shopId, monsterManager = null) {
+    const shopData = this.shops[shopId] || this.shops['merchant_magic'];
+    if (!shopData) return;
+
+    this.activeShop = shopData;
+    if (monsterManager) this.monsterManagerRef = monsterManager;
+
+    const modalCard = this.container.querySelector('#shop-modal-card');
+    const titleEl = this.container.querySelector('#shop-card-title');
+    const ownerEl = this.container.querySelector('#shop-card-owner');
+
+    if (!modalCard || !titleEl || !ownerEl) return;
+
+    titleEl.textContent = shopData.title;
+    ownerEl.textContent = `Comerciante: ${shopData.ownerName}`;
+
+    this.renderShopModal();
+    modalCard.classList.remove('hidden');
+  }
+
+  closeShop() {
+    const modalCard = this.container.querySelector('#shop-modal-card');
+    if (modalCard) {
+      modalCard.classList.add('hidden');
+    }
+    this.activeShop = null;
+  }
+
+  renderShopModal() {
+    if (!this.activeShop) return;
+
+    const goldEl = this.container.querySelector('#shop-card-gold');
+    const listEl = this.container.querySelector('#shop-card-items-list');
+    if (!goldEl || !listEl) return;
+
+    const playerGold = (this.localPlayer && typeof this.localPlayer.gold === 'number') ? this.localPlayer.gold : 0;
+    goldEl.textContent = `💰 ${playerGold} Ouro`;
+
+    let itemsHtml = '';
+    this.activeShop.items.forEach(itemData => {
+      const itemConfig = CONFIG.ITEMS[itemData.itemId];
+      if (!itemConfig) return;
+
+      const canAfford = playerGold >= itemData.price;
+      const btnClass = canAfford ? 'shop-buy-btn can-afford' : 'shop-buy-btn cannot-afford';
+
+      itemsHtml += `
+        <div class="shop-item-row">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="shop-item-icon">
+              ${itemConfig.type === 'consumable' ? '🧪' : itemConfig.type === 'equipment' ? '⚔️' : '📦'}
+            </div>
+            <div>
+              <div style="color: #f7fafc; font-weight: bold; font-size: 13.5px;">${itemConfig.name}</div>
+              <div style="color: #a0aec0; font-size: 11px;">${itemConfig.description}</div>
+            </div>
+          </div>
+          <button data-item-id="${itemData.itemId}" data-price="${itemData.price}" class="${btnClass}">
+            💰 ${itemData.price} Ouro
+          </button>
+        </div>
+      `;
+    });
+
+    listEl.innerHTML = itemsHtml;
+
+    listEl.querySelectorAll('.shop-buy-btn.can-afford').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = e.currentTarget.getAttribute('data-item-id');
+        const price = parseInt(e.currentTarget.getAttribute('data-price'), 10);
+        this.buyShopItem(itemId, price);
+      };
+    });
+  }
+
+  buyShopItem(itemId, price) {
+    if (!this.localPlayer) return;
+
+    const playerGold = (typeof this.localPlayer.gold === 'number') ? this.localPlayer.gold : 0;
+    if (playerGold < price) {
+      if (this.monsterManagerRef) {
+        this.monsterManagerRef.addFloatingText('⚠️ Ouro Insuficiente!', this.localPlayer.gridX, this.localPlayer.gridY, '#f56565');
+      }
+      return;
+    }
+
+    const added = this.localPlayer.addItem(itemId, 1);
+    if (!added) {
+      if (this.monsterManagerRef) {
+        this.monsterManagerRef.addFloatingText('🎒 Inventário Cheio!', this.localPlayer.gridX, this.localPlayer.gridY, '#ed8936');
+      }
+      return;
+    }
+
+    this.localPlayer.gold -= price;
+
+    const itemConfig = CONFIG.ITEMS[itemId];
+    const itemName = itemConfig ? itemConfig.name : itemId;
+
+    if (this.monsterManagerRef) {
+      this.monsterManagerRef.addFloatingText(`+1 ${itemName}`, this.localPlayer.gridX, this.localPlayer.gridY, '#48bb78');
+    }
+
+    this.updatePlayerStats();
+    this.renderShopModal();
   }
 }
