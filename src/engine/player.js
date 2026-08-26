@@ -198,26 +198,26 @@ export class Player {
     }, 4000);
   }
 
-  // Retorna o bônus de Ataque concedido por armas/equipamentos no inventário
+  // Retorna o bônus da MELHOR arma no inventário (evita acúmulo infinito se comprar 10 espadas)
   getBonusAttack() {
-    let bonus = 0;
-    if (!this.inventory) return bonus;
+    let maxBonus = 0;
+    if (!this.inventory) return maxBonus;
     this.inventory.forEach(slot => {
       if (slot && slot.itemId) {
-        if (slot.itemId === 'steel_sword') bonus += 8;
-        if (slot.itemId === 'hunting_bow') bonus += 6;
+        if (slot.itemId === 'steel_sword') maxBonus = Math.max(maxBonus, 8);
+        if (slot.itemId === 'hunting_bow') maxBonus = Math.max(maxBonus, 6);
       }
     });
-    return bonus;
+    return maxBonus;
   }
 
-  // Retorna o bônus de Defesa concedido por escudos/equipamentos no inventário
+  // Retorna o bônus do MELHOR escudo no inventário
   getBonusDefense() {
-    let bonus = 0;
-    if (!this.inventory) return bonus;
+    let maxBonus = 0;
+    if (!this.inventory) return maxBonus;
     this.inventory.forEach(slot => {
-      if (slot && slot.itemId === 'bronze_shield') bonus += 5;
+      if (slot && slot.itemId === 'bronze_shield') maxBonus = Math.max(maxBonus, 5);
     });
-    return bonus;
+    return maxBonus;
   }
 }
