@@ -34,6 +34,7 @@ export class GameMap {
         let type = TILE_TYPES.GRASS;
         let isSolid = false;
         let spriteKey = `grass_${variant}`;
+        let canopyKey = 'tree_canopy';
 
         // 1. Portão Sul e Pilares (Grid X:14..17, Y:31)
         if ((x === 15 || x === 16) && y === this.height - 1) {
