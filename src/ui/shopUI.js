@@ -57,8 +57,11 @@ export class ShopUI {
       font-family: system-ui, -apple-system, sans-serif;
     `;
 
-    // Fechar a loja ao clicar no fundo escuro fora do card
+    const openTime = Date.now();
+
+    // Fechar a loja ao clicar no fundo escuro fora do card (após o clique inicial)
     this.container.onclick = (e) => {
+      if (Date.now() - openTime < 250) return; // Ignora cliques imediatos do instante de abertura
       if (e.target === this.container) {
         this.closeShop();
       }

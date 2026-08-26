@@ -486,12 +486,6 @@ class GameEngine {
         if (npc && (npc.type === 'merchant' || npc.id.startsWith('merchant_'))) {
           if (touchHoldTimer) clearTimeout(touchHoldTimer);
           if (this.localPlayer) this.localPlayer.clearPath();
-          dragStartCoords = null;
-          draggedCorpse = null;
-          npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
-          const shopId = this.shopUI.shops[npc.id] ? npc.id : 'merchant_magic';
-          this.shopUI.openShop(shopId);
-          return;
         }
       }
 
@@ -569,8 +563,22 @@ class GameEngine {
           }
         }
       }
-      // CASO B: Clique Simples (soltou no MESMO quadro onde clicou) -> Caminhar e/ou Saquear!
+      // CASO B: Clique Simples (soltou no MESMO quadro onde clicou) -> Caminhar, Saquear ou Abrir Loja!
       else {
+        // Se houver um NPC Comerciante no quadro clicado: Abrir Loja!
+        if (this.npcManager && this.shopUI) {
+          const npc = this.npcManager.getNpcAt(endCoords.gridX, endCoords.gridY);
+          if (npc && (npc.type === 'merchant' || npc.id.startsWith('merchant_'))) {
+            if (this.localPlayer) this.localPlayer.clearPath();
+            npc.setChatBubble(`Bem-vindo à minha loja! 🛍️`);
+            const shopId = this.shopUI.shops[npc.id] ? npc.id : 'merchant_magic';
+            this.shopUI.openShop(shopId);
+            dragStartCoords = null;
+            draggedCorpse = null;
+            return;
+          }
+        }
+
         // Se houver um corpo no quadro clicado: saquear se estiver adjacente
         if (this.corpseManager) {
           const corpse = this.corpseManager.getCorpseAt(endCoords.gridX, endCoords.gridY);
