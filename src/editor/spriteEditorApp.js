@@ -50,8 +50,10 @@ class SpriteEditorApp {
     this.btnEraser = document.getElementById('tool-eraser');
     this.btnPicker = document.getElementById('tool-picker');
 
+    this.btnApplyGame = document.getElementById('btn-apply-game');
     this.btnDownload = document.getElementById('btn-download');
     this.btnCopyCode = document.getElementById('btn-copy-code');
+    this.btnResetSprite = document.getElementById('btn-reset-sprite');
     this.btnClear = document.getElementById('btn-clear');
   }
 
@@ -115,9 +117,27 @@ class SpriteEditorApp {
       this.isMouseDown = false;
     });
 
+    this.btnApplyGame.addEventListener('click', () => this.applyToGame());
     this.btnDownload.addEventListener('click', () => this.downloadPNG());
     this.btnCopyCode.addEventListener('click', () => this.copyDataURI());
+    this.btnResetSprite.addEventListener('click', () => this.resetSprite());
     this.btnClear.addEventListener('click', () => this.clearCanvas());
+  }
+
+  applyToGame() {
+    const key = this.spriteSelect.value;
+    const dataUri = this.preview1x.toDataURL('image/png');
+    spriteGen.saveCustomSprite(key, dataUri);
+    alert(`🚀 Sprite '${key}' APLICADO COM SUCESSO NO SEU JOGO!\n\nSua arte personalizada já está salva no navegador e será exibida ao voltar para o jogo!`);
+  }
+
+  resetSprite() {
+    const key = this.spriteSelect.value;
+    if (confirm(`Deseja restaurar o sprite padrão de '${key}'?`)) {
+      spriteGen.resetCustomSprite(key);
+      this.loadSpritePreset(key);
+      alert(`↺ Sprite '${key}' restaurado para o padrão original.`);
+    }
   }
 
   getGridCoords(e) {

@@ -86,6 +86,63 @@ class SpriteGenerator {
     this.cache['item_health_potion'] = this.drawHealthPotionSprite(size);
     this.cache['item_cheese'] = this.drawCheeseSprite(size);
     this.cache['item_rat_tail'] = this.drawRatTailSprite(size);
+
+    // Carregar sprites customizados do usuário salvos no localStorage
+    this.loadCustomOverrides();
+  }
+
+  loadCustomOverrides() {
+    try {
+      const savedCustom = localStorage.getItem('mmorpg_custom_sprites');
+      if (!savedCustom) return;
+      const customDict = JSON.parse(savedCustom);
+
+      Object.keys(customDict).forEach(key => {
+        const dataUri = customDict[key];
+        if (dataUri) {
+          this.applyDataUriToCache(key, dataUri);
+        }
+      });
+    } catch (e) {
+      console.warn('Erro ao carregar sprites customizados do localStorage:', e);
+    }
+  }
+
+  applyDataUriToCache(key, dataUri) {
+    const img = new Image();
+    img.onload = () => {
+      const size = (key.includes('canopy') ? CONFIG.TILE_SIZE * 1.6 : CONFIG.TILE_SIZE);
+      const { canvas, ctx } = this.createCanvas(size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+      this.cache[key] = canvas;
+    };
+    img.src = dataUri;
+  }
+
+  saveCustomSprite(key, dataUri) {
+    try {
+      const savedCustom = localStorage.getItem('mmorpg_custom_sprites');
+      const customDict = savedCustom ? JSON.parse(savedCustom) : {};
+      customDict[key] = dataUri;
+      localStorage.setItem('mmorpg_custom_sprites', JSON.stringify(customDict));
+      this.applyDataUriToCache(key, dataUri);
+    } catch (e) {
+      console.error('Erro ao salvar sprite customizado:', e);
+    }
+  }
+
+  resetCustomSprite(key) {
+    try {
+      const savedCustom = localStorage.getItem('mmorpg_custom_sprites');
+      if (!savedCustom) return;
+      const customDict = JSON.parse(savedCustom);
+      delete customDict[key];
+      localStorage.setItem('mmorpg_custom_sprites', JSON.stringify(customDict));
+      this.initialized = false;
+      this.init();
+    } catch (e) {
+      console.error('Erro ao resetar sprite customizado:', e);
+    }
   }
 
   drawGrassTile(size, variant) {
