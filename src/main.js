@@ -81,6 +81,7 @@ class GameEngine {
       (pickupPayload) => this.itemManager.removeGroundItem(pickupPayload.id)
     );
     this.network.onCorpseSpawn = (corpseData) => this.corpseManager.spawnCorpse(corpseData);
+    this.network.onMonsterMove = (payload) => this.monsterManager.handleRemoteMonsterMove(payload);
     this.currentMapId = 'map-1';
     this.network.connect('map-1');
     this.hydrateWorldState('map-1');
@@ -696,6 +697,7 @@ class GameEngine {
       this.monsterManager.update(
         now, 
         this.localPlayer, 
+        this.remotePlayers,
         (gx, gy, mId) => this.isTileOccupiedByEntity(gx, gy, mId),
         (damageTaken) => {
           this.localPlayer.hp = Math.max(0, this.localPlayer.hp - damageTaken);
@@ -729,7 +731,8 @@ class GameEngine {
             this.hud.updatePlayerStats();
             this.hud.addChatMessage('Sistema', '☠️ <strong>Você caiu em batalha!</strong> Seu corpo permanece no local enquanto você renasce na praça central...', true);
           }
-        }
+        },
+        this.network
       );
     }
 

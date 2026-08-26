@@ -150,6 +150,10 @@ export class NetworkManager {
       if (this.onCorpseSpawn) {
         this.onCorpseSpawn(payload);
       }
+    } else if (type === 'monster_move') {
+      if (this.onMonsterMove) {
+        this.onMonsterMove(payload);
+      }
     }
   }
 
@@ -233,6 +237,17 @@ export class NetworkManager {
   // Envia evento de criação de corpo no chão em Tempo Real
   sendCorpseSpawn(corpseData) {
     this.sendBroadcast('corpse_spawn', corpseData);
+  }
+
+  // Envia movimento e alvo do monstro em Tempo Real
+  sendMonsterMove(ratId, gridX, gridY, targetPlayerId) {
+    this.sendBroadcast('monster_move', {
+      ratId,
+      gridX,
+      gridY,
+      targetPlayerId,
+      senderId: this.localPlayer.id
+    });
   }
 
   sendChat(text) {
