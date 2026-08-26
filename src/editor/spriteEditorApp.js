@@ -229,7 +229,15 @@ class SpriteEditorApp {
   render() {
     this.ctx.clearRect(0, 0, this.canvasDisplaySize, this.canvasDisplaySize);
 
-    // Desenhar pixels
+    // 1. Desenhar fundo xadrez indicador de transparência (Estilo Photoshop / Aseprite)
+    for (let y = 0; y < this.gridSize; y++) {
+      for (let x = 0; x < this.gridSize; x++) {
+        this.ctx.fillStyle = (x + y) % 2 === 0 ? '#26292e' : '#1a1d21';
+        this.ctx.fillRect(x * this.pixelSize, y * this.pixelSize, this.pixelSize, this.pixelSize);
+      }
+    }
+
+    // 2. Desenhar pixels pintados
     for (let y = 0; y < this.gridSize; y++) {
       for (let x = 0; x < this.gridSize; x++) {
         if (this.pixels[y][x]) {
@@ -239,8 +247,8 @@ class SpriteEditorApp {
       }
     }
 
-    // Desenhar grade de guia
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    // 3. Desenhar grade de guia visual
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     this.ctx.lineWidth = 1;
     for (let i = 0; i <= this.gridSize; i++) {
       this.ctx.beginPath();
@@ -258,7 +266,10 @@ class SpriteEditorApp {
   }
 
   updatePreviews() {
-    const size = CONFIG.TILE_SIZE || 48;
+    const size = 48;
+    this.ctx1x.imageSmoothingEnabled = false;
+    this.ctx2x.imageSmoothingEnabled = false;
+
     this.ctx1x.clearRect(0, 0, 48, 48);
     this.ctx2x.clearRect(0, 0, 96, 96);
 
@@ -269,10 +280,10 @@ class SpriteEditorApp {
       for (let x = 0; x < this.gridSize; x++) {
         if (this.pixels[y][x]) {
           this.ctx1x.fillStyle = this.pixels[y][x];
-          this.ctx1x.fillRect(x * scale1, y * scale1, scale1, scale1);
+          this.ctx1x.fillRect(Math.floor(x * scale1), Math.floor(y * scale1), Math.ceil(scale1), Math.ceil(scale1));
 
           this.ctx2x.fillStyle = this.pixels[y][x];
-          this.ctx2x.fillRect(x * scale2, y * scale2, scale2, scale2);
+          this.ctx2x.fillRect(Math.floor(x * scale2), Math.floor(y * scale2), Math.ceil(scale2), Math.ceil(scale2));
         }
       }
     }

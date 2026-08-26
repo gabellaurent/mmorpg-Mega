@@ -111,8 +111,10 @@ class SpriteGenerator {
   applyDataUriToCache(key, dataUri) {
     const img = new Image();
     img.onload = () => {
-      const size = (key.includes('canopy') ? CONFIG.TILE_SIZE * 1.6 : CONFIG.TILE_SIZE);
+      const size = (key.includes('canopy') ? Math.round(CONFIG.TILE_SIZE * 1.6) : CONFIG.TILE_SIZE);
       const { canvas, ctx } = this.createCanvas(size, size);
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, size, size);
       ctx.drawImage(img, 0, 0, size, size);
       this.cache[key] = canvas;
     };
