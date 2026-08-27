@@ -946,6 +946,15 @@ class GameEngine {
   }
 }
 
+// Limpeza automática de caches antigos do navegador e desativação de Service Workers obsoletos
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (let registration of registrations) {
+      registration.unregister();
+    }
+  });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   new GameEngine();
 });
