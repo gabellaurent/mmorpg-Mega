@@ -15,8 +15,14 @@ export class Renderer {
     this.cameraX = 0;
     this.cameraY = 0;
     this.showGridOverlay = false;
+    this.projectionMode = 'isometric'; // 'isometric' (45° 3D 3-Faces Cubos) ou 'orthogonal'
 
     this.resize();
+  }
+
+  toggleProjectionMode() {
+    this.projectionMode = this.projectionMode === 'isometric' ? 'orthogonal' : 'isometric';
+    return this.projectionMode;
   }
 
   resize() {
@@ -184,13 +190,10 @@ export class Renderer {
     // 3d. Ordenar TUDO pela coordenada Y (Profundidade: de Cima para Baixo)
     renderQueue.sort((a, b) => a.sortY - b.sortY);
 
-    // 3e. Renderizar Fila Ordenada por Profundidade
+    // 3e. Renderizar Fila Ordenada por Profundidade (com Extrusão 3D a 45°)
     renderQueue.forEach(item => {
       if (item.type === 'tile_object') {
-        const overlaySpr = spriteGen.get(item.tile.spriteKey);
-        if (overlaySpr) {
-          ctx.drawImage(overlaySpr, item.x * tileSize, item.y * tileSize, tileSize, tileSize);
-        }
+        this.draw3DBlockWithHeight(ctx, item.x, item.y, tileSize, item.tile);
       } else if (item.type === 'monster') {
         this.renderMonster(item.monster, item.isLocked);
       } else if (item.type === 'player') {
@@ -286,6 +289,33 @@ export class Renderer {
       } catch (err) {
         // Silenciosamente previne travamento do gameLoop
       }
+    }
+  }
+
+  // Desenha um Bloco / Estrutura em Extrusão 3D com Ângulo de 45°
+  draw3DBlockWithHeight(ctx, x, y, tileSize, tile) {
+    const rx = x * tileSize;
+    const ry = y * tileSize;
+    const key = tile.spriteKey || '';
+    const isSolid = tile.isSolid;
+
+    const spr = spriteGen.get(key);
+    if (!spr) return;
+
+    // Se for um elemento sólido (Parede 3D, Cerca, Rocha, Casa, Móvel, Montanha)
+    if (isSolid) {
+      const height = 16; // Extrusão de Altura 3D para projetar em perspectiva 45°
+
+      // 1. Sombra 3D projetada na base do chão
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(rx + tileSize / 2, ry + tileSize - 2, tileSize / 2 - 2, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Extrusão da Parede/Bloco (Deslocamento vertical de -16px revelando as 3 faces 3D)
+      ctx.drawImage(spr, rx, ry - height, tileSize, tileSize + height / 2);
+    } else {
+      ctx.drawImage(spr, rx, ry, tileSize, tileSize);
     }
   }
 
