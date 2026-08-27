@@ -49,11 +49,25 @@ export const CONFIG = {
     STAIRS_STONE: 33,
     LADDER: 34,
     HILL_WALL: 35,
-    HILL_CORNER: 36
+    HILL_CORNER: 36,
+    WALL_WOOD_FRONT: 37,
+    WALL_WOOD_SIDE: 38,
+    WALL_WOOD_CORNER_TL: 39,
+    WALL_WOOD_CORNER_TR: 40,
+    WALL_WOOD_CORNER_BL: 41,
+    WALL_WOOD_CORNER_BR: 42,
+    WALL_WOOD_PILLAR: 43,
+    WALL_STONE_FRONT: 44,
+    WALL_STONE_SIDE: 45,
+    WALL_STONE_CORNER_TL: 46,
+    WALL_STONE_CORNER_TR: 47,
+    WALL_STONE_CORNER_BL: 48,
+    WALL_STONE_CORNER_BR: 49,
+    WALL_STONE_PILLAR: 50
   },
 
   // Flags de Colisão por tipo de Tile
-  SOLID_TILES: [2, 3, 4, 8, 9, 12, 13, 14, 15, 18, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 36], // HILL_WALL e HILL_CORNER são sólidos
+  SOLID_TILES: [2, 3, 4, 8, 9, 12, 13, 14, 15, 18, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50], // Paredes 3D são sólidas
 
   // Outfits de Personagens disponíveis
   CLASSES: [

@@ -557,11 +557,36 @@ export class GameMap {
           isSolid = false;
           spriteKey = 'house_door';
         }
-        // 2. Paredes de Madeira da Casa (Borda do Cômodo)
-        else if (y === 1 || x === 1 || x === 10 || y === 10) {
-          type = TILE_TYPES.WALL_WOOD;
+        // 2. Cantos e Paredes 3D da Casa em 3 Faces (Topo, Frente e Lado)
+        else if (x === 1 && y === 1) {
+          type = TILE_TYPES.WALL_WOOD_CORNER_TL;
           isSolid = true;
-          spriteKey = 'wall_wood';
+          spriteKey = 'wall_wood_corner_tl';
+        }
+        else if (x === 10 && y === 1) {
+          type = TILE_TYPES.WALL_WOOD_CORNER_TR;
+          isSolid = true;
+          spriteKey = 'wall_wood_corner_tr';
+        }
+        else if (x === 1 && y === 10) {
+          type = TILE_TYPES.WALL_WOOD_CORNER_BL;
+          isSolid = true;
+          spriteKey = 'wall_wood_corner_bl';
+        }
+        else if (x === 10 && y === 10) {
+          type = TILE_TYPES.WALL_WOOD_CORNER_BR;
+          isSolid = true;
+          spriteKey = 'wall_wood_corner_br';
+        }
+        else if (y === 1 || (y === 10 && x !== 6)) {
+          type = TILE_TYPES.WALL_WOOD_FRONT;
+          isSolid = true;
+          spriteKey = 'wall_wood_front';
+        }
+        else if (x === 1 || x === 10) {
+          type = TILE_TYPES.WALL_WOOD_SIDE;
+          isSolid = true;
+          spriteKey = 'wall_wood_side';
         }
         // 3. Fundo Preto (Vazio / Void) em Volta da Casa
         else if (x === 0 || y === 0 || x === 11 || y === 11) {
@@ -602,7 +627,7 @@ export class GameMap {
     }
   }
 
-  // Gera o layout do 2º Andar / Sobrado da Casinha (12x12)
+  // Gera o layout do 2º Andar / Sobrado da Casinha (12x12 com Paredes 3D)
   generateHouseSecondFloorMap() {
     const { TILE_TYPES } = CONFIG;
     this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
@@ -625,11 +650,36 @@ export class GameMap {
           isSolid = true;
           spriteKey = 'fence_h';
         }
-        // 3. Paredes de Madeira do Sobrado
-        else if (y === 1 || x === 1 || x === 10 || (y === 9 && (x < 4 || x > 7))) {
-          type = TILE_TYPES.WALL_WOOD;
+        // 3. Cantos e Paredes 3D do Sobrado
+        else if (x === 1 && y === 1) {
+          type = TILE_TYPES.WALL_WOOD_CORNER_TL;
           isSolid = true;
-          spriteKey = 'wall_wood';
+          spriteKey = 'wall_wood_corner_tl';
+        }
+        else if (x === 10 && y === 1) {
+          type = TILE_TYPES.WALL_WOOD_CORNER_TR;
+          isSolid = true;
+          spriteKey = 'wall_wood_corner_tr';
+        }
+        else if (x === 1 && y === 9) {
+          type = TILE_TYPES.WALL_WOOD_CORNER_BL;
+          isSolid = true;
+          spriteKey = 'wall_wood_corner_bl';
+        }
+        else if (x === 10 && y === 9) {
+          type = TILE_TYPES.WALL_WOOD_CORNER_BR;
+          isSolid = true;
+          spriteKey = 'wall_wood_corner_br';
+        }
+        else if (y === 1 || (y === 9 && (x < 4 || x > 7))) {
+          type = TILE_TYPES.WALL_WOOD_FRONT;
+          isSolid = true;
+          spriteKey = 'wall_wood_front';
+        }
+        else if (x === 1 || x === 10) {
+          type = TILE_TYPES.WALL_WOOD_SIDE;
+          isSolid = true;
+          spriteKey = 'wall_wood_side';
         }
         // 4. Vazio em Volta da Casa
         else if (x === 0 || y === 0 || x === 11 || y === 10 || y === 11) {

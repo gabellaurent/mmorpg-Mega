@@ -90,6 +90,23 @@ class SpriteGenerator {
     this.cache['hill_wall'] = this.drawHillWallSprite(size);
     this.cache['hill_corner'] = this.drawHillCornerSprite(size);
 
+    // Paredes 3D em 3 Faces (Topo, Frente, Lado) Estilo Tibia
+    this.cache['wall_wood_front'] = this.drawWallWoodFrontSprite(size);
+    this.cache['wall_wood_side'] = this.drawWallWoodSideSprite(size);
+    this.cache['wall_wood_corner_tl'] = this.drawWallWoodCornerTLSprite(size);
+    this.cache['wall_wood_corner_tr'] = this.drawWallWoodCornerTRSprite(size);
+    this.cache['wall_wood_corner_bl'] = this.drawWallWoodCornerBLSprite(size);
+    this.cache['wall_wood_corner_br'] = this.drawWallWoodCornerBRSprite(size);
+    this.cache['wall_wood_pillar'] = this.drawWallWoodPillarSprite(size);
+
+    this.cache['wall_stone_front'] = this.drawWallStoneFrontSprite(size);
+    this.cache['wall_stone_side'] = this.drawWallStoneSideSprite(size);
+    this.cache['wall_stone_corner_tl'] = this.drawWallStoneCornerTLSprite(size);
+    this.cache['wall_stone_corner_tr'] = this.drawWallStoneCornerTRSprite(size);
+    this.cache['wall_stone_corner_bl'] = this.drawWallStoneCornerBLSprite(size);
+    this.cache['wall_stone_corner_br'] = this.drawWallStoneCornerBRSprite(size);
+    this.cache['wall_stone_pillar'] = this.drawWallStonePillarSprite(size);
+
     // 3. Monstros: Rat, Rotworm, Lobo, Aranha, Goblin e Guardião de Magma (Boss)
     this.cache['rat'] = this.drawRatSprite(size);
     this.cache['rotworm'] = this.drawRotwormSprite(size);
@@ -1987,6 +2004,405 @@ class SpriteGenerator {
     ctx.fillStyle = '#718096';
     ctx.fillRect(2, 2, size - 4, 2);
     ctx.fillRect(size - 4, 2, 2, size - 4);
+
+    return canvas;
+  }
+
+  // --- RENDERIZADORES DE PAREDES 3D EM 3 FACES (TOPO, FRENTE, LADO) ESTILO TIBIA ---
+
+  // 1. PAREDE DE MADEIRA FRONTAL (Face Frontal + Topo Iluminado)
+  drawWallWoodFrontSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(0, size - 4, size, 4);
+
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(0, 10, size, size - 14);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(2, 12, size - 4, size - 18);
+
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(14, 10, 3, size - 14);
+    ctx.fillRect(30, 10, 3, size - 14);
+
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(0, 26, size, 4);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(0, 26, size, 1);
+
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(0, 0, size, 10);
+    ctx.fillStyle = '#a06d3b';
+    ctx.fillRect(1, 1, size - 2, 8);
+    ctx.fillStyle = '#c79257';
+    ctx.fillRect(1, 1, size - 2, 2);
+
+    return canvas;
+  }
+
+  // 2. PAREDE DE MADEIRA LATERAL (Face Lateral 3D + Topo)
+  drawWallWoodSideSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const px = size / 2 - 6;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(px + 12, 0, 6, size);
+
+    ctx.fillStyle = '#341d0b';
+    ctx.fillRect(px - 2, 0, 14, size);
+    ctx.fillStyle = '#523114';
+    ctx.fillRect(px, 0, 10, size);
+
+    ctx.fillStyle = '#211005';
+    ctx.fillRect(px - 2, 8, 14, 3);
+    ctx.fillRect(px - 2, size - 12, 14, 3);
+
+    ctx.fillStyle = '#7a4e23';
+    ctx.fillRect(px, 0, 10, 6);
+    ctx.fillStyle = '#a06d3b';
+    ctx.fillRect(px + 1, 0, 8, 2);
+
+    return canvas;
+  }
+
+  // 3. CANTO 3D SUPERIOR ESQUERDO
+  drawWallWoodCornerTLSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(cx - 6, cy + 10, size / 2 + 6, 6);
+
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx, cy - 6, size / 2, 18);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx, cy - 4, size / 2, 14);
+
+    ctx.fillStyle = '#341d0b';
+    ctx.fillRect(cx - 6, cy, 12, size / 2);
+    ctx.fillStyle = '#523114';
+    ctx.fillRect(cx - 4, cy, 8, size / 2);
+
+    ctx.fillStyle = '#211005';
+    ctx.fillRect(cx - 8, cy - 14, 16, 26);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 6, cy - 14, 12, 26);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx - 4, cy - 12, 8, 24);
+
+    ctx.fillStyle = '#a06d3b';
+    ctx.fillRect(cx - 6, cy - 14, 12, 4);
+    ctx.fillStyle = '#c79257';
+    ctx.fillRect(cx - 6, cy - 14, 12, 2);
+
+    return canvas;
+  }
+
+  // 4. CANTO 3D SUPERIOR DIREITO
+  drawWallWoodCornerTRSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(0, cy - 6, cx, 18);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(0, cy - 4, cx, 14);
+
+    ctx.fillStyle = '#341d0b';
+    ctx.fillRect(cx - 6, cy, 12, size / 2);
+    ctx.fillStyle = '#523114';
+    ctx.fillRect(cx - 4, cy, 8, size / 2);
+
+    ctx.fillStyle = '#211005';
+    ctx.fillRect(cx - 8, cy - 14, 16, 26);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 6, cy - 14, 12, 26);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx - 4, cy - 12, 8, 24);
+
+    ctx.fillStyle = '#a06d3b';
+    ctx.fillRect(cx - 6, cy - 14, 12, 4);
+    ctx.fillStyle = '#c79257';
+    ctx.fillRect(cx - 6, cy - 14, 12, 2);
+
+    return canvas;
+  }
+
+  // 5. CANTO 3D INFERIOR ESQUERDO
+  drawWallWoodCornerBLSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx, cy - 6, size / 2, 18);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx, cy - 4, size / 2, 14);
+
+    ctx.fillStyle = '#341d0b';
+    ctx.fillRect(cx - 6, 0, 12, cy);
+    ctx.fillStyle = '#523114';
+    ctx.fillRect(cx - 4, 0, 8, cy);
+
+    ctx.fillStyle = '#211005';
+    ctx.fillRect(cx - 8, cy - 14, 16, 26);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 6, cy - 14, 12, 26);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx - 4, cy - 12, 8, 24);
+
+    ctx.fillStyle = '#a06d3b';
+    ctx.fillRect(cx - 6, cy - 14, 12, 4);
+    ctx.fillStyle = '#c79257';
+    ctx.fillRect(cx - 6, cy - 14, 12, 2);
+
+    return canvas;
+  }
+
+  // 6. CANTO 3D INFERIOR DIREITO
+  drawWallWoodCornerBRSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(0, cy - 6, cx, 18);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(0, cy - 4, cx, 14);
+
+    ctx.fillStyle = '#341d0b';
+    ctx.fillRect(cx - 6, 0, 12, cy);
+    ctx.fillStyle = '#523114';
+    ctx.fillRect(cx - 4, 0, 8, cy);
+
+    ctx.fillStyle = '#211005';
+    ctx.fillRect(cx - 8, cy - 14, 16, 26);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 6, cy - 14, 12, 26);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx - 4, cy - 12, 8, 24);
+
+    ctx.fillStyle = '#a06d3b';
+    ctx.fillRect(cx - 6, cy - 14, 12, 4);
+    ctx.fillStyle = '#c79257';
+    ctx.fillRect(cx - 6, cy - 14, 12, 2);
+
+    return canvas;
+  }
+
+  // 7. PILAR DE MADEIRA 3D COM 3 FACES (Topo, Frente e Lado)
+  drawWallWoodPillarSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const px = size / 2 - 7;
+    const py = size / 2 - 12;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(size / 2 + 4, size / 2 + 10, 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#211005';
+    ctx.fillRect(px, py, 14, 26);
+
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(px + 1, py + 6, 8, 19);
+
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(px + 9, py + 6, 4, 19);
+
+    ctx.fillStyle = '#a06d3b';
+    ctx.fillRect(px + 1, py + 1, 12, 5);
+    ctx.fillStyle = '#c79257';
+    ctx.fillRect(px + 1, py + 1, 12, 2);
+
+    return canvas;
+  }
+
+  // --- VARIAÇÃO DE PEDRA TRABALHADA (WALL STONE 3D - 3 FACES) ---
+
+  drawWallStoneFrontSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(0, size - 4, size, 4);
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(0, 10, size, size - 14);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(2, 12, size - 4, size - 18);
+
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(0, 22, size, 2);
+    ctx.fillRect(16, 12, 2, 10);
+    ctx.fillRect(32, 12, 2, 10);
+    ctx.fillRect(24, 24, 2, 10);
+
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(0, 0, size, 10);
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(1, 1, size - 2, 8);
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(1, 1, size - 2, 2);
+
+    return canvas;
+  }
+
+  drawWallStoneSideSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const px = size / 2 - 6;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(px + 12, 0, 6, size);
+
+    ctx.fillStyle = '#171923';
+    ctx.fillRect(px - 2, 0, 14, size);
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(px, 0, 10, size);
+
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(px, 0, 10, 6);
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(px + 1, 0, 8, 2);
+
+    return canvas;
+  }
+
+  drawWallStoneCornerTLSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(cx, cy - 6, size / 2, 18);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(cx, cy - 4, size / 2, 14);
+
+    ctx.fillStyle = '#171923';
+    ctx.fillRect(cx - 6, cy, 12, size / 2);
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(cx - 4, cy, 8, size / 2);
+
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(cx - 8, cy - 14, 16, 26);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(cx - 6, cy - 14, 12, 26);
+
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(cx - 6, cy - 14, 12, 4);
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(cx - 6, cy - 14, 12, 2);
+
+    return canvas;
+  }
+
+  drawWallStoneCornerTRSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(0, cy - 6, cx, 18);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(0, cy - 4, cx, 14);
+
+    ctx.fillStyle = '#171923';
+    ctx.fillRect(cx - 6, cy, 12, size / 2);
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(cx - 4, cy, 8, size / 2);
+
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(cx - 8, cy - 14, 16, 26);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(cx - 6, cy - 14, 12, 26);
+
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(cx - 6, cy - 14, 12, 4);
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(cx - 6, cy - 14, 12, 2);
+
+    return canvas;
+  }
+
+  drawWallStoneCornerBLSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(cx, cy - 6, size / 2, 18);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(cx, cy - 4, size / 2, 14);
+
+    ctx.fillStyle = '#171923';
+    ctx.fillRect(cx - 6, 0, 12, cy);
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(cx - 4, 0, 8, cy);
+
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(cx - 8, cy - 14, 16, 26);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(cx - 6, cy - 14, 12, 26);
+
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(cx - 6, cy - 14, 12, 4);
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(cx - 6, cy - 14, 12, 2);
+
+    return canvas;
+  }
+
+  drawWallStoneCornerBRSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(0, cy - 6, cx, 18);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(0, cy - 4, cx, 14);
+
+    ctx.fillStyle = '#171923';
+    ctx.fillRect(cx - 6, 0, 12, cy);
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(cx - 4, 0, 8, cy);
+
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(cx - 8, cy - 14, 16, 26);
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(cx - 6, cy - 14, 12, 26);
+
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(cx - 6, cy - 14, 12, 4);
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(cx - 6, cy - 14, 12, 2);
+
+    return canvas;
+  }
+
+  drawWallStonePillarSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const px = size / 2 - 7;
+    const py = size / 2 - 12;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(size / 2 + 4, size / 2 + 10, 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(px, py, 14, 26);
+
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(px + 1, py + 6, 8, 19);
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(px + 9, py + 6, 4, 19);
+
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(px + 1, py + 1, 12, 5);
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(px + 1, py + 1, 12, 2);
 
     return canvas;
   }

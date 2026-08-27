@@ -64,6 +64,23 @@ class MapEditorApp {
       { category: 'terrain', key: 'hill_wall', label: 'Paredão de Montanha', type: CONFIG.TILE_TYPES.HILL_WALL, isSolid: true },
       { category: 'terrain', key: 'hill_corner', label: 'Canto de Montanha', type: CONFIG.TILE_TYPES.HILL_CORNER, isSolid: true },
 
+      // 🏰 Paredes 3D em 3 Faces (Topo, Frente, Lado)
+      { category: 'terrain', key: 'wall_wood_front', label: 'Parede Madeira 3D Frente', type: CONFIG.TILE_TYPES.WALL_WOOD_FRONT, isSolid: true },
+      { category: 'terrain', key: 'wall_wood_side', label: 'Parede Madeira 3D Lado', type: CONFIG.TILE_TYPES.WALL_WOOD_SIDE, isSolid: true },
+      { category: 'terrain', key: 'wall_wood_corner_tl', label: 'Parede Madeira 3D Canto ◤', type: CONFIG.TILE_TYPES.WALL_WOOD_CORNER_TL, isSolid: true },
+      { category: 'terrain', key: 'wall_wood_corner_tr', label: 'Parede Madeira 3D Canto ◥', type: CONFIG.TILE_TYPES.WALL_WOOD_CORNER_TR, isSolid: true },
+      { category: 'terrain', key: 'wall_wood_corner_bl', label: 'Parede Madeira 3D Canto ◣', type: CONFIG.TILE_TYPES.WALL_WOOD_CORNER_BL, isSolid: true },
+      { category: 'terrain', key: 'wall_wood_corner_br', label: 'Parede Madeira 3D Canto ◢', type: CONFIG.TILE_TYPES.WALL_WOOD_CORNER_BR, isSolid: true },
+      { category: 'terrain', key: 'wall_wood_pillar', label: 'Pilar Madeira 3D 3-Faces', type: CONFIG.TILE_TYPES.WALL_WOOD_PILLAR, isSolid: true },
+
+      { category: 'terrain', key: 'wall_stone_front', label: 'Parede Pedra 3D Frente', type: CONFIG.TILE_TYPES.WALL_STONE_FRONT, isSolid: true },
+      { category: 'terrain', key: 'wall_stone_side', label: 'Parede Pedra 3D Lado', type: CONFIG.TILE_TYPES.WALL_STONE_SIDE, isSolid: true },
+      { category: 'terrain', key: 'wall_stone_corner_tl', label: 'Parede Pedra 3D Canto ◤', type: CONFIG.TILE_TYPES.WALL_STONE_CORNER_TL, isSolid: true },
+      { category: 'terrain', key: 'wall_stone_corner_tr', label: 'Parede Pedra 3D Canto ◥', type: CONFIG.TILE_TYPES.WALL_STONE_CORNER_TR, isSolid: true },
+      { category: 'terrain', key: 'wall_stone_corner_bl', label: 'Parede Pedra 3D Canto ◣', type: CONFIG.TILE_TYPES.WALL_STONE_CORNER_BL, isSolid: true },
+      { category: 'terrain', key: 'wall_stone_corner_br', label: 'Parede Pedra 3D Canto ◢', type: CONFIG.TILE_TYPES.WALL_STONE_CORNER_BR, isSolid: true },
+      { category: 'terrain', key: 'wall_stone_pillar', label: 'Pilar Pedra 3D 3-Faces', type: CONFIG.TILE_TYPES.WALL_STONE_PILLAR, isSolid: true },
+
       // 🛋️ Casinha & Mobília
       { category: 'terrain', key: 'house_door', label: 'Porta da Casa', type: CONFIG.TILE_TYPES.HOUSE_DOOR, isSolid: false },
       { category: 'terrain', key: 'house_bed', label: 'Cama Casinha', type: CONFIG.TILE_TYPES.HOUSE_BED, isSolid: true },

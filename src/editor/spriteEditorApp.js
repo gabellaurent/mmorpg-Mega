@@ -120,7 +120,7 @@ class SpriteEditorApp {
       } catch (e) {}
     }
 
-    const defaultKeys = ['grass_0', 'grass_dry', 'grass_dark', 'grass_moss', 'cobble', 'dirt', 'cave_floor', 'magma_floor', 'flowers_red', 'flowers_blue', 'flowers_purple', 'bush_berry', 'bush_large', 'tall_grass', 'tree_trunk', 'tree_canopy', 'tree_pine_canopy', 'fence_h', 'fence_v', 'fence_corner_tl', 'fence_corner_tr', 'fence_corner_bl', 'fence_corner_br', 'fence_end_l', 'fence_end_r', 'ramp_up', 'stairs_wood', 'stairs_stone', 'ladder', 'hill_wall', 'hill_corner', 'rat', 'rotworm', 'demon_boss', 'char_knight', 'char_mage', 'char_paladin'];
+    const defaultKeys = ['grass_0', 'grass_dry', 'grass_dark', 'grass_moss', 'cobble', 'dirt', 'cave_floor', 'magma_floor', 'flowers_red', 'flowers_blue', 'flowers_purple', 'bush_berry', 'bush_large', 'tall_grass', 'tree_trunk', 'tree_canopy', 'tree_pine_canopy', 'fence_h', 'fence_v', 'fence_corner_tl', 'fence_corner_tr', 'fence_corner_bl', 'fence_corner_br', 'fence_end_l', 'fence_end_r', 'ramp_up', 'stairs_wood', 'stairs_stone', 'ladder', 'hill_wall', 'hill_corner', 'wall_wood_front', 'wall_wood_side', 'wall_wood_corner_tl', 'wall_wood_corner_tr', 'wall_wood_corner_bl', 'wall_wood_corner_br', 'wall_wood_pillar', 'wall_stone_front', 'wall_stone_side', 'wall_stone_corner_tl', 'wall_stone_corner_tr', 'wall_stone_corner_bl', 'wall_stone_corner_br', 'wall_stone_pillar', 'rat', 'rotworm', 'demon_boss', 'char_knight', 'char_mage', 'char_paladin'];
 
     keysSet.forEach(key => {
       if (!defaultKeys.includes(key)) {
