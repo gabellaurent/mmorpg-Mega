@@ -138,9 +138,9 @@ class MapEditorApp {
   }
 
   initEvents() {
-    this.mapSelect.addEventListener('change', (e) => {
+    this.mapSelect.addEventListener('change', async (e) => {
       this.currentMapId = e.target.value;
-      this.loadMap(this.currentMapId);
+      await this.loadMap(this.currentMapId);
     });
 
     this.btnPaint.addEventListener('click', () => this.setTool('paint'));
@@ -308,8 +308,10 @@ class MapEditorApp {
     if (toolName === 'select' && this.btnSelect) this.btnSelect.classList.add('active');
   }
 
-  loadMap(mapId) {
+  async loadMap(mapId) {
     this.gameMap = new GameMap(mapId);
+    await this.gameMap.loadGlobalMapFromDatabase();
+
     this.width = this.gameMap.width;
     this.height = this.gameMap.height;
     this.tileSize = Math.floor(600 / Math.max(this.width, this.height));
@@ -322,7 +324,7 @@ class MapEditorApp {
       this.teleportSelectedPos.innerText = 'Nenhum';
     }
 
-    // Carregar customizações salvas
+    // Carregar customizações salvas (do banco ou local)
     const customData = this.getCustomMapData(mapId);
     if (customData) {
       if (customData.grid) {
