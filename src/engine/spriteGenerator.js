@@ -5,6 +5,7 @@ import { supabase } from '../services/supabaseClient.js';
 class SpriteGenerator {
   constructor() {
     this.cache = {};
+    this.customMeta = {};
     this.initialized = false;
   }
 
@@ -129,6 +130,10 @@ class SpriteGenerator {
         data.forEach(item => {
           if (item.sprite_key && item.data_url) {
             customDict[item.sprite_key] = item.data_url;
+            this.customMeta[item.sprite_key] = {
+              is_solid: !!item.is_solid,
+              category: item.category || 'tile'
+            };
             this.applyDataUriToCache(item.sprite_key, item.data_url);
           }
         });

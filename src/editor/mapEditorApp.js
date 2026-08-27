@@ -124,7 +124,8 @@ class MapEditorApp {
     const defaultKeys = this.paletteItems.map(i => i.key);
     Object.keys(spriteGen.cache).forEach(key => {
       if (!defaultKeys.includes(key) && !key.startsWith('item_') && key !== 'void') {
-        const isSolid = key.startsWith('rock') || key.startsWith('wall') || key.startsWith('estatua') || key.startsWith('deco') || key.startsWith('house') || key.startsWith('gate');
+        const meta = spriteGen.customMeta ? spriteGen.customMeta[key] : null;
+        const isSolid = meta ? meta.is_solid : (key.startsWith('rock') || key.startsWith('wall') || key.startsWith('estatua') || key.startsWith('deco') || key.startsWith('house') || key.startsWith('gate'));
         this.paletteItems.push({
           key: key,
           label: `⭐ ${key.replace(/_/g, ' ')}`,
