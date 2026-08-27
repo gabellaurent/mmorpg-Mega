@@ -525,7 +525,9 @@ class SpriteEditorApp {
   animLoop(timestamp) {
     if (timestamp - this.lastAnimTime > CONFIG.ANIMATION_FRAME_MS) {
       this.lastAnimTime = timestamp;
-      this.previewFrameIndex = (this.previewFrameIndex + 1) % 3;
+      this.previewFrameStep = ((this.previewFrameStep || 0) + 1) % 4;
+      const animSequence = [0, 1, 0, 2];
+      this.previewFrameIndex = animSequence[this.previewFrameStep];
       this.updatePreviews();
     }
     requestAnimationFrame((t) => this.animLoop(t));

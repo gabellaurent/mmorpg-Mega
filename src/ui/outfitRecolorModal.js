@@ -358,9 +358,11 @@ export class OutfitRecolorModal {
   }
 
   animLoop(timestamp) {
-    if (this.isOpen && timestamp - this.lastAnimTime > 180) {
+    if (this.isOpen && timestamp - this.lastAnimTime > 150) {
       this.lastAnimTime = timestamp;
-      this.previewFrameIndex = (this.previewFrameIndex + 1) % 3;
+      this.previewFrameStep = ((this.previewFrameStep || 0) + 1) % 4;
+      const animSequence = [0, 1, 0, 2];
+      this.previewFrameIndex = animSequence[this.previewFrameStep];
       this.updatePreview();
     }
     requestAnimationFrame((t) => this.animLoop(t));

@@ -173,10 +173,10 @@ export class Player {
       this.renderX = this.startX + (this.targetX - this.startX) * progress;
       this.renderY = this.startY + (this.targetY - this.startY) * progress;
 
-      if (now - this.lastAnimTime > CONFIG.ANIMATION_FRAME_MS) {
-        this.animFrame = (this.animFrame + 1) % 2 + 1;
-        this.lastAnimTime = now;
-      }
+      // Ciclo Fluido de 4 Fases Tibia RPG: [0: Parado, 1: Passo 1, 0: Parado, 2: Passo 2]
+      const animSequence = [0, 1, 0, 2];
+      const seqIndex = Math.min(3, Math.floor(progress * 4));
+      this.animFrame = animSequence[seqIndex];
 
       if (progress >= 1) {
         this.renderX = this.targetX;
