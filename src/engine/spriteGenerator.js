@@ -115,11 +115,29 @@ class SpriteGenerator {
   applyDataUriToCache(key, dataUri) {
     const img = new Image();
     img.onload = () => {
-      const size = (key.includes('canopy') ? Math.round(CONFIG.TILE_SIZE * 1.6) : CONFIG.TILE_SIZE);
-      const { canvas, ctx } = this.createCanvas(size, size);
+      const isCharacterKey = key.startsWith('char_') || key.startsWith('npc_');
+
+      // Se for um personagem mas o sprite salvo for antigo/corrompido (tamanho menor que 192x144), ignorar e restaurar o padrão
+      if (isCharacterKey && (img.width < 192 || img.height < 144)) {
+        console.warn(`Sprite customizado '${key}' com formato antigo detectado (${img.width}x${img.height}). Restaurando spritesheet 192x144 original.`);
+        try {
+          const savedCustom = localStorage.getItem('mmorpg_custom_sprites');
+          if (savedCustom) {
+            const customDict = JSON.parse(savedCustom);
+            delete customDict[key];
+            localStorage.setItem('mmorpg_custom_sprites', JSON.stringify(customDict));
+          }
+        } catch (e) {}
+        return;
+      }
+
+      const targetWidth = img.width > 48 ? img.width : (key.includes('canopy') ? Math.round(CONFIG.TILE_SIZE * 1.6) : CONFIG.TILE_SIZE);
+      const targetHeight = img.height > 48 ? img.height : (key.includes('canopy') ? Math.round(CONFIG.TILE_SIZE * 1.6) : CONFIG.TILE_SIZE);
+
+      const { canvas, ctx } = this.createCanvas(targetWidth, targetHeight);
       ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, size, size);
-      ctx.drawImage(img, 0, 0, size, size);
+      ctx.clearRect(0, 0, targetWidth, targetHeight);
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
       this.cache[key] = canvas;
     };
     img.src = dataUri;
