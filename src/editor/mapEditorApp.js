@@ -126,10 +126,16 @@ class MapEditorApp {
       if (!defaultKeys.includes(key) && !key.startsWith('item_') && key !== 'void') {
         const meta = spriteGen.customMeta ? spriteGen.customMeta[key] : null;
         const isSolid = meta ? meta.is_solid : (key.startsWith('rock') || key.startsWith('wall') || key.startsWith('estatua') || key.startsWith('deco') || key.startsWith('house') || key.startsWith('gate'));
+        
+        let cat = 'terrain';
+        if (key.startsWith('npc_')) cat = 'npc';
+        else if (key.startsWith('char_')) cat = 'spawn';
+
         this.paletteItems.push({
+          category: cat,
           key: key,
           label: `⭐ ${key.replace(/_/g, ' ')}`,
-          type: key.startsWith('npc_') ? 'npc' : (key.startsWith('char_') ? 'spawn' : 'tile'),
+          type: cat === 'terrain' ? CONFIG.TILE_TYPES.GRASS : cat,
           isSolid: isSolid
         });
       }
