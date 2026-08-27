@@ -343,59 +343,31 @@ export class NetworkManager {
     }
 
     try {
-      const cleanUsername = username.trim();
-      if (!cleanUsername || cleanUsername.length < 3) {
-        return { success: false, message: 'O nome de usuário deve ter pelo menos 3 caracteres.' };
-      }
-      if (!password || password.length < 4) {
-        return { success: false, message: 'A senha deve ter pelo menos 4 caracteres.' };
-      }
+      const { data, error } = await supabase.functions.invoke('game-engine', {
+        body: {
+          action: 'register',
+          username,
+          password,
+          spriteId: playerData.spriteId,
+          x: playerData.gridX,
+          y: playerData.gridY
+        }
+      });
 
-      const { data: existing } = await supabase
-        .from('players')
-        .select('id')
-        .ilike('username', cleanUsername)
-        .maybeSingle();
-
-      if (existing) {
-        return { success: false, message: 'Este nome de usuário já está em uso por outro jogador.' };
+      if (error || !data || !data.success) {
+        return { success: false, message: data?.message || error?.message || 'Erro ao criar conta no servidor.' };
       }
 
-      const passwordHash = await this.hashPassword(password);
-      const insertData = {
-        username: cleanUsername,
-        password_hash: passwordHash,
-        level: playerData.level || 1,
-        experience: playerData.xp || 0,
-        hp: playerData.hp || 100,
-        gold: playerData.gold || 0,
-        inventory: playerData.inventory || Array(24).fill(null),
-        sprite_id: playerData.spriteId || 'knight',
-        x: playerData.gridX || 16,
-        y: playerData.gridY || 16
-      };
-
-      const { data: created, error } = await supabase
-        .from('players')
-        .insert([insertData])
-        .select('*')
-        .single();
-
-      if (error) {
-        console.error('Erro ao registrar jogador:', error);
-        return { success: false, message: 'Erro ao criar conta no banco de dados.' };
-      }
-
-      if (this.localPlayer) {
-        this.localPlayer.dbId = created.id;
+      if (this.localPlayer && data.player) {
+        this.localPlayer.dbId = data.player.id;
         this.localPlayer.isRegistered = true;
-        this.localPlayer.name = cleanUsername;
+        this.localPlayer.name = data.player.username;
       }
 
-      return { success: true, player: created };
+      return { success: true, player: data.player };
     } catch (err) {
-      console.error('Erro no cadastro:', err);
-      return { success: false, message: 'Falha inesperada ao tentar cadastrar conta.' };
+      console.error('Erro no cadastro via Edge Function:', err);
+      return { success: false, message: 'Falha ao comunicar com a Edge Function.' };
     }
   }
 
@@ -405,24 +377,22 @@ export class NetworkManager {
     }
 
     try {
-      const cleanUsername = username.trim();
-      const passwordHash = await this.hashPassword(password);
+      const { data, error } = await supabase.functions.invoke('game-engine', {
+        body: {
+          action: 'login',
+          username,
+          password
+        }
+      });
 
-      const { data: player, error } = await supabase
-        .from('players')
-        .select('*')
-        .ilike('username', cleanUsername)
-        .eq('password_hash', passwordHash)
-        .maybeSingle();
-
-      if (error || !player) {
-        return { success: false, message: 'Usuário ou senha incorretos.' };
+      if (error || !data || !data.success) {
+        return { success: false, message: data?.message || error?.message || 'Usuário ou senha incorretos.' };
       }
 
-      return { success: true, playerData: player };
+      return { success: true, playerData: data.player };
     } catch (err) {
-      console.error('Erro no login:', err);
-      return { success: false, message: 'Falha ao conectar com o banco de dados.' };
+      console.error('Erro no login via Edge Function:', err);
+      return { success: false, message: 'Falha ao conectar com a Edge Function.' };
     }
   }
 
@@ -433,29 +403,65 @@ export class NetworkManager {
     if (!dbId && !this.localPlayer.isRegistered) return;
 
     try {
-      const updatePayload = {
-        level: this.localPlayer.level,
-        experience: this.localPlayer.xp,
-        hp: this.localPlayer.hp,
-        gold: this.localPlayer.gold,
-        inventory: this.localPlayer.inventory,
-        x: this.localPlayer.gridX,
-        y: this.localPlayer.gridY
-      };
-
-      if (dbId) {
-        await supabase
-          .from('players')
-          .update(updatePayload)
-          .eq('id', dbId);
-      } else if (this.localPlayer.name) {
-        await supabase
-          .from('players')
-          .update(updatePayload)
-          .ilike('username', this.localPlayer.name);
-      }
+      await supabase.functions.invoke('game-engine', {
+        body: {
+          action: 'player_move',
+          playerId: dbId || this.localPlayer.id,
+          x: this.localPlayer.gridX,
+          y: this.localPlayer.gridY
+        }
+      });
     } catch (err) {
-      console.error('Erro ao salvar no banco:', err);
+      console.error('Erro ao sincronizar posição via Edge Function:', err);
+    }
+  }
+
+  async attackMonsterViaEdge(ratId, spriteKey, mapId = 'map-1') {
+    if (!isSupabaseConfigured || !supabase || !this.localPlayer) return null;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('game-engine', {
+        body: {
+          action: 'attack_monster',
+          playerId: this.localPlayer.dbId || this.localPlayer.id,
+          ratId,
+          spriteKey,
+          mapId
+        }
+      });
+
+      if (error || !data || !data.success) {
+        console.warn('Falha no combate via Edge Function:', error || data?.message);
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Erro ao atacar monstro via Edge Function:', err);
+      return null;
+    }
+  }
+
+  async lootCorpseViaEdge(corpseId) {
+    if (!isSupabaseConfigured || !supabase || !this.localPlayer) return null;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('game-engine', {
+        body: {
+          action: 'loot_corpse',
+          corpseId,
+          playerId: this.localPlayer.dbId || this.localPlayer.id
+        }
+      });
+
+      if (error || !data || !data.success) {
+        return null;
+      }
+
+      return data.lootedItems;
+    } catch (err) {
+      console.error('Erro ao saquear corpo via Edge Function:', err);
+      return null;
     }
   }
 

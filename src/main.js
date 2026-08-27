@@ -152,7 +152,7 @@ class GameEngine {
     }
   }
 
-  performAttack(explicitTarget = null) {
+  async performAttack(explicitTarget = null) {
     if (!this.localPlayer) return;
     const now = performance.now();
     if (now - this.lastAttackTime < 800) return;
@@ -172,6 +172,70 @@ class GameEngine {
       const maxRange = this.getMaxAttackRange();
       if (dist <= maxRange) {
         this.lastAttackTime = now;
+
+        // Processar Combate via Edge Function Autoritativa se disponível
+        if (this.network && this.network.useSupabase) {
+          const edgeResult = await this.network.attackMonsterViaEdge(targetRat.id, targetRat.spriteKey, this.currentMapId || 'map-1');
+          if (edgeResult && edgeResult.success) {
+            const dmg = edgeResult.damage;
+            const died = edgeResult.isDead;
+            targetRat.hp = Math.max(0, targetRat.hp - dmg);
+            if (died) targetRat.isDead = true;
+
+            this.monsterManager.addFloatingText(`-${dmg}`, targetRat.gridX, targetRat.gridY, '#f56565');
+            this.network.sendMonsterHit(targetRat.id, dmg, targetRat.hp, this.localPlayer.name);
+
+            if (died) {
+              this.lockedTargetId = null;
+              const gainedXp = edgeResult.gainedXp || 25;
+              const leveledUp = edgeResult.leveledUp;
+              this.localPlayer.level = edgeResult.newLevel || this.localPlayer.level;
+              this.localPlayer.xp = edgeResult.newXp || this.localPlayer.xp;
+              this.localPlayer.hp = edgeResult.newHp || this.localPlayer.hp;
+              this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
+
+              const corpseData = {
+                ownerName: targetRat.name,
+                entityType: 'monster',
+                gridX: targetRat.gridX,
+                gridY: targetRat.gridY,
+                loot: [
+                  { itemId: 'gold', quantity: Math.floor(Math.random() * 10) + 5 },
+                  { itemId: 'health_potion', quantity: 1 }
+                ],
+                createdAt: Date.now()
+              };
+
+              const spawnedCorpse = this.corpseManager.spawnCorpse(corpseData);
+              if (this.network) {
+                this.network.sendCorpseSpawn(spawnedCorpse);
+                this.network.saveCorpseToDatabase(spawnedCorpse, this.currentMapId || 'map-1');
+              }
+
+              this.hud.addChatMessage('Sistema', `💀 <strong>${targetRat.name}</strong> morreu! Clique no corpo para saquear os itens.`, true);
+
+              if (leveledUp) {
+                this.hud.addChatMessage('Sistema', `✨ <strong>LEVEL UP!</strong> Você alcançou o Nível ${this.localPlayer.level}! Sua vida foi restaurada!`, true);
+              } else {
+                this.hud.addChatMessage('Sistema', `⚔️ Você derrotou o <strong>${targetRat.name}</strong> e ganhou +${gainedXp} EXP!`, true);
+              }
+
+              const ratId = targetRat.id;
+              setTimeout(() => {
+                targetRat.respawn();
+                if (this.network) {
+                  this.network.sendMonsterRespawn(ratId);
+                }
+                this.hud.addChatMessage('Sistema', `⚠️ Um <strong>${targetRat.name}</strong> renasceu nos cantos do mapa!`, true);
+              }, 8000);
+            }
+
+            this.hud.updatePlayerStats();
+            return;
+          }
+        }
+
+        // Fallback local se estiver sem rede
         const baseDmg = Math.floor(Math.random() * 9) + 8;
         const bonusDmg = this.localPlayer.getBonusAttack ? this.localPlayer.getBonusAttack() : 0;
         const dmg = baseDmg + bonusDmg;
@@ -186,63 +250,29 @@ class GameEngine {
           const leveledUp = this.localPlayer.addXp(gainedXp);
           this.monsterManager.addFloatingText(`+${gainedXp} EXP`, this.localPlayer.gridX, this.localPlayer.gridY, '#9f7aea');
 
-          // Gerar loot do monstro de acordo com o tipo
-          const monsterLoot = [];
-          if (targetRat.spriteKey === 'demon_boss') {
-            monsterLoot.push({ itemId: 'gold', quantity: Math.floor(Math.random() * 80) + 50 });
-            monsterLoot.push({ itemId: 'mana_potion', quantity: 3, itemConfig: CONFIG.ITEMS['mana_potion'] });
-            monsterLoot.push({ itemId: 'steel_sword', quantity: 1, itemConfig: CONFIG.ITEMS['steel_sword'] });
-          } else if (targetRat.spriteKey === 'rotworm') {
-            monsterLoot.push({ itemId: 'gold', quantity: Math.floor(Math.random() * 20) + 8 });
-            if (Math.random() < 0.6) {
-              monsterLoot.push({ itemId: 'cheese', quantity: 2, itemConfig: CONFIG.ITEMS['cheese'] });
-            }
-            if (Math.random() < 0.4) {
-              monsterLoot.push({ itemId: 'health_potion', quantity: 1, itemConfig: CONFIG.ITEMS['health_potion'] });
-            }
-          } else {
-            monsterLoot.push({ itemId: 'gold', quantity: Math.floor(Math.random() * 8) + 3 });
-            if (Math.random() < 0.45) {
-              monsterLoot.push({ itemId: 'health_potion', quantity: 1, itemConfig: CONFIG.ITEMS['health_potion'] });
-            }
-            if (Math.random() < 0.25) {
-              monsterLoot.push({ itemId: 'rat_tail', quantity: 1, itemConfig: CONFIG.ITEMS['rat_tail'] });
-            }
-          }
-
           const corpseData = {
             ownerName: targetRat.name,
             entityType: 'monster',
             gridX: targetRat.gridX,
             gridY: targetRat.gridY,
-            loot: monsterLoot,
+            loot: [{ itemId: 'gold', quantity: Math.floor(Math.random() * 8) + 3 }],
             createdAt: Date.now()
           };
 
           const spawnedCorpse = this.corpseManager.spawnCorpse(corpseData);
           if (this.network) {
             this.network.sendCorpseSpawn(spawnedCorpse);
-            this.network.saveCorpseToDatabase(spawnedCorpse, this.currentMapId || 'map-1');
-            const respawnTime = Date.now() + 8000;
-            this.network.saveMonsterStateToDatabase(targetRat.id, true, respawnTime, this.currentMapId || 'map-1');
           }
 
-          this.hud.addChatMessage('Sistema', `💀 <strong>${targetRat.name}</strong> morreu! Clique no corpo para saquear os itens.`, true);
+          this.hud.addChatMessage('Sistema', `💀 <strong>${targetRat.name}</strong> morreu!`, true);
 
           if (leveledUp) {
-            this.hud.addChatMessage('Sistema', `✨ <strong>LEVEL UP!</strong> Você alcançou o Nível ${this.localPlayer.level}! Sua vida foi restaurada!`, true);
-          } else {
-            this.hud.addChatMessage('Sistema', `⚔️ Você derrotou o <strong>${targetRat.name}</strong> e ganhou +${gainedXp} EXP!`, true);
+            this.hud.addChatMessage('Sistema', `✨ <strong>LEVEL UP!</strong> Nível ${this.localPlayer.level}!`, true);
           }
 
           const ratId = targetRat.id;
           setTimeout(() => {
             targetRat.respawn();
-            if (this.network) {
-              this.network.sendMonsterRespawn(ratId);
-              this.network.saveMonsterStateToDatabase(ratId, false, 0, this.currentMapId || 'map-1');
-            }
-            this.hud.addChatMessage('Sistema', `⚠️ Um <strong>${targetRat.name}</strong> renasceu nos cantos do mapa!`, true);
           }, 8000);
         }
 
