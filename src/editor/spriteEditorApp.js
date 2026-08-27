@@ -76,6 +76,8 @@ class SpriteEditorApp {
     this.btnPicker = document.getElementById('tool-picker');
 
     this.btnApplyGame = document.getElementById('btn-apply-game');
+    this.btnImportPNG = document.getElementById('btn-import-png');
+    this.inputImportPNG = document.getElementById('input-import-png');
     this.btnDownload = document.getElementById('btn-download');
     this.btnCopyCode = document.getElementById('btn-copy-code');
     this.btnResetSprite = document.getElementById('btn-reset-sprite');
@@ -216,11 +218,113 @@ class SpriteEditorApp {
       this.isMouseDown = false;
     });
 
+    if (this.btnImportPNG && this.inputImportPNG) {
+      this.btnImportPNG.addEventListener('click', () => {
+        this.inputImportPNG.click();
+      });
+      this.inputImportPNG.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          this.importPNGFile(e.target.files[0]);
+        }
+      });
+    }
+
     this.btnApplyGame.addEventListener('click', () => this.applyToGame());
     this.btnDownload.addEventListener('click', () => this.downloadPNG());
     this.btnCopyCode.addEventListener('click', () => this.copyDataURI());
     this.btnResetSprite.addEventListener('click', () => this.resetSprite());
     this.btnClear.addEventListener('click', () => this.clearCanvas());
+  }
+
+  importPNGFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = img.width;
+        tempCanvas.height = img.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(img, 0, 0);
+
+        if (this.isMultiFrame || (img.width >= 192 && img.height >= 144)) {
+          this.isMultiFrame = true;
+          if (this.frameSelectorGroup) this.frameSelectorGroup.style.display = 'block';
+          this.fullCanvas.width = img.width;
+          this.fullCanvas.height = img.height;
+          this.fullCtx.clearRect(0, 0, img.width, img.height);
+          this.fullCtx.drawImage(img, 0, 0);
+          this.loadSpritePresetFromCanvas(tempCanvas);
+        } else {
+          this.isMultiFrame = false;
+          if (this.frameSelectorGroup) this.frameSelectorGroup.style.display = 'none';
+
+          const imgData = tempCtx.getImageData(0, 0, img.width, img.height);
+          for (let y = 0; y < this.gridSize; y++) {
+            for (let x = 0; x < this.gridSize; x++) {
+              const srcX = Math.floor(x * (img.width / this.gridSize));
+              const srcY = Math.floor(y * (img.height / this.gridSize));
+              const idx = (srcY * img.width + srcX) * 4;
+              const r = imgData.data[idx];
+              const g = imgData.data[idx + 1];
+              const b = imgData.data[idx + 2];
+              const a = imgData.data[idx + 3];
+
+              if (a > 10) {
+                const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+                this.pixels[y][x] = hex;
+              } else {
+                this.pixels[y][x] = null;
+              }
+            }
+          }
+          this.render();
+        }
+        alert('✨ Imagem PNG importada com sucesso para a tela de desenho!\n\nClique em "🚀 APLICAR E SALVAR NO JOGO" para disponibilizar no jogo e no editor de mapas!');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  loadSpritePresetFromCanvas(canvas) {
+    const frameWidth = Math.floor(canvas.width / 4);
+    const frameHeight = Math.floor(canvas.height / 3);
+
+    for (let c = 0; c < 4; c++) {
+      for (let r = 0; r < 3; r++) {
+        const offsetX = c * frameWidth;
+        const offsetY = r * frameHeight;
+        const imgData = this.fullCtx.getImageData(offsetX, offsetY, frameWidth, frameHeight);
+
+        for (let y = 0; y < this.gridSize; y++) {
+          for (let x = 0; x < this.gridSize; x++) {
+            const srcX = Math.floor(x * (frameWidth / this.gridSize));
+            const srcY = Math.floor(y * (frameHeight / this.gridSize));
+            const idx = (srcY * frameWidth + srcX) * 4;
+
+            const red = imgData.data[idx];
+            const green = imgData.data[idx + 1];
+            const blue = imgData.data[idx + 2];
+            const alpha = imgData.data[idx + 3];
+
+            if (alpha > 10) {
+              const hex = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`;
+              this.framesData[c][r][y][x] = hex;
+            } else {
+              this.framesData[c][r][y][x] = null;
+            }
+          }
+        }
+      }
+    }
+
+    this.selectedCol = 0;
+    this.selectedRow = 0;
+    this.pixels = this.framesData[0][0];
+    this.renderFrameSelectorGrid();
+    this.syncCurrentFrameToFullCanvas();
+    this.render();
   }
 
   getGridCoords(e) {
