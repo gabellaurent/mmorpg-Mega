@@ -457,33 +457,46 @@ export class GameMap {
 
   // Retorna informações de transição de mapa se o tile for uma passagem
   getTransition(x, y) {
+    const tile = this.getTile(x, y);
+    if (!tile) return null;
+
+    const { TILE_TYPES } = CONFIG;
+
     if (this.mapId === 'map-1') {
-      if ((x === 15 || x === 16) && y === 31) {
+      // Portão Sul de saída para a Floresta do Sul
+      if ((x === 15 || x === 16) && y === this.height - 1) {
         return { targetMapId: 'map-2', targetX: 15, targetY: 1 };
       }
-      if (x === 24 && y === 8) {
+      // Entrada da Casinha da Vila (valida se o tile atual é uma Porta)
+      if (tile.type === TILE_TYPES.HOUSE_DOOR) {
         return { targetMapId: 'map-house-1', targetX: 6, targetY: 9 };
       }
     } else if (this.mapId === 'map-2') {
+      // Portão Norte de saída para a Vila Principal
       if ((x === 15 || x === 16) && y === 0) {
         return { targetMapId: 'map-1', targetX: 15, targetY: 30 };
       }
-      if (x === 10 && y === 10) {
+      // Entrada da Caverna dos Rotworms (valida se o tile atual é um Buraco de Caverna)
+      if (tile.type === TILE_TYPES.CAVE_HOLE) {
         return { targetMapId: 'map-cave-1', targetX: 4, targetY: 4 };
       }
     } else if (this.mapId === 'map-cave-1') {
-      if (x === 4 && y === 4) {
+      // Escada para subir de volta à Floresta do Sul
+      if (tile.type === TILE_TYPES.CAVE_STAIRS) {
         return { targetMapId: 'map-2', targetX: 10, targetY: 11 };
       }
-      if (x === 18 && y === 18) {
+      // Buraco para descer ao Abismo Vulcânico (Sub-nível 2)
+      if (tile.type === TILE_TYPES.CAVE_HOLE) {
         return { targetMapId: 'map-cave-2', targetX: 4, targetY: 4 };
       }
     } else if (this.mapId === 'map-cave-2') {
-      if (x === 4 && y === 4) {
+      // Escada para subir de volta ao Sub-nível 1
+      if (tile.type === TILE_TYPES.CAVE_STAIRS) {
         return { targetMapId: 'map-cave-1', targetX: 18, targetY: 17 };
       }
     } else if (this.mapId === 'map-house-1') {
-      if (x === 6 && y === 10) {
+      // Porta de Saída da Casinha
+      if (tile.type === TILE_TYPES.HOUSE_DOOR) {
         return { targetMapId: 'map-1', targetX: 24, targetY: 9 };
       }
     }
