@@ -13,6 +13,19 @@ class SpriteEditorApp {
     this.currentColor = '#48bb78';
     this.isMouseDown = false;
 
+    // Suporte a Spritesheets de Personagem (4x3 = 12 Quadros)
+    this.isMultiFrame = false;
+    this.selectedCol = 0; // 0: South (Sul), 1: North (Norte), 2: East (Leste), 3: West (Oeste)
+    this.selectedRow = 0; // 0: Parado, 1: Passo 1, 2: Passo 2
+    this.fullCanvas = document.createElement('canvas');
+    this.fullCanvas.width = 192;
+    this.fullCanvas.height = 144;
+    this.fullCtx = this.fullCanvas.getContext('2d');
+
+    // Animação Live Preview
+    this.previewFrameIndex = 0;
+    this.lastAnimTime = 0;
+
     this.paletteColors = [
       '#5d4037', '#3e2723', '#795548', '#8d6e63', '#26140e', // Terrosos/Caverna
       '#48bb78', '#38a169', '#2f855a', '#276749', '#1c4532', // Grama/Vegetação
@@ -28,6 +41,9 @@ class SpriteEditorApp {
     this.initPalette();
     this.initEvents();
     this.loadSpritePreset('grass_0');
+
+    // Iniciar loop de animação do Live Preview
+    requestAnimationFrame((t) => this.animLoop(t));
   }
 
   initDOM() {
@@ -55,6 +71,9 @@ class SpriteEditorApp {
     this.btnCopyCode = document.getElementById('btn-copy-code');
     this.btnResetSprite = document.getElementById('btn-reset-sprite');
     this.btnClear = document.getElementById('btn-clear');
+
+    this.frameSelectorGroup = document.getElementById('frame-selector-group');
+    this.frameButtonsGrid = document.getElementById('frame-buttons-grid');
   }
 
   initPalette() {
@@ -108,7 +127,7 @@ class SpriteEditorApp {
     });
 
     this.pixelCanvas.addEventListener('mousemove', (e) => {
-      if (this.isMouseDown && (this.currentTool === 'pencil' || this.currentTool === 'eraser')) {
+      if (this.isMouseDown) {
         this.handleCanvasClick(e);
       }
     });
@@ -122,22 +141,6 @@ class SpriteEditorApp {
     this.btnCopyCode.addEventListener('click', () => this.copyDataURI());
     this.btnResetSprite.addEventListener('click', () => this.resetSprite());
     this.btnClear.addEventListener('click', () => this.clearCanvas());
-  }
-
-  applyToGame() {
-    const key = this.spriteSelect.value;
-    const dataUri = this.preview1x.toDataURL('image/png');
-    spriteGen.saveCustomSprite(key, dataUri);
-    alert(`🚀 Sprite '${key}' APLICADO COM SUCESSO NO SEU JOGO!\n\nSua arte personalizada já está salva no navegador e será exibida ao voltar para o jogo!`);
-  }
-
-  resetSprite() {
-    const key = this.spriteSelect.value;
-    if (confirm(`Deseja restaurar o sprite padrão de '${key}'?`)) {
-      spriteGen.resetCustomSprite(key);
-      this.loadSpritePreset(key);
-      alert(`↺ Sprite '${key}' restaurado para o padrão original.`);
-    }
   }
 
   getGridCoords(e) {
@@ -155,10 +158,8 @@ class SpriteEditorApp {
 
     if (this.currentTool === 'pencil') {
       this.pixels[y][x] = this.currentColor;
-      this.render();
     } else if (this.currentTool === 'eraser') {
       this.pixels[y][x] = null;
-      this.render();
     } else if (this.currentTool === 'picker') {
       if (this.pixels[y][x]) {
         this.setColor(this.pixels[y][x]);
@@ -167,8 +168,10 @@ class SpriteEditorApp {
     } else if (this.currentTool === 'bucket') {
       const targetColor = this.pixels[y][x];
       this.floodFill(x, y, targetColor, this.currentColor);
-      this.render();
     }
+
+    this.syncCurrentFrameToFullCanvas();
+    this.render();
   }
 
   floodFill(startX, startY, targetColor, replacementColor) {
@@ -192,14 +195,111 @@ class SpriteEditorApp {
     const canvas = spriteGen.get(key);
     if (!canvas) return;
 
-    const tempCtx = canvas.getContext('2d');
-    const imgData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+    // Checar se é uma Spritesheet Multi-Quadro (Personagens ou NPCs 4x3)
+    if (canvas.width >= 192 && canvas.height >= 144) {
+      this.isMultiFrame = true;
+      if (this.frameSelectorGroup) this.frameSelectorGroup.style.display = 'block';
+
+      // Copiar a spritesheet completa para o canvas offscreen
+      this.fullCanvas.width = canvas.width;
+      this.fullCanvas.height = canvas.height;
+      this.fullCtx.clearRect(0, 0, canvas.width, canvas.height);
+      this.fullCtx.drawImage(canvas, 0, 0);
+
+      this.selectedCol = 0; // Sul
+      this.selectedRow = 0; // Parado
+      this.renderFrameSelectorGrid();
+      this.loadFrameToGrid(0, 0);
+    } else {
+      this.isMultiFrame = false;
+      if (this.frameSelectorGroup) this.frameSelectorGroup.style.display = 'none';
+
+      const tempCtx = canvas.getContext('2d');
+      const imgData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+
+      for (let y = 0; y < this.gridSize; y++) {
+        for (let x = 0; x < this.gridSize; x++) {
+          const srcX = Math.floor(x * (canvas.width / this.gridSize));
+          const srcY = Math.floor(y * (canvas.height / this.gridSize));
+          const idx = (srcY * canvas.width + srcX) * 4;
+
+          const r = imgData.data[idx];
+          const g = imgData.data[idx + 1];
+          const b = imgData.data[idx + 2];
+          const a = imgData.data[idx + 3];
+
+          if (a > 10) {
+            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+            this.pixels[y][x] = hex;
+          } else {
+            this.pixels[y][x] = null;
+          }
+        }
+      }
+      this.render();
+    }
+  }
+
+  renderFrameSelectorGrid() {
+    if (!this.frameButtonsGrid) return;
+    this.frameButtonsGrid.innerHTML = '';
+
+    const directions = [
+      { col: 0, label: '⬇️ Sul', icon: '⬇️' },
+      { col: 1, label: '⬆️ Norte', icon: '⬆️' },
+      { col: 2, label: '➡️ Leste', icon: '➡️' },
+      { col: 3, label: '⬅️ Oeste', icon: '⬅️' }
+    ];
+
+    const frames = [
+      { row: 0, label: 'Parado' },
+      { row: 1, label: 'Passo 1' },
+      { row: 2, label: 'Passo 2' }
+    ];
+
+    directions.forEach(dir => {
+      frames.forEach(fr => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-tool';
+        btn.style.padding = '4px 6px';
+        btn.style.fontSize = '0.75rem';
+        btn.innerText = `${dir.icon} ${fr.label}`;
+
+        if (this.selectedCol === dir.col && this.selectedRow === fr.row) {
+          btn.classList.add('active');
+        }
+
+        btn.addEventListener('click', () => {
+          this.switchSubFrame(dir.col, fr.row);
+        });
+
+        this.frameButtonsGrid.appendChild(btn);
+      });
+    });
+  }
+
+  switchSubFrame(col, row) {
+    this.syncCurrentFrameToFullCanvas();
+    this.selectedCol = col;
+    this.selectedRow = row;
+    this.renderFrameSelectorGrid();
+    this.loadFrameToGrid(col, row);
+  }
+
+  loadFrameToGrid(col, row) {
+    const frameWidth = Math.floor(this.fullCanvas.width / 4);
+    const frameHeight = Math.floor(this.fullCanvas.height / 3);
+    const offsetX = col * frameWidth;
+    const offsetY = row * frameHeight;
+
+    const imgData = this.fullCtx.getImageData(offsetX, offsetY, frameWidth, frameHeight);
 
     for (let y = 0; y < this.gridSize; y++) {
       for (let x = 0; x < this.gridSize; x++) {
-        const srcX = Math.floor(x * (canvas.width / this.gridSize));
-        const srcY = Math.floor(y * (canvas.height / this.gridSize));
-        const idx = (srcY * canvas.width + srcX) * 4;
+        const srcX = Math.floor(x * (frameWidth / this.gridSize));
+        const srcY = Math.floor(y * (frameHeight / this.gridSize));
+        const idx = (srcY * frameWidth + srcX) * 4;
 
         const r = imgData.data[idx];
         const g = imgData.data[idx + 1];
@@ -214,7 +314,38 @@ class SpriteEditorApp {
         }
       }
     }
+
     this.render();
+  }
+
+  syncCurrentFrameToFullCanvas() {
+    if (!this.isMultiFrame) return;
+
+    const frameWidth = Math.floor(this.fullCanvas.width / 4);
+    const frameHeight = Math.floor(this.fullCanvas.height / 3);
+    const offsetX = this.selectedCol * frameWidth;
+    const offsetY = this.selectedRow * frameHeight;
+
+    // Limpar o quadro no canvas offscreen completo
+    this.fullCtx.clearRect(offsetX, offsetY, frameWidth, frameHeight);
+
+    // Renderizar os pixels da grade 32x32 no quadro 48x48
+    const scaleX = frameWidth / this.gridSize;
+    const scaleY = frameHeight / this.gridSize;
+
+    for (let y = 0; y < this.gridSize; y++) {
+      for (let x = 0; x < this.gridSize; x++) {
+        if (this.pixels[y][x]) {
+          this.fullCtx.fillStyle = this.pixels[y][x];
+          this.fullCtx.fillRect(
+            offsetX + Math.floor(x * scaleX), 
+            offsetY + Math.floor(y * scaleY), 
+            Math.ceil(scaleX), 
+            Math.ceil(scaleY)
+          );
+        }
+      }
+    }
   }
 
   clearCanvas() {
@@ -223,13 +354,14 @@ class SpriteEditorApp {
         this.pixels[y][x] = null;
       }
     }
+    this.syncCurrentFrameToFullCanvas();
     this.render();
   }
 
   render() {
     this.ctx.clearRect(0, 0, this.canvasDisplaySize, this.canvasDisplaySize);
 
-    // 1. Desenhar fundo xadrez indicador de transparência (Estilo Photoshop / Aseprite)
+    // 1. Fundo xadrez de transparência
     for (let y = 0; y < this.gridSize; y++) {
       for (let x = 0; x < this.gridSize; x++) {
         this.ctx.fillStyle = (x + y) % 2 === 0 ? '#26292e' : '#1a1d21';
@@ -247,7 +379,7 @@ class SpriteEditorApp {
       }
     }
 
-    // 3. Desenhar grade de guia visual
+    // 3. Desenhar grade de guia
     this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     this.ctx.lineWidth = 1;
     for (let i = 0; i <= this.gridSize; i++) {
@@ -265,44 +397,117 @@ class SpriteEditorApp {
     this.updatePreviews();
   }
 
+  animLoop(timestamp) {
+    if (timestamp - this.lastAnimTime > CONFIG.ANIMATION_FRAME_MS) {
+      this.lastAnimTime = timestamp;
+      this.previewFrameIndex = (this.previewFrameIndex + 1) % 3;
+      this.updatePreviews();
+    }
+    requestAnimationFrame((t) => this.animLoop(t));
+  }
+
   updatePreviews() {
-    const size = 48;
     this.ctx1x.imageSmoothingEnabled = false;
     this.ctx2x.imageSmoothingEnabled = false;
 
     this.ctx1x.clearRect(0, 0, 48, 48);
     this.ctx2x.clearRect(0, 0, 96, 96);
 
-    const scale1 = 48 / this.gridSize;
-    const scale2 = 96 / this.gridSize;
+    if (this.isMultiFrame) {
+      // Pré-visualização com animação do personagem caminhando em tempo real
+      const frameWidth = Math.floor(this.fullCanvas.width / 4);
+      const frameHeight = Math.floor(this.fullCanvas.height / 3);
 
-    for (let y = 0; y < this.gridSize; y++) {
-      for (let x = 0; x < this.gridSize; x++) {
-        if (this.pixels[y][x]) {
-          this.ctx1x.fillStyle = this.pixels[y][x];
-          this.ctx1x.fillRect(Math.floor(x * scale1), Math.floor(y * scale1), Math.ceil(scale1), Math.ceil(scale1));
+      const srcX = this.selectedCol * frameWidth;
+      const srcY = this.previewFrameIndex * frameHeight;
 
-          this.ctx2x.fillStyle = this.pixels[y][x];
-          this.ctx2x.fillRect(Math.floor(x * scale2), Math.floor(y * scale2), Math.ceil(scale2), Math.ceil(scale2));
+      this.ctx1x.drawImage(this.fullCanvas, srcX, srcY, frameWidth, frameHeight, 0, 0, 48, 48);
+      this.ctx2x.drawImage(this.fullCanvas, srcX, srcY, frameWidth, frameHeight, 0, 0, 96, 96);
+    } else {
+      const scale1 = 48 / this.gridSize;
+      const scale2 = 96 / this.gridSize;
+
+      for (let y = 0; y < this.gridSize; y++) {
+        for (let x = 0; x < this.gridSize; x++) {
+          if (this.pixels[y][x]) {
+            this.ctx1x.fillStyle = this.pixels[y][x];
+            this.ctx1x.fillRect(Math.floor(x * scale1), Math.floor(y * scale1), Math.ceil(scale1), Math.ceil(scale1));
+
+            this.ctx2x.fillStyle = this.pixels[y][x];
+            this.ctx2x.fillRect(Math.floor(x * scale2), Math.floor(y * scale2), Math.ceil(scale2), Math.ceil(scale2));
+          }
         }
       }
     }
   }
 
+  applyToGame() {
+    this.syncCurrentFrameToFullCanvas();
+    const key = this.spriteSelect.value;
+    if (!key) return;
+
+    try {
+      const saved = localStorage.getItem('mmorpg_custom_sprites');
+      const dict = saved ? JSON.parse(saved) : {};
+
+      let dataUrl = '';
+      if (this.isMultiFrame) {
+        dataUrl = this.fullCanvas.toDataURL('image/png');
+      } else {
+        dataUrl = this.preview1x.toDataURL('image/png');
+      }
+
+      dict[key] = dataUrl;
+      localStorage.setItem('mmorpg_custom_sprites', JSON.stringify(dict));
+
+      // Atualizar o cache de sprites do jogo
+      spriteGen.init();
+
+      alert(`🚀 SPRITE '${key}' APLICADO COM SUCESSO NO JOGO!\n\nTodas as animações de caminhada foram preservadas sem transparência indesejada!`);
+    } catch (e) {
+      console.error('Erro ao salvar sprite customizado:', e);
+      alert('Erro ao salvar sprite no jogo.');
+    }
+  }
+
+  resetSprite() {
+    const key = this.spriteSelect.value;
+    if (!key) return;
+
+    if (confirm(`Deseja restaurar o sprite '${key}' para o visual pixel-art original do jogo?`)) {
+      try {
+        const saved = localStorage.getItem('mmorpg_custom_sprites');
+        if (saved) {
+          const dict = JSON.parse(saved);
+          delete dict[key];
+          localStorage.setItem('mmorpg_custom_sprites', JSON.stringify(dict));
+        }
+
+        spriteGen.init();
+        this.loadSpritePreset(key);
+        alert(`↺ Sprite '${key}' restaurado ao visual original.`);
+      } catch (e) {
+        console.error('Erro ao restaurar sprite:', e);
+      }
+    }
+  }
+
   downloadPNG() {
+    this.syncCurrentFrameToFullCanvas();
     const link = document.createElement('a');
     const spriteName = this.spriteSelect.value || 'custom_sprite';
     link.download = `${spriteName}.png`;
-    link.href = this.preview1x.toDataURL('image/png');
+    link.href = this.isMultiFrame ? this.fullCanvas.toDataURL('image/png') : this.preview1x.toDataURL('image/png');
     link.click();
   }
 
   copyDataURI() {
-    const dataUri = this.preview1x.toDataURL('image/png');
+    this.syncCurrentFrameToFullCanvas();
+    const dataUri = this.isMultiFrame ? this.fullCanvas.toDataURL('image/png') : this.preview1x.toDataURL('image/png');
     navigator.clipboard.writeText(dataUri).then(() => {
-      alert('✅ Código DataURI copiado para a sua área de transferência!');
+      alert('✅ Código DataURI do sprite completo copiado para a área de transferência!');
     }).catch(err => {
-      prompt('Copie o código DataURI do sprite:', dataUri);
+      prompt('Copie o código DataURI:', dataUri);
     });
   }
 }

@@ -340,6 +340,15 @@
         </select>
       </div>
 
+      <!-- Seletor de Quadros de Animação (Visível apenas para Personagens / Spritesheets 4x3) -->
+      <div id="frame-selector-group" class="tool-group" style="display: none; background: #161b22; padding: 10px; border-radius: 8px; border: 1px solid #30363d;">
+        <label style="color: #4299e1; font-weight: bold;">🎬 Quadro da Animação (1 de 12):</label>
+        <div style="font-size: 0.75rem; color: #8b949e; margin-bottom: 6px;">Selecione qual direção/passo do personagem deseja desenhar:</div>
+        <div id="frame-buttons-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+          <!-- Botões de 12 Quadros gerados via JS -->
+        </div>
+      </div>
+
       <div class="tool-group">
         <label>🛠️ Ferramenta:</label>
         <div class="tool-buttons">
