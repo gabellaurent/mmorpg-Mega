@@ -58,6 +58,9 @@ class MapEditorApp {
       // Monstros (Spawns)
       { category: 'spawn', key: 'rat', label: 'Spawn: Cave Rat', monsterType: 'rat' },
       { category: 'spawn', key: 'rotworm', label: 'Spawn: Rotworm', monsterType: 'rotworm' },
+      { category: 'spawn', key: 'wolf', label: 'Spawn: Lobo', monsterType: 'wolf' },
+      { category: 'spawn', key: 'spider', label: 'Spawn: Aranha', monsterType: 'spider' },
+      { category: 'spawn', key: 'goblin', label: 'Spawn: Goblin', monsterType: 'goblin' },
       { category: 'spawn', key: 'demon_boss', label: 'Spawn: Guardião Magma', monsterType: 'demon_boss' },
 
       // 🧙 NPCs & Habitantes da Vila
@@ -390,6 +393,24 @@ class MapEditorApp {
         { id: 'f_2', key: 'rat', name: 'Rato Selvagem', x: 25, y: 8 },
         { id: 'f_3', key: 'rat', name: 'Rato Selvagem', x: 10, y: 14 },
         { id: 'f_4', key: 'rat', name: 'Rato Selvagem', x: 21, y: 14 }
+      ];
+    } else if (mapId === 'map-north') {
+      return [
+        { id: 'wf_1', key: 'wolf', name: 'Lobo Selvagem', x: 8, y: 6 },
+        { id: 'wf_2', key: 'wolf', name: 'Lobo Selvagem', x: 24, y: 6 },
+        { id: 'wf_3', key: 'wolf', name: 'Lobo Alfa', x: 16, y: 12 }
+      ];
+    } else if (mapId === 'map-east') {
+      return [
+        { id: 'sp_1', key: 'spider', name: 'Aranha Gigante', x: 12, y: 6 },
+        { id: 'sp_2', key: 'spider', name: 'Aranha Gigante', x: 24, y: 6 },
+        { id: 'sp_3', key: 'spider', name: 'Aranha Tecelã', x: 8, y: 12 }
+      ];
+    } else if (mapId === 'map-west') {
+      return [
+        { id: 'gb_1', key: 'goblin', name: 'Goblin Guerreiro', x: 6, y: 6 },
+        { id: 'gb_2', key: 'goblin', name: 'Goblin Guerreiro', x: 22, y: 6 },
+        { id: 'gb_3', key: 'goblin', name: 'Goblin Xamã', x: 14, y: 10 }
       ];
     } else if (mapId === 'map-cave-1') {
       return [

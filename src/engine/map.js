@@ -721,19 +721,19 @@ export class GameMap {
 
     if (this.mapId === 'map-1') {
       // Portão Sul -> Floresta do Sul
-      if ((x === 15 || x === 16) && y === this.height - 1) {
+      if ((x === 15 || x === 16) && (y === this.height - 1 || y === this.height - 2)) {
         return { targetMapId: 'map-2', targetX: 15, targetY: 1 };
       }
       // Portão Norte -> Floresta do Norte (Lobos)
-      if ((x === 15 || x === 16) && y === 0) {
+      if ((x === 15 || x === 16) && (y === 0 || y === 1)) {
         return { targetMapId: 'map-north', targetX: 15, targetY: 30 };
       }
       // Portão Leste -> Floresta do Leste (Aranhas)
-      if (x === this.width - 1 && (y === 15 || y === 16)) {
+      if ((x === this.width - 1 || x === this.width - 2) && (y === 15 || y === 16)) {
         return { targetMapId: 'map-east', targetX: 1, targetY: 15 };
       }
       // Portão Oeste -> Floresta do Oeste (Goblins)
-      if (x === 0 && (y === 15 || y === 16)) {
+      if ((x === 0 || x === 1) && (y === 15 || y === 16)) {
         return { targetMapId: 'map-west', targetX: 30, targetY: 15 };
       }
       // Entrada da Casinha da Vila
@@ -742,7 +742,7 @@ export class GameMap {
       }
     } else if (this.mapId === 'map-2') {
       // Portão Norte de saída para a Vila Principal
-      if ((x === 15 || x === 16) && y === 0) {
+      if ((x === 15 || x === 16) && (y === 0 || y === 1)) {
         return { targetMapId: 'map-1', targetX: 15, targetY: 30 };
       }
       if (tile.type === TILE_TYPES.CAVE_HOLE) {
@@ -750,17 +750,17 @@ export class GameMap {
       }
     } else if (this.mapId === 'map-north') {
       // Portão Sul de saída para a Vila Principal
-      if ((x === 15 || x === 16) && y === this.height - 1) {
+      if ((x === 15 || x === 16) && (y === this.height - 1 || y === this.height - 2)) {
         return { targetMapId: 'map-1', targetX: 15, targetY: 1 };
       }
     } else if (this.mapId === 'map-east') {
       // Portão Oeste de saída para a Vila Principal
-      if (x === 0 && (y === 15 || y === 16)) {
+      if ((x === 0 || x === 1) && (y === 15 || y === 16)) {
         return { targetMapId: 'map-1', targetX: 30, targetY: 15 };
       }
     } else if (this.mapId === 'map-west') {
       // Portão Leste de saída para a Vila Principal
-      if (x === this.width - 1 && (y === 15 || y === 16)) {
+      if ((x === this.width - 1 || x === this.width - 2) && (y === 15 || y === 16)) {
         return { targetMapId: 'map-1', targetX: 1, targetY: 15 };
       }
     } else if (this.mapId === 'map-cave-1') {
