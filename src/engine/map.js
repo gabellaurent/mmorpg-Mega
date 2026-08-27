@@ -1,5 +1,6 @@
 // Gerenciador do Mapa 32x32 Grid (Suporte Multi-Mapa)
 import { CONFIG } from '../config.js';
+import { supabase } from '../services/supabaseClient.js';
 
 export class GameMap {
   constructor(mapId = 'map-1') {
@@ -33,6 +34,7 @@ export class GameMap {
     }
 
     this.loadCustomMapOverrides();
+    this.loadGlobalMapFromDatabase();
   }
 
   loadCustomMapOverrides() {
@@ -54,6 +56,41 @@ export class GameMap {
       }
     } catch (e) {
       console.warn('Erro ao carregar mapa customizado do localStorage:', e);
+    }
+  }
+
+  async loadGlobalMapFromDatabase() {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('custom_maps')
+        .select('*')
+        .eq('map_id', this.mapId)
+        .maybeSingle();
+
+      if (data && !error) {
+        if (data.grid && data.grid.length > 0) {
+          this.grid = data.grid;
+          this.height = data.grid.length;
+          this.width = data.grid[0].length;
+        }
+        if (data.teleports) {
+          this.customTeleports = data.teleports;
+        }
+
+        // Salvar em cache no localStorage local
+        const saved = localStorage.getItem('mmorpg_custom_maps');
+        const dict = saved ? JSON.parse(saved) : {};
+        dict[this.mapId] = {
+          grid: data.grid,
+          spawns: data.spawns || [],
+          npcs: data.npcs || [],
+          teleports: data.teleports || {}
+        };
+        localStorage.setItem('mmorpg_custom_maps', JSON.stringify(dict));
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar mapa do Supabase DB:', e);
     }
   }
 

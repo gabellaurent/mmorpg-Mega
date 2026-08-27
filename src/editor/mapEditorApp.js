@@ -3,6 +3,7 @@ import { CONFIG } from '../config.js';
 import { GameMap } from '../engine/map.js';
 import { MonsterManager } from '../engine/monsterManager.js';
 import { spriteGen } from '../engine/spriteGenerator.js';
+import { supabase } from '../services/supabaseClient.js';
 
 class MapEditorApp {
   constructor() {
@@ -574,7 +575,7 @@ class MapEditorApp {
     }
   }
 
-  saveCustomMap() {
+  async saveCustomMap() {
     try {
       const saved = localStorage.getItem('mmorpg_custom_maps');
       const dict = saved ? JSON.parse(saved) : {};
@@ -585,13 +586,38 @@ class MapEditorApp {
         teleports: this.teleports
       };
       localStorage.setItem('mmorpg_custom_maps', JSON.stringify(dict));
-      alert(`🚀 Mapa '${this.gameMap.name}' SALVO COM SUCESSO!\n\nAs alterações de terreno, relevo, árvores, spawns e TELEPORTES CUSTOMIZADOS já estão aplicadas no seu jogo!`);
+
+      // Sincronizar com o Banco de Dados Global Supabase
+      if (supabase) {
+        const { error } = await supabase
+          .from('custom_maps')
+          .upsert({
+            map_id: this.currentMapId,
+            name: this.gameMap.name,
+            width: this.width,
+            height: this.height,
+            grid: this.gameMap.grid,
+            spawns: this.spawns,
+            npcs: this.npcs,
+            teleports: this.teleports,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Erro ao salvar mapa no Supabase DB:', error);
+          alert(`⚠️ Salvo localmente, mas ocorreu um aviso ao sincronizar no banco global: ${error.message}`);
+        } else {
+          alert(`🌐 MAPA '${this.gameMap.name}' PUBLICADO COM SUCESSO NO BANCO DE DADOS SUPABASE!\n\nAs alterações já estão salvas no servidor global e ativas para TODOS os jogadores do mundo!`);
+        }
+      } else {
+        alert(`🚀 Mapa '${this.gameMap.name}' salvo localmente!`);
+      }
     } catch (e) {
       console.error('Erro ao salvar mapa:', e);
     }
   }
 
-  resetCustomMap() {
+  async resetCustomMap() {
     if (confirm(`Deseja restaurar o mapa '${this.gameMap.name}' para a geografia e spawns originais?`)) {
       try {
         const saved = localStorage.getItem('mmorpg_custom_maps');
@@ -600,8 +626,13 @@ class MapEditorApp {
           delete dict[this.currentMapId];
           localStorage.setItem('mmorpg_custom_maps', JSON.stringify(dict));
         }
+
+        if (supabase) {
+          await supabase.from('custom_maps').delete().eq('map_id', this.currentMapId);
+        }
+
         this.loadMap(this.currentMapId);
-        alert(`↺ Mapa '${this.gameMap.name}' restaurado ao estado original.`);
+        alert(`↺ Mapa '${this.gameMap.name}' restaurado ao estado original no servidor global.`);
       } catch (e) {
         console.error('Erro ao resetar mapa:', e);
       }
