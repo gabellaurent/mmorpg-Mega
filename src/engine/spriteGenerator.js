@@ -72,6 +72,16 @@ class SpriteGenerator {
     this.cache['magma_floor'] = this.drawMagmaFloorTile(size);
     this.cache['obsidian_wall'] = this.drawObsidianWallTile(size);
 
+    // Sprites de Cerca de Madeira Modulares Estilo Tibia (8 Peças)
+    this.cache['fence_h'] = this.drawFenceHSprite(size);
+    this.cache['fence_v'] = this.drawFenceVSprite(size);
+    this.cache['fence_corner_tl'] = this.drawFenceCornerTLSprite(size);
+    this.cache['fence_corner_tr'] = this.drawFenceCornerTRSprite(size);
+    this.cache['fence_corner_bl'] = this.drawFenceCornerBLSprite(size);
+    this.cache['fence_corner_br'] = this.drawFenceCornerBRSprite(size);
+    this.cache['fence_end_l'] = this.drawFenceEndLSprite(size);
+    this.cache['fence_end_r'] = this.drawFenceEndRSprite(size);
+
     // 3. Monstros: Rat, Rotworm, Lobo, Aranha, Goblin e Guardião de Magma (Boss)
     this.cache['rat'] = this.drawRatSprite(size);
     this.cache['rotworm'] = this.drawRotwormSprite(size);
@@ -1536,6 +1546,271 @@ class SpriteGenerator {
     // Porrete / Adaga de Madeira na mão
     ctx.fillStyle = '#975a16';
     ctx.fillRect(cx + 9, cy - 6, 4, 16);
+
+    return canvas;
+  }
+
+  // --- RENDERIZADORES DE CERCA DE MADEIRA MODULAR ESTILO TIBIA ---
+
+  drawFenceHSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Sombra no chão
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, size / 2 + 10, size, 4);
+
+    // Traves horizontais de madeira (Superior e Inferior)
+    ctx.fillStyle = '#653e1a'; // Madeira base escura
+    ctx.fillRect(0, size / 2 - 8, size, 5);
+    ctx.fillRect(0, size / 2 + 4, size, 5);
+
+    ctx.fillStyle = '#8d5b2b'; // Madeira meio
+    ctx.fillRect(0, size / 2 - 7, size, 3);
+    ctx.fillRect(0, size / 2 + 5, size, 3);
+
+    ctx.fillStyle = '#b88349'; // Brilho topo
+    ctx.fillRect(0, size / 2 - 8, size, 1);
+    ctx.fillRect(0, size / 2 + 4, size, 1);
+
+    // Poste Central com topo chanfrado
+    const px = size / 2 - 4;
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(px - 1, size / 2 - 14, 10, 26);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(px, size / 2 - 14, 8, 26);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(px + 1, size / 2 - 13, 5, 25);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(px + 1, size / 2 - 14, 4, 2); // Topo iluminado
+
+    // Pregos / Amarração de Ferro
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(px + 2, size / 2 - 6, 2, 2);
+    ctx.fillRect(px + 2, size / 2 + 6, 2, 2);
+
+    return canvas;
+  }
+
+  drawFenceVSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const px = size / 2 - 4;
+
+    // Sombra do poste e traves
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(px + 8, 0, 4, size);
+
+    // Traves verticais de madeira contínuas
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(px - 1, 0, 10, size);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(px, 0, 8, size);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(px + 1, 0, 5, size);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(px + 1, 0, 2, size);
+
+    // Amarrações / Juntas horizontais
+    ctx.fillStyle = '#26140e';
+    ctx.fillRect(px - 2, 8, 12, 4);
+    ctx.fillRect(px - 2, size - 12, 12, 4);
+
+    return canvas;
+  }
+
+  drawFenceCornerTLSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // Sombra
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(cx - 4, cy + 10, size / 2 + 4, 4);
+    ctx.fillRect(cx + 6, cy - 4, 4, size / 2 + 4);
+
+    // Trave Leste (para a Direita)
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx, cy - 8, size / 2, 5);
+    ctx.fillRect(cx, cy + 4, size / 2, 5);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx, cy - 7, size / 2, 3);
+    ctx.fillRect(cx, cy + 5, size / 2, 3);
+
+    // Trave Sul (para Baixo)
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(cx - 4, cy, 8, size / 2);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 3, cy, 6, size / 2);
+
+    // Poste de Canto (Robusto)
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(cx - 5, cy - 14, 10, 24);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 4, cy - 14, 8, 24);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx - 3, cy - 13, 5, 23);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(cx - 3, cy - 14, 4, 2);
+
+    return canvas;
+  }
+
+  drawFenceCornerTRSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // Sombra
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, cy + 10, cx + 4, 4);
+
+    // Trave Oeste (para a Esquerda)
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(0, cy - 8, cx, 5);
+    ctx.fillRect(0, cy + 4, cx, 5);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(0, cy - 7, cx, 3);
+    ctx.fillRect(0, cy + 5, cx, 3);
+
+    // Trave Sul (para Baixo)
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(cx - 4, cy, 8, size / 2);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 3, cy, 6, size / 2);
+
+    // Poste de Canto
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(cx - 5, cy - 14, 10, 24);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 4, cy - 14, 8, 24);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx - 3, cy - 13, 5, 23);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(cx - 3, cy - 14, 4, 2);
+
+    return canvas;
+  }
+
+  drawFenceCornerBLSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // Trave Leste (para a Direita)
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx, cy - 8, size / 2, 5);
+    ctx.fillRect(cx, cy + 4, size / 2, 5);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx, cy - 7, size / 2, 3);
+    ctx.fillRect(cx, cy + 5, size / 2, 3);
+
+    // Trave Norte (para Cima)
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(cx - 4, 0, 8, cy);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 3, 0, 6, cy);
+
+    // Poste de Canto
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(cx - 5, cy - 14, 10, 24);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 4, cy - 14, 8, 24);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx - 3, cy - 13, 5, 23);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(cx - 3, cy - 14, 4, 2);
+
+    return canvas;
+  }
+
+  drawFenceCornerBRSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // Trave Oeste (para a Esquerda)
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(0, cy - 8, cx, 5);
+    ctx.fillRect(0, cy + 4, cx, 5);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(0, cy - 7, cx, 3);
+    ctx.fillRect(0, cy + 5, cx, 3);
+
+    // Trave Norte (para Cima)
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(cx - 4, 0, 8, cy);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 3, 0, 6, cy);
+
+    // Poste de Canto
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(cx - 5, cy - 14, 10, 24);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(cx - 4, cy - 14, 8, 24);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(cx - 3, cy - 13, 5, 23);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(cx - 3, cy - 14, 4, 2);
+
+    return canvas;
+  }
+
+  drawFenceEndLSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cy = size / 2;
+
+    // Sombra do poste terminal
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(8, cy + 10, 6, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Traves estendendo para a direita
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(8, cy - 8, size - 8, 5);
+    ctx.fillRect(8, cy + 4, size - 8, 5);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(8, cy - 7, size - 8, 3);
+    ctx.fillRect(8, cy + 5, size - 8, 3);
+
+    // Poste Inicial Arredondado (Esquerda)
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(4, cy - 14, 8, 26);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(5, cy - 14, 6, 26);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(6, cy - 13, 4, 25);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(6, cy - 14, 3, 2);
+
+    return canvas;
+  }
+
+  drawFenceEndRSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cy = size / 2;
+
+    // Sombra do poste terminal
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(size - 8, cy + 10, 6, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Traves estendendo para a esquerda
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(0, cy - 8, size - 8, 5);
+    ctx.fillRect(0, cy + 4, size - 8, 5);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(0, cy - 7, size - 8, 3);
+    ctx.fillRect(0, cy + 5, size - 8, 3);
+
+    // Poste Final Arredondado (Direita)
+    ctx.fillStyle = '#42260e';
+    ctx.fillRect(size - 12, cy - 14, 8, 26);
+    ctx.fillStyle = '#653e1a';
+    ctx.fillRect(size - 11, cy - 14, 6, 26);
+    ctx.fillStyle = '#8d5b2b';
+    ctx.fillRect(size - 10, cy - 13, 4, 25);
+    ctx.fillStyle = '#b88349';
+    ctx.fillRect(size - 10, cy - 14, 3, 2);
 
     return canvas;
   }

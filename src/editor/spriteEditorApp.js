@@ -120,7 +120,7 @@ class SpriteEditorApp {
       } catch (e) {}
     }
 
-    const defaultKeys = ['grass_0', 'grass_dry', 'grass_dark', 'grass_moss', 'cobble', 'dirt', 'cave_floor', 'magma_floor', 'flowers_red', 'flowers_blue', 'flowers_purple', 'bush_berry', 'bush_large', 'tall_grass', 'tree_trunk', 'tree_canopy', 'tree_pine_canopy', 'rat', 'rotworm', 'demon_boss', 'char_knight', 'char_mage', 'char_paladin'];
+    const defaultKeys = ['grass_0', 'grass_dry', 'grass_dark', 'grass_moss', 'cobble', 'dirt', 'cave_floor', 'magma_floor', 'flowers_red', 'flowers_blue', 'flowers_purple', 'bush_berry', 'bush_large', 'tall_grass', 'tree_trunk', 'tree_canopy', 'tree_pine_canopy', 'fence_h', 'fence_v', 'fence_corner_tl', 'fence_corner_tr', 'fence_corner_bl', 'fence_corner_br', 'fence_end_l', 'fence_end_r', 'rat', 'rotworm', 'demon_boss', 'char_knight', 'char_mage', 'char_paladin'];
 
     keysSet.forEach(key => {
       if (!defaultKeys.includes(key)) {

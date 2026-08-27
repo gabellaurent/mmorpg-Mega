@@ -46,7 +46,15 @@ class MapEditorApp {
       { category: 'terrain', key: 'gate_pillar', label: 'Pilar Portão', type: CONFIG.TILE_TYPES.GATE, isSolid: true },
       { category: 'terrain', key: 'cave_hole', label: 'Entrada Caverna', type: CONFIG.TILE_TYPES.CAVE_HOLE, isSolid: false },
       { category: 'terrain', key: 'cave_stairs', label: 'Escada Caverna', type: CONFIG.TILE_TYPES.CAVE_STAIRS, isSolid: false },
-      { category: 'terrain', key: 'portal', label: 'Portal Praça', type: CONFIG.TILE_TYPES.PORTAL, isSolid: false },
+      // 🪵 Cerca de Madeira Modular (Estilo Tibia)
+      { category: 'terrain', key: 'fence_h', label: 'Cerca Horizontal', type: CONFIG.TILE_TYPES.FENCE_H, isSolid: true },
+      { category: 'terrain', key: 'fence_v', label: 'Cerca Vertical', type: CONFIG.TILE_TYPES.FENCE_V, isSolid: true },
+      { category: 'terrain', key: 'fence_corner_tl', label: 'Cerca Canto Sup. Esq. ◤', type: CONFIG.TILE_TYPES.FENCE_CORNER_TL, isSolid: true },
+      { category: 'terrain', key: 'fence_corner_tr', label: 'Cerca Canto Sup. Dir. ◥', type: CONFIG.TILE_TYPES.FENCE_CORNER_TR, isSolid: true },
+      { category: 'terrain', key: 'fence_corner_bl', label: 'Cerca Canto Inf. Esq. ◣', type: CONFIG.TILE_TYPES.FENCE_CORNER_BL, isSolid: true },
+      { category: 'terrain', key: 'fence_corner_br', label: 'Cerca Canto Inf. Dir. ◢', type: CONFIG.TILE_TYPES.FENCE_CORNER_BR, isSolid: true },
+      { category: 'terrain', key: 'fence_end_l', label: 'Cerca Ponta Esquerda', type: CONFIG.TILE_TYPES.FENCE_END_L, isSolid: true },
+      { category: 'terrain', key: 'fence_end_r', label: 'Cerca Ponta Direita', type: CONFIG.TILE_TYPES.FENCE_END_R, isSolid: true },
 
       // 🛋️ Casinha & Mobília
       { category: 'terrain', key: 'house_door', label: 'Porta da Casa', type: CONFIG.TILE_TYPES.HOUSE_DOOR, isSolid: false },
