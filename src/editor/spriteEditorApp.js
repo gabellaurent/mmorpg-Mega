@@ -83,6 +83,8 @@ class SpriteEditorApp {
 
     this.frameSelectorGroup = document.getElementById('frame-selector-group');
     this.frameButtonsGrid = document.getElementById('frame-buttons-grid');
+    this.btnMirrorEastWest = document.getElementById('btn-mirror-east-west');
+    this.btnFlipHorizontal = document.getElementById('btn-flip-horizontal');
   }
 
   initPalette() {
@@ -129,6 +131,14 @@ class SpriteEditorApp {
     this.btnBucket.addEventListener('click', () => this.setTool('bucket'));
     this.btnEraser.addEventListener('click', () => this.setTool('eraser'));
     this.btnPicker.addEventListener('click', () => this.setTool('picker'));
+
+    if (this.btnMirrorEastWest) {
+      this.btnMirrorEastWest.addEventListener('click', () => this.mirrorEastToWest());
+    }
+
+    if (this.btnFlipHorizontal) {
+      this.btnFlipHorizontal.addEventListener('click', () => this.flipHorizontalActiveFrame());
+    }
 
     this.pixelCanvas.addEventListener('mousedown', (e) => {
       this.isMouseDown = true;
@@ -327,6 +337,44 @@ class SpriteEditorApp {
     this.selectedRow = row;
     this.pixels = this.framesData[col][row];
     this.renderFrameSelectorGrid();
+    this.syncCurrentFrameToFullCanvas();
+    this.render();
+  }
+
+  mirrorEastToWest() {
+    if (!this.isMultiFrame) return;
+
+    // Col 2 = Leste (East), Col 3 = Oeste (West)
+    // Para cada uma das 3 rows (Parado, Passo 1, Passo 2)
+    for (let r = 0; r < 3; r++) {
+      for (let y = 0; y < this.gridSize; y++) {
+        for (let x = 0; x < this.gridSize; x++) {
+          this.framesData[3][r][y][31 - x] = this.framesData[2][r][y][x];
+        }
+      }
+    }
+
+    this.syncCurrentFrameToFullCanvas();
+    this.render();
+
+    alert('🪞 OS 3 QUADROS DE LESTE (➡️) FORAM ESPELHADOS E COPIADOS PARA OESTE (⬅️) COM SUCESSO!');
+  }
+
+  flipHorizontalActiveFrame() {
+    const flipped = Array(this.gridSize).fill(null).map(() => Array(this.gridSize).fill(null));
+
+    for (let y = 0; y < this.gridSize; y++) {
+      for (let x = 0; x < this.gridSize; x++) {
+        flipped[y][31 - x] = this.pixels[y][x];
+      }
+    }
+
+    for (let y = 0; y < this.gridSize; y++) {
+      for (let x = 0; x < this.gridSize; x++) {
+        this.pixels[y][x] = flipped[y][x];
+      }
+    }
+
     this.syncCurrentFrameToFullCanvas();
     this.render();
   }
