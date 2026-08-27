@@ -75,7 +75,7 @@ export class Renderer {
     const startRow = Math.max(0, Math.floor(this.cameraY / tileSize));
     const endRow = Math.min(CONFIG.GRID_HEIGHT - 1, Math.ceil((this.cameraY + viewHeight) / tileSize));
 
-    // PASSO 1: Terrenos Base e Objetos Sobrepostos (Empilhamento em Camadas)
+    // PASSO 1: Desenhar APENAS Terrenos Base (Chão Plano de Fundo)
     const mapId = gameMap.mapId || 'map-1';
     const defaultGroundKey = (mapId === 'map-cave-1' ? 'cave_floor' : (mapId === 'map-cave-2' ? 'magma_floor' : (mapId === 'map-house-1' ? 'wood_floor' : 'grass_0')));
 
@@ -84,22 +84,13 @@ export class Renderer {
         const tile = gameMap.getTile(x, y);
         if (!tile) continue;
 
-        // 1. Desenhar Terreno Base de Fundo
         const baseKey = tile.baseKey || (['cave_wall', 'cave_floor'].includes(tile.spriteKey) ? 'cave_floor' : (['obsidian_wall', 'magma_floor'].includes(tile.spriteKey) ? 'magma_floor' : (tile.spriteKey === 'wood_floor' ? 'wood_floor' : defaultGroundKey)));
         const baseSpr = spriteGen.get(baseKey) || spriteGen.get('grass_0');
         ctx.drawImage(baseSpr, x * tileSize, y * tileSize, tileSize, tileSize);
-
-        // 2. Desenhar Elemento / Item Sobreposto (Cerca, Flores, Árvores, Móveis, Sprites Transparentes)
-        if (tile.spriteKey && tile.spriteKey !== baseKey) {
-          const overlaySpr = spriteGen.get(tile.spriteKey);
-          if (overlaySpr) {
-            ctx.drawImage(overlaySpr, x * tileSize, y * tileSize, tileSize, tileSize);
-          }
-        }
       }
     }
 
-    // PASSO 2: Grade Guia
+    // PASSO 2: Grade Guia (se ativada)
     if (this.showGridOverlay) {
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
       ctx.lineWidth = 1;
@@ -138,40 +129,74 @@ export class Renderer {
       });
     }
 
-    // PASSO 2.6: Corpos e Restos Mortais com Decomposição (Sistema Tibia)
+    // PASSO 2.6: Corpos e Restos Mortais com Decomposição
     if (corpseManager) {
       this.renderCorpses(corpseManager);
     }
 
-    // PASSO 3: Monstros (Rats)
+    // PASSO 3: MONTAGEM DA LISTA DE ENTIDADES E ESTRUTURAS COM ORDENAÇÃO DE PROFUNDIDADE Y (Visão ¾ Tibia Style)
+    const renderQueue = [];
+
+    // 3a. Adicionar Estruturas/Elementos com Altura da Grade (Paredes, Cercas, Móveis, Montanhas, Árvores)
+    for (let y = startRow; y <= endRow; y++) {
+      for (let x = startCol; x <= endCol; x++) {
+        const tile = gameMap.getTile(x, y);
+        if (!tile) continue;
+        const baseKey = tile.baseKey || (['cave_wall', 'cave_floor'].includes(tile.spriteKey) ? 'cave_floor' : (['obsidian_wall', 'magma_floor'].includes(tile.spriteKey) ? 'magma_floor' : (tile.spriteKey === 'wood_floor' ? 'wood_floor' : defaultGroundKey)));
+        if (tile.spriteKey && tile.spriteKey !== baseKey) {
+          renderQueue.push({
+            sortY: y * tileSize + tileSize / 2,
+            type: 'tile_object',
+            x, y, tile
+          });
+        }
+      }
+    }
+
+    // 3b. Adicionar Monstros
     if (monsterManager) {
       monsterManager.monsters.forEach(rat => {
         if (!rat.isDead) {
           const isLocked = lockedTargetId && rat.id === lockedTargetId;
-          this.renderMonster(rat, isLocked);
+          renderQueue.push({
+            sortY: rat.renderY + tileSize / 2,
+            type: 'monster',
+            monster: rat,
+            isLocked
+          });
         }
       });
     }
 
-    // PASSO 4: Entidades (Jogadores + NPCs)
-    const allEntities = [
-      { entity: localPlayer, type: 'player', isLocal: true },
-      ...Array.from(remotePlayersMap.values()).map(p => ({ entity: p, type: 'player', isLocal: false }))
-    ];
-
+    // 3c. Adicionar Jogadores e NPCs
+    if (localPlayer) {
+      renderQueue.push({ sortY: localPlayer.renderY + tileSize / 2, type: 'player', player: localPlayer, isLocal: true });
+    }
+    remotePlayersMap.forEach(p => {
+      renderQueue.push({ sortY: p.renderY + tileSize / 2, type: 'player', player: p, isLocal: false });
+    });
     if (npcManager) {
       npcManager.npcs.forEach(npc => {
-        allEntities.push({ entity: npc, type: 'npc' });
+        renderQueue.push({ sortY: npc.renderY + tileSize / 2, type: 'npc', npc });
       });
     }
 
-    allEntities.sort((a, b) => a.entity.renderY - b.entity.renderY);
+    // 3d. Ordenar TUDO pela coordenada Y (Profundidade: de Cima para Baixo)
+    renderQueue.sort((a, b) => a.sortY - b.sortY);
 
-    allEntities.forEach(item => {
-      if (item.type === 'player') {
-        this.renderPlayer(item.entity, item.isLocal);
+    // 3e. Renderizar Fila Ordenada por Profundidade
+    renderQueue.forEach(item => {
+      if (item.type === 'tile_object') {
+        const overlaySpr = spriteGen.get(item.tile.spriteKey);
+        if (overlaySpr) {
+          ctx.drawImage(overlaySpr, item.x * tileSize, item.y * tileSize, tileSize, tileSize);
+        }
+      } else if (item.type === 'monster') {
+        this.renderMonster(item.monster, item.isLocked);
+      } else if (item.type === 'player') {
+        this.renderPlayer(item.player, item.isLocal);
       } else if (item.type === 'npc') {
-        this.renderNpc(item.entity);
+        this.renderNpc(item.npc);
       }
     });
 
