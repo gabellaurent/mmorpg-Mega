@@ -13,10 +13,18 @@ class SpriteEditorApp {
     this.currentColor = '#48bb78';
     this.isMouseDown = false;
 
-    // Suporte a Spritesheets de Personagem (4x3 = 12 Quadros)
+    // Suporte a Spritesheets de Personagem (4x3 = 12 Quadros em Memória)
     this.isMultiFrame = false;
     this.selectedCol = 0; // 0: South (Sul), 1: North (Norte), 2: East (Leste), 3: West (Oeste)
     this.selectedRow = 0; // 0: Parado, 1: Passo 1, 2: Passo 2
+
+    // Matriz de 12 quadros [4 cols][3 rows][32][32]
+    this.framesData = Array(4).fill(null).map(() => 
+      Array(3).fill(null).map(() => 
+        Array(32).fill(null).map(() => Array(32).fill(null))
+      )
+    );
+
     this.fullCanvas = document.createElement('canvas');
     this.fullCanvas.width = 192;
     this.fullCanvas.height = 144;
@@ -206,10 +214,44 @@ class SpriteEditorApp {
       this.fullCtx.clearRect(0, 0, canvas.width, canvas.height);
       this.fullCtx.drawImage(canvas, 0, 0);
 
+      const frameWidth = Math.floor(canvas.width / 4);
+      const frameHeight = Math.floor(canvas.height / 3);
+
+      // Amostrar os 12 quadros para a memória this.framesData[col][row][32][32]
+      for (let c = 0; c < 4; c++) {
+        for (let r = 0; r < 3; r++) {
+          const offsetX = c * frameWidth;
+          const offsetY = r * frameHeight;
+          const imgData = this.fullCtx.getImageData(offsetX, offsetY, frameWidth, frameHeight);
+
+          for (let y = 0; y < this.gridSize; y++) {
+            for (let x = 0; x < this.gridSize; x++) {
+              const srcX = Math.floor(x * (frameWidth / this.gridSize));
+              const srcY = Math.floor(y * (frameHeight / this.gridSize));
+              const idx = (srcY * frameWidth + srcX) * 4;
+
+              const red = imgData.data[idx];
+              const green = imgData.data[idx + 1];
+              const blue = imgData.data[idx + 2];
+              const alpha = imgData.data[idx + 3];
+
+              if (alpha > 10) {
+                const hex = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`;
+                this.framesData[c][r][y][x] = hex;
+              } else {
+                this.framesData[c][r][y][x] = null;
+              }
+            }
+          }
+        }
+      }
+
       this.selectedCol = 0; // Sul
       this.selectedRow = 0; // Parado
+      this.pixels = this.framesData[0][0];
       this.renderFrameSelectorGrid();
-      this.loadFrameToGrid(0, 0);
+      this.syncCurrentFrameToFullCanvas();
+      this.render();
     } else {
       this.isMultiFrame = false;
       if (this.frameSelectorGroup) this.frameSelectorGroup.style.display = 'none';
@@ -280,41 +322,11 @@ class SpriteEditorApp {
   }
 
   switchSubFrame(col, row) {
-    this.syncCurrentFrameToFullCanvas();
     this.selectedCol = col;
     this.selectedRow = row;
+    this.pixels = this.framesData[col][row];
     this.renderFrameSelectorGrid();
-    this.loadFrameToGrid(col, row);
-  }
-
-  loadFrameToGrid(col, row) {
-    const frameWidth = Math.floor(this.fullCanvas.width / 4);
-    const frameHeight = Math.floor(this.fullCanvas.height / 3);
-    const offsetX = col * frameWidth;
-    const offsetY = row * frameHeight;
-
-    const imgData = this.fullCtx.getImageData(offsetX, offsetY, frameWidth, frameHeight);
-
-    for (let y = 0; y < this.gridSize; y++) {
-      for (let x = 0; x < this.gridSize; x++) {
-        const srcX = Math.floor(x * (frameWidth / this.gridSize));
-        const srcY = Math.floor(y * (frameHeight / this.gridSize));
-        const idx = (srcY * frameWidth + srcX) * 4;
-
-        const r = imgData.data[idx];
-        const g = imgData.data[idx + 1];
-        const b = imgData.data[idx + 2];
-        const a = imgData.data[idx + 3];
-
-        if (a > 10) {
-          const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-          this.pixels[y][x] = hex;
-        } else {
-          this.pixels[y][x] = null;
-        }
-      }
-    }
-
+    this.syncCurrentFrameToFullCanvas();
     this.render();
   }
 
@@ -323,26 +335,29 @@ class SpriteEditorApp {
 
     const frameWidth = Math.floor(this.fullCanvas.width / 4);
     const frameHeight = Math.floor(this.fullCanvas.height / 3);
-    const offsetX = this.selectedCol * frameWidth;
-    const offsetY = this.selectedRow * frameHeight;
-
-    // Limpar o quadro no canvas offscreen completo
-    this.fullCtx.clearRect(offsetX, offsetY, frameWidth, frameHeight);
-
-    // Renderizar os pixels da grade 32x32 no quadro 48x48
     const scaleX = frameWidth / this.gridSize;
     const scaleY = frameHeight / this.gridSize;
 
-    for (let y = 0; y < this.gridSize; y++) {
-      for (let x = 0; x < this.gridSize; x++) {
-        if (this.pixels[y][x]) {
-          this.fullCtx.fillStyle = this.pixels[y][x];
-          this.fullCtx.fillRect(
-            offsetX + Math.floor(x * scaleX), 
-            offsetY + Math.floor(y * scaleY), 
-            Math.ceil(scaleX), 
-            Math.ceil(scaleY)
-          );
+    this.fullCtx.clearRect(0, 0, this.fullCanvas.width, this.fullCanvas.height);
+
+    for (let c = 0; c < 4; c++) {
+      for (let r = 0; r < 3; r++) {
+        const offsetX = c * frameWidth;
+        const offsetY = r * frameHeight;
+
+        for (let y = 0; y < this.gridSize; y++) {
+          for (let x = 0; x < this.gridSize; x++) {
+            const color = this.framesData[c][r][y][x];
+            if (color) {
+              this.fullCtx.fillStyle = color;
+              this.fullCtx.fillRect(
+                offsetX + Math.floor(x * scaleX), 
+                offsetY + Math.floor(y * scaleY), 
+                Math.ceil(scaleX), 
+                Math.ceil(scaleY)
+              );
+            }
+          }
         }
       }
     }
