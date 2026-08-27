@@ -557,13 +557,7 @@ class GameEngine {
         draggedCorpse = null;
       }
 
-      // 0. Toque / Clique Direto no Próprio Personagem (Restrito ao Quadro Exato do GRID)!
-      if (this.localPlayer && this.localPlayer.gridX === coords.gridX && this.localPlayer.gridY === coords.gridY) {
-        if (this.radialMenu) {
-          this.radialMenu.toggle(e.clientX, e.clientY);
-        }
-        return;
-      }
+      // 0. Removido clique esquerdo no personagem (O menu agora é aberto com Botão Direito no PC ou Toque Longo no Celular)
 
       // 0.5. Toque / Clique em NPC Comerciante (Abrir Loja de Poções/Armas se o Jogador estiver perto)
       if (this.npcManager && this.hud && this.localPlayer) {
@@ -614,7 +608,7 @@ class GameEngine {
     });
 
     // Evento PointerUp: Processar Clique Simples (Caminhar/Saquear) ou Arraste (Drag & Drop de Corpos)
-    this.canvas.addEventListener('pointerup', (e) => {
+    this.canvas.addEventListener('pointerup', async (e) => {
       if (e.button !== 0) return;
       if (this.gameStartTime && Date.now() - this.gameStartTime < 600) return;
       this.canvas.style.cursor = 'crosshair';
@@ -659,7 +653,7 @@ class GameEngine {
           }
         }
       }
-      // CASO B: Clique Simples (soltou no MESMO quadro onde clicou) -> Caminhar, Saquear ou Abrir Loja!
+      // CASO B: Clique Simples (soltou no MESMO quadro onde clicou) -> Saquear Corpo ou Caminhar!
       else {
         // Se houver um NPC Comerciante no quadro clicado: Abrir Loja!
         if (this.npcManager && this.hud && this.localPlayer) {
@@ -678,27 +672,59 @@ class GameEngine {
           }
         }
 
-        // Se houver um corpo no quadro clicado: saquear se estiver adjacente
+        // Se houver um corpo no quadro clicado: Saquear o Loot sem andar por cima!
         if (this.corpseManager) {
           const corpse = this.corpseManager.getCorpseAt(endCoords.gridX, endCoords.gridY);
           if (corpse) {
             const dist = Math.max(Math.abs(corpse.gridX - this.localPlayer.gridX), Math.abs(corpse.gridY - this.localPlayer.gridY));
             if (dist <= 1.5) {
-              const result = this.corpseManager.lootCorpse(corpse.id, this.localPlayer);
-              if (result.success) {
-                if (this.network) {
-                  this.network.updateCorpseInDatabase(corpse.id, corpse.loot);
+              let looted = false;
+              if (this.network && this.network.useSupabase) {
+                const edgeLoot = await this.network.lootCorpseViaEdge(corpse.id);
+                if (edgeLoot && edgeLoot.length > 0) {
+                  looted = true;
+                  const lootedNames = edgeLoot.map(i => i.itemId === 'gold' ? `+${i.quantity} Ouro` : (CONFIG.ITEMS[i.itemId]?.name || i.itemId)).join(', ');
+                  this.monsterManager.addFloatingText(`+${lootedNames}`, corpse.gridX, corpse.gridY, '#f6e05e');
+                  this.hud.addChatMessage('Sistema', `🎒 Você abriu o corpo de <strong>${corpse.ownerName}</strong> e encontrou: <strong>${lootedNames}</strong>!`, true);
+                  this.hud.updatePlayerStats();
                 }
-                const lootedNames = result.lootedItems.map(i => i.itemId === 'gold' ? `+${i.quantity} Ouro` : (CONFIG.ITEMS[i.itemId]?.name || i.itemId)).join(', ');
-                this.monsterManager.addFloatingText(`+${lootedNames}`, corpse.gridX, corpse.gridY, '#f6e05e');
-                this.hud.addChatMessage('Sistema', `🎒 Você abriu o corpo de <strong>${corpse.ownerName}</strong> e encontrou: <strong>${lootedNames}</strong>!`, true);
-                this.hud.updatePlayerStats();
               }
+              if (!looted) {
+                const result = this.corpseManager.lootCorpse(corpse.id, this.localPlayer);
+                if (result.success) {
+                  if (this.network) {
+                    this.network.updateCorpseInDatabase(corpse.id, corpse.loot);
+                  }
+                  const lootedNames = result.lootedItems.map(i => i.itemId === 'gold' ? `+${i.quantity} Ouro` : (CONFIG.ITEMS[i.itemId]?.name || i.itemId)).join(', ');
+                  this.monsterManager.addFloatingText(`+${lootedNames}`, corpse.gridX, corpse.gridY, '#f6e05e');
+                  this.hud.addChatMessage('Sistema', `🎒 Você abriu o corpo de <strong>${corpse.ownerName}</strong> e encontrou: <strong>${lootedNames}</strong>!`, true);
+                  this.hud.updatePlayerStats();
+                }
+              }
+              // IMPORTANTE: Limpar rastreador e Retornar imediatamente para NÃO caminhar por cima do corpo!
+              dragStartCoords = null;
+              draggedCorpse = null;
+              return;
+            } else {
+              // Se estiver distante do corpo, caminhar até um quadro adjacente
+              const path = Pathfinder.findPath(
+                this.localPlayer.gridX,
+                this.localPlayer.gridY,
+                endCoords.gridX,
+                endCoords.gridY,
+                (x, y) => !this.isTileOccupiedByEntity(x, y, this.localPlayer.id)
+              );
+              if (path && path.length > 0) {
+                this.localPlayer.setPath(path);
+              }
+              dragStartCoords = null;
+              draggedCorpse = null;
+              return;
             }
           }
         }
 
-        // Caminhada Point-and-Click até o quadro desejado
+        // Caminhada Point-and-Click comum até o quadro desejado
         const path = Pathfinder.findPath(
           this.localPlayer.gridX,
           this.localPlayer.gridY,
@@ -731,8 +757,15 @@ class GameEngine {
     const coords = this.getGridCoordsFromClient(clientX, clientY);
     if (!coords) return;
 
+    // BOTÃO DIREITO NO PRÓPRIO PERSONAGEM DO COMPUTADOR: ABRIR MENU RETANGULAR DE AÇÕES!
+    if (this.localPlayer && this.localPlayer.gridX === coords.gridX && this.localPlayer.gridY === coords.gridY) {
+      if (this.radialMenu) {
+        this.radialMenu.toggle(clientX, clientY);
+      }
+      return;
+    }
+
     let clickedRat = null;
-    let minDistance = 999;
 
     this.monsterManager.monsters.forEach(rat => {
       if (!rat.isDead && rat.gridX === coords.gridX && rat.gridY === coords.gridY) {

@@ -1,52 +1,66 @@
 export class RadialMenu {
   constructor(onSelectAction) {
-    this.onSelectAction = onSelectAction; // Callback para disparar a ação selecionada: 'inventory', 'map', 'status', 'chat'
+    this.onSelectAction = onSelectAction; // Callback para disparar a ação selecionada: 'inventory', 'map', 'status', 'chat', 'outfit', 'grid'
     this.isOpen = false;
-    this.activeTouchId = null;
     this.element = null;
     this.init();
   }
 
   init() {
     this.element = document.createElement('div');
-    this.element.id = 'radial-menu-overlay';
-    this.element.className = 'radial-menu-overlay hidden';
+    this.element.id = 'action-menu-overlay';
+    this.element.className = 'action-menu-overlay hidden';
 
     this.element.innerHTML = `
-      <div class="radial-wheel" id="radial-wheel">
-        <div class="radial-center-badge">
-          <span class="radial-center-icon">⚔️</span>
+      <div class="action-menu-card" id="action-menu-card">
+        <div class="action-menu-header">
+          <div class="action-menu-title">⚔️ MENUS DO HERÓI</div>
+          <button type="button" class="action-menu-close" id="btn-close-action-menu">✕</button>
         </div>
         
-        <!-- Slot Topo: Mochila [I] -->
-        <button class="radial-item item-top" data-action="inventory" title="Mochila (I)">
-          <span class="radial-icon">🎒</span>
-          <span class="radial-label">Mochila</span>
-        </button>
+        <div class="action-menu-grid">
+          <!-- Mochila -->
+          <button type="button" class="action-menu-item" data-action="inventory" title="Mochila (I)">
+            <span class="action-menu-icon">🎒</span>
+            <span class="action-menu-label">Mochila</span>
+            <span class="action-menu-shortcut">[I]</span>
+          </button>
 
-        <!-- Slot Direita: Mapa [M] -->
-        <button class="radial-item item-right" data-action="map" title="Mapa (M)">
-          <span class="radial-icon">🗺️</span>
-          <span class="radial-label">Mapa</span>
-        </button>
+          <!-- Mapa -->
+          <button type="button" class="action-menu-item" data-action="map" title="Mapa (M)">
+            <span class="action-menu-icon">🗺️</span>
+            <span class="action-menu-label">Mapa</span>
+            <span class="action-menu-shortcut">[M]</span>
+          </button>
 
-        <!-- Slot Baixo: Status [C] -->
-        <button class="radial-item item-bottom" data-action="status" title="Status (C)">
-          <span class="radial-icon">⚔️</span>
-          <span class="radial-label">Status</span>
-        </button>
+          <!-- Status -->
+          <button type="button" class="action-menu-item" data-action="status" title="Status (C)">
+            <span class="action-menu-icon">⚔️</span>
+            <span class="action-menu-label">Status</span>
+            <span class="action-menu-shortcut">[C]</span>
+          </button>
 
-        <!-- Slot Esquerda: Chat [Enter] -->
-        <button class="radial-item item-left" data-action="chat" title="Chat (Enter)">
-          <span class="radial-icon">💬</span>
-          <span class="radial-label">Chat</span>
-        </button>
+          <!-- Chat -->
+          <button type="button" class="action-menu-item" data-action="chat" title="Chat (Enter)">
+            <span class="action-menu-icon">💬</span>
+            <span class="action-menu-label">Chat</span>
+            <span class="action-menu-shortcut">[Enter]</span>
+          </button>
 
-        <!-- Slot Outfit: Personalizar Cores -->
-        <button class="radial-item item-outfit" data-action="outfit" title="Personalizar Outfit (O)">
-          <span class="radial-icon">🎨</span>
-          <span class="radial-label">Outfit</span>
-        </button>
+          <!-- Outfit -->
+          <button type="button" class="action-menu-item" data-action="outfit" title="Personalizar Outfit (O)">
+            <span class="action-menu-icon">🎨</span>
+            <span class="action-menu-label">Outfit</span>
+            <span class="action-menu-shortcut">[O]</span>
+          </button>
+
+          <!-- Grade -->
+          <button type="button" class="action-menu-item" data-action="grid" title="Linhas da Grade">
+            <span class="action-menu-icon">📐</span>
+            <span class="action-menu-label">Grade</span>
+            <span class="action-menu-shortcut">[G]</span>
+          </button>
+        </div>
       </div>
     `;
 
@@ -55,16 +69,22 @@ export class RadialMenu {
   }
 
   attachEvents() {
-    const wheel = this.element.querySelector('#radial-wheel');
-
-    // Bloquear fechamento ao clicar fora da roda
+    // Fechar ao clicar fora do card
     this.element.addEventListener('click', (e) => {
       if (e.target === this.element) {
         this.close();
       }
     });
 
-    const items = this.element.querySelectorAll('.radial-item');
+    const closeBtn = this.element.querySelector('#btn-close-action-menu');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.close();
+      });
+    }
+
+    const items = this.element.querySelectorAll('.action-menu-item');
     items.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -82,12 +102,12 @@ export class RadialMenu {
     this.isOpen = true;
     this.element.classList.remove('hidden');
 
-    const wheel = this.element.querySelector('#radial-wheel');
-    const clampedX = Math.max(120, Math.min(window.innerWidth - 120, x));
+    const card = this.element.querySelector('#action-menu-card');
+    const clampedX = Math.max(150, Math.min(window.innerWidth - 150, x));
     const clampedY = Math.max(120, Math.min(window.innerHeight - 120, y));
 
-    wheel.style.left = `${clampedX}px`;
-    wheel.style.top = `${clampedY}px`;
+    card.style.left = `${clampedX}px`;
+    card.style.top = `${clampedY}px`;
   }
 
   close() {
