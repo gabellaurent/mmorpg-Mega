@@ -16,6 +16,15 @@
   <!-- Folha de Estilos CSS -->
   <link rel="stylesheet" href="./style.css" />
 
+  <!-- Importmap para resolução nativa do Supabase no navegador -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+    }
+  }
+  </script>
+
   <style>
     body {
       background-color: #0d1117;
