@@ -177,7 +177,13 @@ Deno.serve(async (req) => {
         let newHp = player.hp;
 
         if (isDead) {
-          gainedXp = spriteKey === 'demon_boss' ? 250 : spriteKey === 'rotworm' ? 45 : 25;
+          if (spriteKey === 'demon_boss') gainedXp = 250;
+          else if (spriteKey === 'goblin') gainedXp = 65;
+          else if (spriteKey === 'spider') gainedXp = 50;
+          else if (spriteKey === 'rotworm') gainedXp = 45;
+          else if (spriteKey === 'wolf') gainedXp = 35;
+          else gainedXp = 25;
+
           newXp += gainedXp;
 
           while (newXp >= getXpForLevel(newLevel + 1)) {

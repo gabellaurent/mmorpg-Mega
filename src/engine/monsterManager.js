@@ -115,6 +115,39 @@ export class MonsterManager {
           { id: 'f_rat_8', name: 'Rato da Floresta', x: 14, y: 8, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } },
           { id: 'f_rat_9', name: 'Rato da Floresta', x: 27, y: 16, options: { hp: 35, minDmg: 4, maxDmg: 8, xpReward: 30, spriteKey: 'rat' } }
         ];
+      } else if (mapId === 'map-north') {
+        // Floresta do Norte: 7 Lobos Selvagens
+        spawns = [
+          { id: 'wf_1', name: 'Lobo Selvagem', x: 8, y: 6, options: { hp: 50, minDmg: 5, maxDmg: 10, xpReward: 35, spriteKey: 'wolf' } },
+          { id: 'wf_2', name: 'Lobo Selvagem', x: 24, y: 6, options: { hp: 50, minDmg: 5, maxDmg: 10, xpReward: 35, spriteKey: 'wolf' } },
+          { id: 'wf_3', name: 'Lobo Alfa', x: 16, y: 12, options: { hp: 75, minDmg: 8, maxDmg: 14, xpReward: 50, spriteKey: 'wolf' } },
+          { id: 'wf_4', name: 'Lobo Selvagem', x: 6, y: 16, options: { hp: 50, minDmg: 5, maxDmg: 10, xpReward: 35, spriteKey: 'wolf' } },
+          { id: 'wf_5', name: 'Lobo Selvagem', x: 26, y: 16, options: { hp: 50, minDmg: 5, maxDmg: 10, xpReward: 35, spriteKey: 'wolf' } },
+          { id: 'wf_6', name: 'Lobo Selvagem', x: 10, y: 24, options: { hp: 50, minDmg: 5, maxDmg: 10, xpReward: 35, spriteKey: 'wolf' } },
+          { id: 'wf_7', name: 'Lobo Selvagem', x: 22, y: 24, options: { hp: 50, minDmg: 5, maxDmg: 10, xpReward: 35, spriteKey: 'wolf' } }
+        ];
+      } else if (mapId === 'map-east') {
+        // Floresta do Leste: 7 Aranhas Gigantes
+        spawns = [
+          { id: 'sp_1', name: 'Aranha Gigante', x: 12, y: 6, options: { hp: 70, minDmg: 8, maxDmg: 14, xpReward: 50, spriteKey: 'spider' } },
+          { id: 'sp_2', name: 'Aranha Gigante', x: 24, y: 6, options: { hp: 70, minDmg: 8, maxDmg: 14, xpReward: 50, spriteKey: 'spider' } },
+          { id: 'sp_3', name: 'Aranha Tecelã', x: 8, y: 12, options: { hp: 70, minDmg: 8, maxDmg: 14, xpReward: 50, spriteKey: 'spider' } },
+          { id: 'sp_4', name: 'Aranha Tecelã', x: 20, y: 12, options: { hp: 70, minDmg: 8, maxDmg: 14, xpReward: 50, spriteKey: 'spider' } },
+          { id: 'sp_5', name: 'Aranha da Noite', x: 14, y: 20, options: { hp: 85, minDmg: 10, maxDmg: 16, xpReward: 60, spriteKey: 'spider' } },
+          { id: 'sp_6', name: 'Aranha Gigante', x: 6, y: 24, options: { hp: 70, minDmg: 8, maxDmg: 14, xpReward: 50, spriteKey: 'spider' } },
+          { id: 'sp_7', name: 'Aranha Gigante', x: 25, y: 24, options: { hp: 70, minDmg: 8, maxDmg: 14, xpReward: 50, spriteKey: 'spider' } }
+        ];
+      } else if (mapId === 'map-west') {
+        // Floresta do Oeste (Pântano): 7 Goblins Guerreiros
+        spawns = [
+          { id: 'gb_1', name: 'Goblin Guerreiro', x: 6, y: 6, options: { hp: 90, minDmg: 10, maxDmg: 18, xpReward: 65, spriteKey: 'goblin' } },
+          { id: 'gb_2', name: 'Goblin Guerreiro', x: 22, y: 6, options: { hp: 90, minDmg: 10, maxDmg: 18, xpReward: 65, spriteKey: 'goblin' } },
+          { id: 'gb_3', name: 'Goblin Xamã', x: 14, y: 10, options: { hp: 100, minDmg: 12, maxDmg: 20, xpReward: 75, spriteKey: 'goblin' } },
+          { id: 'gb_4', name: 'Goblin Guerreiro', x: 8, y: 18, options: { hp: 90, minDmg: 10, maxDmg: 18, xpReward: 65, spriteKey: 'goblin' } },
+          { id: 'gb_5', name: 'Goblin Guerreiro', x: 24, y: 18, options: { hp: 90, minDmg: 10, maxDmg: 18, xpReward: 65, spriteKey: 'goblin' } },
+          { id: 'gb_6', name: 'Goblin do Pântano', x: 12, y: 26, options: { hp: 90, minDmg: 10, maxDmg: 18, xpReward: 65, spriteKey: 'goblin' } },
+          { id: 'gb_7', name: 'Goblin do Pântano', x: 20, y: 26, options: { hp: 90, minDmg: 10, maxDmg: 18, xpReward: 65, spriteKey: 'goblin' } }
+        ];
       } else if (mapId === 'map-cave-1') {
         // Sub-nível 1: Caverna dos Rotworms (6 Rotworms)
         spawns = [

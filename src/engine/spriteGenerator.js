@@ -72,9 +72,12 @@ class SpriteGenerator {
     this.cache['magma_floor'] = this.drawMagmaFloorTile(size);
     this.cache['obsidian_wall'] = this.drawObsidianWallTile(size);
 
-    // 3. Monstros: Rat, Rotworm e Guardião de Magma (Boss)
+    // 3. Monstros: Rat, Rotworm, Lobo, Aranha, Goblin e Guardião de Magma (Boss)
     this.cache['rat'] = this.drawRatSprite(size);
     this.cache['rotworm'] = this.drawRotwormSprite(size);
+    this.cache['wolf'] = this.drawWolfSprite(size);
+    this.cache['spider'] = this.drawSpiderSprite(size);
+    this.cache['goblin'] = this.drawGoblinSprite(size);
     this.cache['demon_boss'] = this.drawDemonBossSprite(size);
 
     // 4. Personagens e NPCs
@@ -1377,6 +1380,162 @@ class SpriteGenerator {
     ctx.fillStyle = '#f6e05e';
     ctx.fillRect(cx - 8, cy - 8, 4, 4); // Olho esquerdo
     ctx.fillRect(cx + 4, cy - 8, 4, 4);  // Olho direito
+
+    return canvas;
+  }
+
+  drawWolfSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2 + 2;
+
+    // Sombra
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 12, 14, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cauda peluda cinza
+    ctx.fillStyle = '#718096';
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cy + 2);
+    ctx.lineTo(cx - 20, cy + 8);
+    ctx.lineTo(cx - 14, cy + 12);
+    ctx.fill();
+
+    // Corpo de pelo cinza escuro
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(cx - 12, cy - 4, 20, 14);
+
+    // Peito / Pelo claro
+    ctx.fillStyle = '#cbd5e0';
+    ctx.fillRect(cx + 2, cy - 2, 8, 10);
+
+    // Orelhas pontudas
+    ctx.fillStyle = '#2d3748';
+    ctx.beginPath();
+    ctx.moveTo(cx + 4, cy - 8);
+    ctx.lineTo(cx + 8, cy - 14);
+    ctx.lineTo(cx + 10, cy - 6);
+    ctx.fill();
+
+    // Focinho de Lobo
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(cx + 10, cy - 4, 8, 8);
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(cx + 16, cy - 3, 3, 3); // Nariz
+
+    // Olho Amarelo Brilhante (Selvagem)
+    ctx.fillStyle = '#ecc94b';
+    ctx.fillRect(cx + 8, cy - 4, 3, 3);
+
+    return canvas;
+  }
+
+  drawSpiderSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // Sombra
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 10, 16, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 8 Patas Articuladas
+    ctx.strokeStyle = '#2d3748';
+    ctx.lineWidth = 2.5;
+    const legOffsets = [-10, -4, 4, 10];
+    legOffsets.forEach(ox => {
+      // Patas esquerdas
+      ctx.beginPath();
+      ctx.moveTo(cx + ox, cy);
+      ctx.lineTo(cx + ox - 8, cy - 8);
+      ctx.lineTo(cx + ox - 14, cy + 8);
+      ctx.stroke();
+
+      // Patas direitas
+      ctx.beginPath();
+      ctx.moveTo(cx + ox, cy);
+      ctx.lineTo(cx + ox + 8, cy - 8);
+      ctx.lineTo(cx + ox + 14, cy + 8);
+      ctx.stroke();
+    });
+
+    // Abdômen Aranha Roxa/Escura
+    ctx.fillStyle = '#44337a';
+    ctx.beginPath();
+    ctx.ellipse(cx - 6, cy, 11, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Marcas Vermelhas no Abdômen
+    ctx.fillStyle = '#e53e3e';
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy - 4);
+    ctx.lineTo(cx - 4, cy);
+    ctx.lineTo(cx - 8, cy + 4);
+    ctx.fill();
+
+    // Cefalotórax (Cabeça)
+    ctx.fillStyle = '#1a202c';
+    ctx.beginPath();
+    ctx.ellipse(cx + 6, cy, 7, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Múltiplos Olhos Vermelhos Aterrorizantes
+    ctx.fillStyle = '#f56565';
+    ctx.fillRect(cx + 8, cy - 4, 2, 2);
+    ctx.fillRect(cx + 11, cy - 2, 2, 2);
+    ctx.fillRect(cx + 8, cy + 2, 2, 2);
+    ctx.fillRect(cx + 11, cy, 2, 2);
+
+    return canvas;
+  }
+
+  drawGoblinSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // Sombra
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 12, 12, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Túnica de Couro Marrom
+    ctx.fillStyle = '#744210';
+    ctx.fillRect(cx - 8, cy - 2, 16, 14);
+
+    // Pele Verde de Goblin
+    ctx.fillStyle = '#38a169';
+    // Cabeça
+    ctx.fillRect(cx - 7, cy - 14, 14, 12);
+    // Orelhas pontudas
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy - 10);
+    ctx.lineTo(cx - 14, cy - 12);
+    ctx.lineTo(cx - 7, cy - 6);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(cx + 7, cy - 10);
+    ctx.lineTo(cx + 14, cy - 12);
+    ctx.lineTo(cx + 7, cy - 6);
+    ctx.fill();
+
+    // Olhos Vermelhos e Nariz Pontudo
+    ctx.fillStyle = '#e53e3e';
+    ctx.fillRect(cx - 4, cy - 10, 3, 3);
+    ctx.fillRect(cx + 2, cy - 10, 3, 3);
+
+    ctx.fillStyle = '#276749';
+    ctx.fillRect(cx - 1, cy - 7, 3, 5);
+
+    // Porrete / Adaga de Madeira na mão
+    ctx.fillStyle = '#975a16';
+    ctx.fillRect(cx + 9, cy - 6, 4, 16);
 
     return canvas;
   }

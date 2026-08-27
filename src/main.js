@@ -844,6 +844,12 @@ class GameEngine {
       this.hud.updatePlayerStats();
       if (targetMapId === 'map-2') {
         this.hud.addChatMessage('Sistema', '🌲 Você entrou na <strong>Floresta do Sul</strong>! Há um buraco de caverna misterioso por aqui...', true);
+      } else if (targetMapId === 'map-north') {
+        this.hud.addChatMessage('Sistema', '🌲 Você entrou na <strong>Floresta do Norte</strong>! Cuidado com os Lobos Selvagens que rondam a área!', true);
+      } else if (targetMapId === 'map-east') {
+        this.hud.addChatMessage('Sistema', '🕸️ Você entrou na <strong>Floresta do Leste</strong>! Aranhas Gigantes tecem suas teias entre as árvores...', true);
+      } else if (targetMapId === 'map-west') {
+        this.hud.addChatMessage('Sistema', '🐊 Você entrou na <strong>Floresta do Oeste (Pântano)</strong>! Os Goblins Guerreiros dominam este território!', true);
       } else if (targetMapId === 'map-cave-1') {
         this.hud.addChatMessage('Sistema', '🕳️ Você desceu para a <strong>Caverna dos Rotworms (Sub-1)</strong>! Cuidado com as larvas gigantes subterrâneas!', true);
       } else if (targetMapId === 'map-cave-2') {

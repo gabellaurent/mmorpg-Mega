@@ -12,6 +12,15 @@ export class GameMap {
     if (mapId === 'map-2') {
       this.name = 'Floresta do Sul';
       this.generateForestMap();
+    } else if (mapId === 'map-north') {
+      this.name = 'Floresta do Norte (Lobos)';
+      this.generateNorthForestMap();
+    } else if (mapId === 'map-east') {
+      this.name = 'Floresta do Leste (Aranhas)';
+      this.generateEastForestMap();
+    } else if (mapId === 'map-west') {
+      this.name = 'Floresta do Oeste (Pântano / Goblins)';
+      this.generateWestForestMap();
     } else if (mapId === 'map-cave-1') {
       this.name = 'Caverna dos Rotworms (Sub-1)';
       this.width = 24;
@@ -117,8 +126,45 @@ export class GameMap {
           isSolid = true;
           spriteKey = 'gate_pillar';
         }
-        // 2. Estrada de Paralelepípedo para o Portão Sul (X: 15..16, Y: 20..30)
-        else if ((x === 15 || x === 16) && y >= 20 && y < this.height - 1) {
+        // 1.1 Portão Norte (Grid X:14..17, Y:0)
+        else if ((x === 15 || x === 16) && y === 0) {
+          type = TILE_TYPES.COBBLE;
+          isSolid = false;
+          spriteKey = 'cobble';
+        }
+        else if ((x === 14 || x === 17) && y === 0) {
+          type = TILE_TYPES.GATE;
+          isSolid = true;
+          spriteKey = 'gate_pillar';
+        }
+        // 1.2 Portão Leste (Grid X:31, Y:14..17)
+        else if (x === this.width - 1 && (y === 15 || y === 16)) {
+          type = TILE_TYPES.COBBLE;
+          isSolid = false;
+          spriteKey = 'cobble';
+        }
+        else if (x === this.width - 1 && (y === 14 || y === 17)) {
+          type = TILE_TYPES.GATE;
+          isSolid = true;
+          spriteKey = 'gate_pillar';
+        }
+        // 1.3 Portão Oeste (Grid X:0, Y:14..17)
+        else if (x === 0 && (y === 15 || y === 16)) {
+          type = TILE_TYPES.COBBLE;
+          isSolid = false;
+          spriteKey = 'cobble';
+        }
+        else if (x === 0 && (y === 14 || y === 17)) {
+          type = TILE_TYPES.GATE;
+          isSolid = true;
+          spriteKey = 'gate_pillar';
+        }
+        // 2. Estradas de Paralelepípedo conectando a Praça aos 4 Portões
+        else if ((x === 15 || x === 16) && y >= 1 && y < this.height - 1) {
+          type = TILE_TYPES.COBBLE;
+          spriteKey = 'cobble';
+        }
+        else if ((y === 15 || y === 16) && x >= 1 && x < this.width - 1) {
           type = TILE_TYPES.COBBLE;
           spriteKey = 'cobble';
         }
@@ -329,6 +375,166 @@ export class GameMap {
     }
   }
 
+  // Gera o layout do Mapa: Floresta do Norte (Lobos - 32x32)
+  generateNorthForestMap() {
+    const { TILE_TYPES } = CONFIG;
+    this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const variant = (x * 13 + y * 7) % 3;
+        let type = TILE_TYPES.GRASS;
+        let isSolid = false;
+        let spriteKey = `grass_${variant}`;
+
+        // Portão Sul de Saída para a Vila Principal (Grid X: 15..16, Y: 31)
+        if ((x === 15 || x === 16) && y === this.height - 1) {
+          type = TILE_TYPES.COBBLE;
+          isSolid = false;
+          spriteKey = 'cobble';
+        } else if ((x === 14 || x === 17) && y === this.height - 1) {
+          type = TILE_TYPES.GATE;
+          isSolid = true;
+          spriteKey = 'gate_pillar';
+        }
+        // Estrada Principal de Paralelepípedo
+        else if ((x === 15 || x === 16) && y >= 10 && y <= 30) {
+          type = TILE_TYPES.COBBLE;
+          spriteKey = 'cobble';
+        }
+        // Bordas da Floresta
+        else if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_pine_trunk';
+        }
+        // Aglomerados de Pinheiros e Ninhos de Lobos
+        else if ((x >= 4 && x <= 9 && y >= 4 && y <= 8) || (x >= 22 && x <= 27 && y >= 4 && y <= 9)) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_pine_trunk';
+        }
+        else if ((x >= 3 && x <= 8 && y >= 20 && y <= 24) || (x >= 23 && x <= 28 && y >= 20 && y <= 25)) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_pine_trunk';
+        }
+        else if (x % 4 === 0 && y % 6 === 0) {
+          type = TILE_TYPES.ROCK;
+          isSolid = true;
+          spriteKey = 'rock';
+        }
+
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+      }
+    }
+  }
+
+  // Gera o layout do Mapa: Floresta do Leste (Aranhas - 32x32)
+  generateEastForestMap() {
+    const { TILE_TYPES } = CONFIG;
+    this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const variant = (x * 5 + y * 19) % 3;
+        let type = TILE_TYPES.GRASS;
+        let isSolid = false;
+        let spriteKey = 'grass_dark';
+
+        // Portão Oeste de Saída para a Vila Principal (Grid X: 0, Y: 15..16)
+        if (x === 0 && (y === 15 || y === 16)) {
+          type = TILE_TYPES.COBBLE;
+          isSolid = false;
+          spriteKey = 'cobble';
+        } else if (x === 0 && (y === 14 || y === 17)) {
+          type = TILE_TYPES.GATE;
+          isSolid = true;
+          spriteKey = 'gate_pillar';
+        }
+        // Estrada principal Oeste-Leste
+        else if ((y === 15 || y === 16) && x >= 1 && x <= 22) {
+          type = TILE_TYPES.DIRT;
+          spriteKey = 'dirt';
+        }
+        // Bordas da Floresta
+        else if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+        }
+        // Árvores com Teias e Cobras
+        else if ((x >= 5 && x <= 10 && y >= 3 && y <= 8) || (x >= 18 && x <= 25 && y >= 3 && y <= 9)) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+        }
+        else if ((x >= 5 && x <= 11 && y >= 20 && y <= 26) || (x >= 20 && x <= 26 && y >= 20 && y <= 26)) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+        }
+        else if (x % 5 === 0 && y % 5 === 0) {
+          type = TILE_TYPES.ROCK;
+          isSolid = true;
+          spriteKey = 'rock';
+        }
+
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+      }
+    }
+  }
+
+  // Gera o layout do Mapa: Floresta do Oeste (Pântano / Goblins - 32x32)
+  generateWestForestMap() {
+    const { TILE_TYPES } = CONFIG;
+    this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        let type = TILE_TYPES.GRASS;
+        let isSolid = false;
+        let spriteKey = 'grass_moss';
+
+        // Portão Leste de Saída para a Vila Principal (Grid X: 31, Y: 15..16)
+        if (x === this.width - 1 && (y === 15 || y === 16)) {
+          type = TILE_TYPES.COBBLE;
+          isSolid = false;
+          spriteKey = 'cobble';
+        } else if (x === this.width - 1 && (y === 14 || y === 17)) {
+          type = TILE_TYPES.GATE;
+          isSolid = true;
+          spriteKey = 'gate_pillar';
+        }
+        // Estrada principal Leste-Oeste de Terra Múmida
+        else if ((y === 15 || y === 16) && x >= 8 && x <= 30) {
+          type = TILE_TYPES.DIRT;
+          spriteKey = 'dirt';
+        }
+        // Bordas do Pântano
+        else if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+        }
+        // Poços de Água do Pântano (Sólidos)
+        else if ((x >= 4 && x <= 8 && y >= 4 && y <= 8) || (x >= 20 && x <= 24 && y >= 20 && y <= 24)) {
+          type = TILE_TYPES.WATER;
+          isSolid = true;
+          spriteKey = 'water_0';
+        }
+        // Aglomerados de Árvores do Pântano
+        else if ((x >= 12 && x <= 17 && y >= 3 && y <= 8) || (x >= 4 && x <= 10 && y >= 20 && y <= 26)) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'tree_trunk';
+        }
+
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+      }
+    }
+  }
+
   // Gera o layout do Mapa: Interior da Casinha (12x12)
   generateHouseInteriorMap() {
     const { TILE_TYPES } = CONFIG;
@@ -514,11 +720,23 @@ export class GameMap {
     const { TILE_TYPES } = CONFIG;
 
     if (this.mapId === 'map-1') {
-      // Portão Sul de saída para a Floresta do Sul
+      // Portão Sul -> Floresta do Sul
       if ((x === 15 || x === 16) && y === this.height - 1) {
         return { targetMapId: 'map-2', targetX: 15, targetY: 1 };
       }
-      // Entrada da Casinha da Vila (valida se o tile atual é uma Porta)
+      // Portão Norte -> Floresta do Norte (Lobos)
+      if ((x === 15 || x === 16) && y === 0) {
+        return { targetMapId: 'map-north', targetX: 15, targetY: 30 };
+      }
+      // Portão Leste -> Floresta do Leste (Aranhas)
+      if (x === this.width - 1 && (y === 15 || y === 16)) {
+        return { targetMapId: 'map-east', targetX: 1, targetY: 15 };
+      }
+      // Portão Oeste -> Floresta do Oeste (Goblins)
+      if (x === 0 && (y === 15 || y === 16)) {
+        return { targetMapId: 'map-west', targetX: 30, targetY: 15 };
+      }
+      // Entrada da Casinha da Vila
       if (tile.type === TILE_TYPES.HOUSE_DOOR) {
         return { targetMapId: 'map-house-1', targetX: 6, targetY: 9 };
       }
@@ -527,9 +745,23 @@ export class GameMap {
       if ((x === 15 || x === 16) && y === 0) {
         return { targetMapId: 'map-1', targetX: 15, targetY: 30 };
       }
-      // Entrada da Caverna dos Rotworms (valida se o tile atual é um Buraco de Caverna)
       if (tile.type === TILE_TYPES.CAVE_HOLE) {
         return { targetMapId: 'map-cave-1', targetX: 4, targetY: 4 };
+      }
+    } else if (this.mapId === 'map-north') {
+      // Portão Sul de saída para a Vila Principal
+      if ((x === 15 || x === 16) && y === this.height - 1) {
+        return { targetMapId: 'map-1', targetX: 15, targetY: 1 };
+      }
+    } else if (this.mapId === 'map-east') {
+      // Portão Oeste de saída para a Vila Principal
+      if (x === 0 && (y === 15 || y === 16)) {
+        return { targetMapId: 'map-1', targetX: 30, targetY: 15 };
+      }
+    } else if (this.mapId === 'map-west') {
+      // Portão Leste de saída para a Vila Principal
+      if (x === this.width - 1 && (y === 15 || y === 16)) {
+        return { targetMapId: 'map-1', targetX: 1, targetY: 15 };
       }
     } else if (this.mapId === 'map-cave-1') {
       // Escada para subir de volta à Floresta do Sul
