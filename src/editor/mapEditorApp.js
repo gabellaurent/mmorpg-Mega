@@ -39,12 +39,21 @@ class MapEditorApp {
       { category: 'terrain', key: 'tree_trunk', label: 'Árvore Verde', type: CONFIG.TILE_TYPES.TREE, isSolid: true, canopyKey: 'tree_canopy' },
       { category: 'terrain', key: 'tree_pine_trunk', label: 'Pinheiro', type: CONFIG.TILE_TYPES.TREE, isSolid: true, canopyKey: 'tree_pine_canopy' },
       { category: 'terrain', key: 'rock', label: 'Rocha Rústica', type: CONFIG.TILE_TYPES.ROCK, isSolid: true },
+      { category: 'terrain', key: 'water_0', label: 'Água / Lago', type: CONFIG.TILE_TYPES.WATER, isSolid: true },
       { category: 'terrain', key: 'cave_wall', label: 'Parede Caverna', type: CONFIG.TILE_TYPES.CAVE_WALL, isSolid: true },
       { category: 'terrain', key: 'obsidian_wall', label: 'Parede Vulcânica', type: CONFIG.TILE_TYPES.OBSIDIAN_WALL, isSolid: true },
       { category: 'terrain', key: 'wall_wood', label: 'Parede Madeira', type: CONFIG.TILE_TYPES.WALL_WOOD, isSolid: true },
+      { category: 'terrain', key: 'gate_pillar', label: 'Pilar Portão', type: CONFIG.TILE_TYPES.GATE, isSolid: true },
       { category: 'terrain', key: 'cave_hole', label: 'Entrada Caverna', type: CONFIG.TILE_TYPES.CAVE_HOLE, isSolid: false },
       { category: 'terrain', key: 'cave_stairs', label: 'Escada Caverna', type: CONFIG.TILE_TYPES.CAVE_STAIRS, isSolid: false },
       { category: 'terrain', key: 'portal', label: 'Portal Praça', type: CONFIG.TILE_TYPES.PORTAL, isSolid: false },
+
+      // 🛋️ Casinha & Mobília
+      { category: 'terrain', key: 'house_door', label: 'Porta da Casa', type: CONFIG.TILE_TYPES.HOUSE_DOOR, isSolid: false },
+      { category: 'terrain', key: 'house_bed', label: 'Cama Casinha', type: CONFIG.TILE_TYPES.HOUSE_BED, isSolid: true },
+      { category: 'terrain', key: 'house_table', label: 'Mesa Madeira', type: CONFIG.TILE_TYPES.HOUSE_TABLE, isSolid: true },
+      { category: 'terrain', key: 'house_fireplace', label: 'Lareira Pedra', type: CONFIG.TILE_TYPES.HOUSE_FIREPLACE, isSolid: true },
+      { category: 'terrain', key: 'house_chest', label: 'Baú de Madeira', type: CONFIG.TILE_TYPES.HOUSE_CHEST, isSolid: true },
 
       // Monstros (Spawns)
       { category: 'spawn', key: 'rat', label: 'Spawn: Cave Rat', monsterType: 'rat' },
