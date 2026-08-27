@@ -353,6 +353,7 @@ class MapEditorApp {
   }
 
   async loadMap(mapId) {
+    this.currentMapId = mapId;
     this.gameMap = new GameMap(mapId);
     await this.gameMap.loadGlobalMapFromDatabase();
 
@@ -371,16 +372,16 @@ class MapEditorApp {
     // Carregar customizações salvas (do banco ou local)
     const customData = this.getCustomMapData(mapId);
     if (customData) {
-      if (customData.grid) {
+      if (customData.grid && customData.grid.length > 0) {
         this.gameMap.grid = customData.grid;
       }
-      this.spawns = customData.spawns || [];
-      this.npcs = customData.npcs || [];
-      this.teleports = customData.teleports || {};
+      this.spawns = customData.spawns || this.getDefaultSpawns(mapId);
+      this.npcs = customData.npcs || this.getDefaultNpcs(mapId);
+      this.teleports = customData.teleports || this.gameMap.customTeleports || {};
     } else {
       this.spawns = this.getDefaultSpawns(mapId);
       this.npcs = this.getDefaultNpcs(mapId);
-      this.teleports = {};
+      this.teleports = this.gameMap.customTeleports || {};
     }
 
     this.render();
