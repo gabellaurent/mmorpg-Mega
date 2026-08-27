@@ -80,6 +80,10 @@ class SpriteGenerator {
     });
     this.cache['npc_guard'] = this.drawGuardSpritesheet(size);
     this.cache['npc_merchant'] = this.drawMerchantSpritesheet(size);
+    this.cache['npc_blacksmith'] = this.drawMerchantSpritesheet(size);
+    this.cache['npc_ranger'] = this.drawGuardSpritesheet(size);
+    this.cache['npc_healer'] = this.drawMerchantSpritesheet(size);
+    this.cache['npc_taverner'] = this.drawMerchantSpritesheet(size);
 
     // 5. Sprites de Itens (Loot & Inventário)
     this.cache['item_gold'] = this.drawGoldSprite(size);

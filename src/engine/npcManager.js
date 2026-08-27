@@ -54,17 +54,53 @@ export class NpcManager {
         const dict = JSON.parse(saved);
         if (dict[mapId] && Array.isArray(dict[mapId].npcs) && dict[mapId].npcs.length > 0) {
           dict[mapId].npcs.forEach(n => {
-            const isGuard = n.key === 'npc_guard';
+            let title = 'Habitante da Vila';
+            let type = 'merchant';
+            let badgeText = '💬 DIÁLOGO';
+            let badgeColor = '#9f7aea';
+
+            if (n.key === 'npc_guard') {
+              title = 'Guardião Real';
+              type = 'guard';
+              badgeText = '🛡️ GUARDA';
+              badgeColor = '#4299e1';
+            } else if (n.key === 'npc_merchant') {
+              title = 'Alquimista & Mago';
+              type = 'merchant';
+              badgeText = '🧪 POÇÕES & MAGIA';
+              badgeColor = '#9f7aea';
+            } else if (n.key === 'npc_blacksmith') {
+              title = 'Mestre Armeiro';
+              type = 'merchant';
+              badgeText = '⚔️ ARMAS & ESCUDOS';
+              badgeColor = '#ed8936';
+            } else if (n.key === 'npc_ranger') {
+              title = 'Guia da Floresta';
+              type = 'guard';
+              badgeText = '🏹 GUIA';
+              badgeColor = '#38a169';
+            } else if (n.key === 'npc_healer') {
+              title = 'Sacerdote do Templo';
+              type = 'merchant';
+              badgeText = '✨ CURA & TEMPLO';
+              badgeColor = '#48bb78';
+            } else if (n.key === 'npc_taverner') {
+              title = 'Mestre da Taverna';
+              type = 'merchant';
+              badgeText = '🍺 TAVERNA & COMIDA';
+              badgeColor = '#d69e2e';
+            }
+
             this.addNpc(new Npc({
               id: n.id,
               name: n.name,
-              title: isGuard ? 'Guardião Real' : 'Comerciante',
-              type: isGuard ? 'guard' : 'merchant',
+              title,
+              type,
               gridX: n.x,
               gridY: n.y,
               direction: 'south',
-              badgeText: isGuard ? '🛡️ GUARDA' : '🛒 LOJA',
-              badgeColor: isGuard ? '#4299e1' : '#ecc94b'
+              badgeText,
+              badgeColor
             }));
           });
           customLoaded = true;

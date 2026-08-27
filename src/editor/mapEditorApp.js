@@ -60,9 +60,13 @@ class MapEditorApp {
       { category: 'spawn', key: 'rotworm', label: 'Spawn: Rotworm', monsterType: 'rotworm' },
       { category: 'spawn', key: 'demon_boss', label: 'Spawn: Guardião Magma', monsterType: 'demon_boss' },
 
-      // NPCs
-      { category: 'npc', key: 'npc_guard', label: 'NPC: Guardião Praça', npcType: 'guard' },
-      { category: 'npc', key: 'npc_merchant', label: 'NPC: Mestre Elzar', npcType: 'merchant' }
+      // 🧙 NPCs & Habitantes da Vila
+      { category: 'npc', key: 'npc_guard', label: 'NPC: Guardião Real', npcType: 'guard' },
+      { category: 'npc', key: 'npc_merchant', label: 'NPC: Mestre Elzar', npcType: 'merchant' },
+      { category: 'npc', key: 'npc_blacksmith', label: 'NPC: Ferreiro Borin', npcType: 'blacksmith' },
+      { category: 'npc', key: 'npc_ranger', label: 'NPC: Elric Guia', npcType: 'ranger' },
+      { category: 'npc', key: 'npc_healer', label: 'NPC: Sacerdote Cura', npcType: 'healer' },
+      { category: 'npc', key: 'npc_taverner', label: 'NPC: Taberneiro Bard', npcType: 'taverner' }
     ];
 
     spriteGen.init();
