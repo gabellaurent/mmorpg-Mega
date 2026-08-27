@@ -423,7 +423,20 @@ export class Renderer {
     }
 
     const customKey = player.customSpriteKey || `char_${player.spriteId}_custom_${player.id}`;
-    const spritesheet = spriteGen.get(customKey) || spriteGen.get(`char_${player.spriteId}`);
+    let spritesheet = null;
+
+    if (spriteGen.cache && spriteGen.cache[customKey]) {
+      spritesheet = spriteGen.cache[customKey];
+    }
+    
+    if (!spritesheet) {
+      let baseKey = player.spriteId || 'knight';
+      if (!baseKey.startsWith('char_')) {
+        baseKey = `char_${baseKey}`;
+      }
+      spritesheet = spriteGen.get(baseKey) || spriteGen.get('char_knight');
+    }
+
     if (!spritesheet) return;
 
     const dirCols = { south: 0, north: 1, east: 2, west: 3 };
