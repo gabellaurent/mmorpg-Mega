@@ -1,6 +1,7 @@
 // Editor de Sprites & Pixel Art em HTML5 Canvas para o MMORPG
 import { CONFIG } from '../config.js';
 import { spriteGen } from '../engine/spriteGenerator.js';
+import { supabase } from '../services/supabaseClient.js';
 
 class SpriteEditorApp {
   constructor() {
@@ -456,7 +457,7 @@ class SpriteEditorApp {
     }
   }
 
-  applyToGame() {
+  async applyToGame() {
     this.syncCurrentFrameToFullCanvas();
     const key = this.spriteSelect.value;
     if (!key) return;
@@ -475,17 +476,28 @@ class SpriteEditorApp {
       dict[key] = dataUrl;
       localStorage.setItem('mmorpg_custom_sprites', JSON.stringify(dict));
 
+      // Sincronizar com o Banco de Dados Global Supabase (Tabela custom_sprites)
+      if (supabase) {
+        await supabase
+          .from('custom_sprites')
+          .upsert({
+            sprite_key: key,
+            data_url: dataUrl,
+            updated_at: new Date().toISOString()
+          });
+      }
+
       // Atualizar o cache de sprites do jogo
       spriteGen.init();
 
-      alert(`🚀 SPRITE '${key}' APLICADO COM SUCESSO NO JOGO!\n\nTodas as animações de caminhada foram preservadas sem transparência indesejada!`);
+      alert(`🚀 SPRITE '${key}' APLICADO COM SUCESSO E SALVO NO BANCO DE DADOS GLOBAL!\n\nTodos os jogadores que entrarem no jogo verão este sprite customizado!`);
     } catch (e) {
       console.error('Erro ao salvar sprite customizado:', e);
       alert('Erro ao salvar sprite no jogo.');
     }
   }
 
-  resetSprite() {
+  async resetSprite() {
     const key = this.spriteSelect.value;
     if (!key) return;
 
@@ -496,6 +508,13 @@ class SpriteEditorApp {
           const dict = JSON.parse(saved);
           delete dict[key];
           localStorage.setItem('mmorpg_custom_sprites', JSON.stringify(dict));
+        }
+
+        if (supabase) {
+          await supabase
+            .from('custom_sprites')
+            .delete()
+            .eq('sprite_key', key);
         }
 
         spriteGen.init();
