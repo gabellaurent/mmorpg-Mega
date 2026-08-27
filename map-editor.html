@@ -356,12 +356,15 @@
         </div>
       </div>
 
-      <div class="card-title">🚀 Ações de Salvamento:</div>
+      <div class="card-title">🚀 Ações de Salvamento & Exportação:</div>
       <button id="btn-apply-map" class="btn-action">🚀 APLICAR E SALVAR MAPA NO JOGO</button>
-      <button id="btn-reset-map" class="btn-action btn-secondary">↺ Restaurar Mapa Padrão</button>
+      <button id="btn-export-json" class="btn-action btn-secondary" style="margin-top: 4px;">📥 Exportar Mapa (JSON)</button>
+      <button id="btn-import-json" class="btn-action btn-secondary">📤 Importar Mapa (JSON)</button>
+      <input type="file" id="file-import-json" accept=".json" style="display: none;">
+      <button id="btn-reset-map" class="btn-action btn-secondary" style="color: #f85149; border-color: #f85149;">↺ Restaurar Mapa Padrão</button>
 
       <div class="info-badge" style="margin-top: auto;">
-        💡 <strong>Dica:</strong> Qualquer alteração no relevo, árvores, construções ou spawns de monstros será refletida automaticamente no seu jogo ao salvar!
+        💡 <strong>Armazenamento:</strong> Suas edições ficam salvas no <code>localStorage</code> do navegador e podem ser exportadas em arquivo <code>.json</code> para backup!
       </div>
     </aside>
 

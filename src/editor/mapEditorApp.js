@@ -78,6 +78,9 @@ class MapEditorApp {
 
     this.btnApplyMap = document.getElementById('btn-apply-map');
     this.btnResetMap = document.getElementById('btn-reset-map');
+    this.btnExportJson = document.getElementById('btn-export-json');
+    this.btnImportJson = document.getElementById('btn-import-json');
+    this.fileImportJson = document.getElementById('file-import-json');
 
     this.inspectorCoords = document.getElementById('inspector-coords');
     this.inspectorSprite = document.getElementById('inspector-sprite');
@@ -188,6 +191,16 @@ class MapEditorApp {
     this.btnApplyMap.addEventListener('click', () => this.saveCustomMap());
     this.btnResetMap.addEventListener('click', () => this.resetCustomMap());
 
+    if (this.btnExportJson) {
+      this.btnExportJson.addEventListener('click', () => this.exportMapJSON());
+    }
+    if (this.btnImportJson) {
+      this.btnImportJson.addEventListener('click', () => this.fileImportJson.click());
+    }
+    if (this.fileImportJson) {
+      this.fileImportJson.addEventListener('change', (e) => this.importMapJSON(e));
+    }
+
     if (this.btnSaveTeleport) {
       this.btnSaveTeleport.addEventListener('click', () => this.saveTeleportForTile());
     }
@@ -195,6 +208,51 @@ class MapEditorApp {
     if (this.btnRemoveTeleport) {
       this.btnRemoveTeleport.addEventListener('click', () => this.removeTeleportForTile());
     }
+  }
+
+  exportMapJSON() {
+    const mapData = {
+      mapId: this.currentMapId,
+      name: this.gameMap.name,
+      width: this.width,
+      height: this.height,
+      grid: this.gameMap.grid,
+      spawns: this.spawns,
+      npcs: this.npcs,
+      teleports: this.teleports
+    };
+    const jsonStr = JSON.stringify(mapData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${this.currentMapId}_custom.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  importMapJSON(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = JSON.parse(evt.target.result);
+        if (data.grid) {
+          this.gameMap.grid = data.grid;
+          if (data.spawns) this.spawns = data.spawns;
+          if (data.npcs) this.npcs = data.npcs;
+          if (data.teleports) this.teleports = data.teleports;
+          this.render();
+          alert(`📥 Mapa '${data.name || this.currentMapId}' IMPORTADO COM SUCESSO!\n\nClique em '🚀 APLICAR E SALVAR MAPA NO JOGO' para salvar no seu jogo.`);
+        } else {
+          alert('Arquivo JSON inválido.');
+        }
+      } catch (err) {
+        alert('Erro ao ler o arquivo JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
   }
 
   adjustZoom(delta) {
