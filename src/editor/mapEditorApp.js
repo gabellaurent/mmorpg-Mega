@@ -570,11 +570,12 @@ class MapEditorApp {
   }
 
   updateStats() {
-    const tpCount = Object.keys(this.teleports).length;
+    if (!this.mapStats) return;
+    const tpCount = this.teleports ? Object.keys(this.teleports).length : 0;
     this.mapStats.innerHTML = `
       <strong>Dimensões:</strong> ${this.width}x${this.height}<br>
-      <strong>Spawns Monstros:</strong> ${this.spawns.length}<br>
-      <strong>NPCs Posicionados:</strong> ${this.npcs.length}<br>
+      <strong>Spawns Monstros:</strong> ${this.spawns ? this.spawns.length : 0}<br>
+      <strong>NPCs Posicionados:</strong> ${this.npcs ? this.npcs.length : 0}<br>
       <strong>Teleportes Ativos:</strong> ${tpCount}
     `;
   }
