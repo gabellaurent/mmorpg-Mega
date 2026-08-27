@@ -337,7 +337,44 @@
             <option value="char_mage">Mago (Mage)</option>
             <option value="char_paladin">Paladino (Ranger)</option>
           </optgroup>
+          <optgroup id="custom-optgroup" label="🌟 Meus Sprites Customizados (Nuvem / DB)">
+            <!-- Sprites customizados criados dinamicamente -->
+          </optgroup>
         </select>
+        <button id="btn-open-create-modal" type="button" class="btn-tool" style="margin-top: 8px; background-color: #238636; border-color: #2ea043; color: #fff; width: 100%;">
+          ➕ Criar Novo Sprite Customizado (Tile / Item / NPC)
+        </button>
+      </div>
+
+      <!-- Modal de Criação de Novo Sprite -->
+      <div id="create-sprite-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); z-index: 999; align-items: center; justify-content: center;">
+        <div style="background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; width: 360px; max-width: 90%; color: #c9d1d9; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+          <h3 style="margin-top: 0; color: #58a6ff;">✨ Criar Novo Sprite Global</h3>
+          <div style="font-size: 0.8rem; color: #8b949e; margin-bottom: 12px;">Crie um elemento novo que será salvo no banco de dados e poderá ser colocado nos mapas!</div>
+
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">ID do Sprite (Chave):</label>
+            <input type="text" id="new-sprite-key" placeholder="ex: estatua_ouro, espada_magica" style="width: 100%; padding: 8px; border-radius: 6px; background: #0d1117; border: 1px solid #30363d; color: #fff; font-family: monospace;">
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">Tipo de Elemento:</label>
+            <select id="new-sprite-type" style="width: 100%; padding: 8px; border-radius: 6px; background: #0d1117; border: 1px solid #30363d; color: #fff;">
+              <option value="tile">🟩 Tile / Item / Objeto (32x32)</option>
+              <option value="character">🎬 Personagem / Monstro / NPC (4x3 - 12 Quadros)</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="new-sprite-solid" id="new-sprite-solid" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="new-sprite-solid" style="font-size: 0.85rem; cursor: pointer;">🚫 Bloqueia passagem do jogador (Sólido)</label>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button id="btn-cancel-create-sprite" type="button" class="btn-tool btn-secondary">Cancelar</button>
+            <button id="btn-confirm-create-sprite" type="button" class="btn-tool active" style="background-color: #238636;">Criar e Desenhar</button>
+          </div>
+        </div>
       </div>
 
       <!-- Seletor de Quadros de Animação (Visível apenas para Personagens / Spritesheets 4x3) -->

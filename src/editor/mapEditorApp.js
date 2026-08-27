@@ -116,7 +116,24 @@ class MapEditorApp {
     this.teleports = {};
   }
 
-  initPalette() {
+  async initPalette() {
+    // Sincronizar com o banco de dados de sprites antes de montar a paleta
+    await spriteGen.loadGlobalCustomSpritesFromDatabase();
+
+    // Adicionar sprites customizados dinâmicos do banco de dados/cache à paleta
+    const defaultKeys = this.paletteItems.map(i => i.key);
+    Object.keys(spriteGen.cache).forEach(key => {
+      if (!defaultKeys.includes(key) && !key.startsWith('item_') && key !== 'void') {
+        const isSolid = key.startsWith('rock') || key.startsWith('wall') || key.startsWith('estatua') || key.startsWith('deco') || key.startsWith('house') || key.startsWith('gate');
+        this.paletteItems.push({
+          key: key,
+          label: `⭐ ${key.replace(/_/g, ' ')}`,
+          type: key.startsWith('npc_') ? 'npc' : (key.startsWith('char_') ? 'spawn' : 'tile'),
+          isSolid: isSolid
+        });
+      }
+    });
+
     this.paletteContainer.innerHTML = '';
 
     this.paletteItems.forEach(item => {
@@ -131,7 +148,11 @@ class MapEditorApp {
 
       const spr = spriteGen.get(item.key) || spriteGen.get('grass_0');
       if (spr) {
-        iconCtx.drawImage(spr, 0, 0, 36, 36);
+        if (spr.width >= 192) {
+          iconCtx.drawImage(spr, 0, 0, 48, 48, 0, 0, 36, 36);
+        } else {
+          iconCtx.drawImage(spr, 0, 0, 36, 36);
+        }
       }
 
       const label = document.createElement('span');

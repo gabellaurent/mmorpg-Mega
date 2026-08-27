@@ -85,6 +85,51 @@ class SpriteEditorApp {
     this.frameButtonsGrid = document.getElementById('frame-buttons-grid');
     this.btnMirrorEastWest = document.getElementById('btn-mirror-east-west');
     this.btnFlipHorizontal = document.getElementById('btn-flip-horizontal');
+
+    this.btnOpenCreateModal = document.getElementById('btn-open-create-modal');
+    this.createModal = document.getElementById('create-sprite-modal');
+    this.btnConfirmCreate = document.getElementById('btn-confirm-create-sprite');
+    this.btnCancelCreate = document.getElementById('btn-cancel-create-sprite');
+
+    this.loadCustomOptionsIntoSelect();
+  }
+
+  async loadCustomOptionsIntoSelect() {
+    this.customOptGroup = document.getElementById('custom-optgroup');
+    if (!this.customOptGroup) return;
+
+    this.customOptGroup.innerHTML = '';
+    const keysSet = new Set();
+
+    try {
+      const saved = localStorage.getItem('mmorpg_custom_sprites');
+      if (saved) {
+        const dict = JSON.parse(saved);
+        Object.keys(dict).forEach(k => keysSet.add(k));
+      }
+    } catch (e) {}
+
+    if (supabase) {
+      try {
+        const { data } = await supabase.from('custom_sprites').select('sprite_key');
+        if (data) {
+          data.forEach(item => {
+            if (item.sprite_key) keysSet.add(item.sprite_key);
+          });
+        }
+      } catch (e) {}
+    }
+
+    const defaultKeys = ['grass_0', 'grass_dry', 'grass_dark', 'grass_moss', 'cobble', 'dirt', 'cave_floor', 'magma_floor', 'flowers_red', 'flowers_blue', 'flowers_purple', 'bush_berry', 'bush_large', 'tall_grass', 'tree_trunk', 'tree_canopy', 'tree_pine_canopy', 'rat', 'rotworm', 'demon_boss', 'char_knight', 'char_mage', 'char_paladin'];
+
+    keysSet.forEach(key => {
+      if (!defaultKeys.includes(key)) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.innerText = `⭐ ${key}`;
+        this.customOptGroup.appendChild(opt);
+      }
+    });
   }
 
   initPalette() {
@@ -138,6 +183,22 @@ class SpriteEditorApp {
 
     if (this.btnFlipHorizontal) {
       this.btnFlipHorizontal.addEventListener('click', () => this.flipHorizontalActiveFrame());
+    }
+
+    if (this.btnOpenCreateModal) {
+      this.btnOpenCreateModal.addEventListener('click', () => {
+        if (this.createModal) this.createModal.style.display = 'flex';
+      });
+    }
+
+    if (this.btnCancelCreate) {
+      this.btnCancelCreate.addEventListener('click', () => {
+        if (this.createModal) this.createModal.style.display = 'none';
+      });
+    }
+
+    if (this.btnConfirmCreate) {
+      this.btnConfirmCreate.addEventListener('click', () => this.confirmCreateSprite());
     }
 
     this.pixelCanvas.addEventListener('mousedown', (e) => {
@@ -505,6 +566,63 @@ class SpriteEditorApp {
     }
   }
 
+  confirmCreateSprite() {
+    const keyInput = document.getElementById('new-sprite-key');
+    const typeSelect = document.getElementById('new-sprite-type');
+    const solidCheck = document.getElementById('new-sprite-solid');
+
+    if (!keyInput || !keyInput.value.trim()) {
+      alert('Por favor, informe um ID/nome único para o novo sprite!');
+      return;
+    }
+
+    const key = keyInput.value.trim().toLowerCase().replace(/\s+/g, '_');
+    const isChar = typeSelect.value === 'character';
+    const isSolid = solidCheck ? solidCheck.checked : false;
+
+    let opt = Array.from(this.spriteSelect.options).find(o => o.value === key);
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = key;
+      opt.innerText = `⭐ ${key}`;
+      if (this.customOptGroup) {
+        this.customOptGroup.appendChild(opt);
+      } else {
+        this.spriteSelect.appendChild(opt);
+      }
+    }
+
+    this.spriteSelect.value = key;
+    this.currentIsSolid = isSolid;
+    this.currentCategory = isChar ? 'character' : 'tile';
+
+    if (isChar) {
+      this.isMultiFrame = true;
+      this.fullCanvas.width = 192;
+      this.fullCanvas.height = 144;
+      this.fullCtx.clearRect(0, 0, 192, 144);
+      this.framesData = Array(4).fill(null).map(() => 
+        Array(3).fill(null).map(() => 
+          Array(32).fill(null).map(() => Array(32).fill(null))
+        )
+      );
+      this.selectedCol = 0;
+      this.selectedRow = 0;
+      this.pixels = this.framesData[0][0];
+      if (this.frameSelectorGroup) this.frameSelectorGroup.style.display = 'block';
+      this.renderFrameSelectorGrid();
+      this.syncCurrentFrameToFullCanvas();
+      this.render();
+    } else {
+      this.isMultiFrame = false;
+      if (this.frameSelectorGroup) this.frameSelectorGroup.style.display = 'none';
+      this.clearCanvas();
+    }
+
+    if (this.createModal) this.createModal.style.display = 'none';
+    alert(`✨ Novo sprite '${key}' criado!\n\nDesenhe sua arte na tela e clique em '🚀 APLICAR E SALVAR NO JOGO' para disponibilizar no jogo e no editor de mapas!`);
+  }
+
   async applyToGame() {
     this.syncCurrentFrameToFullCanvas();
     const key = this.spriteSelect.value;
@@ -524,13 +642,15 @@ class SpriteEditorApp {
       dict[key] = dataUrl;
       localStorage.setItem('mmorpg_custom_sprites', JSON.stringify(dict));
 
-      // Sincronizar com o Banco de Dados Global Supabase (Tabela custom_sprites)
+      // Sincronizar com o Banco de Dados Global Supabase (Tabela custom_sprites com category e is_solid)
       if (supabase) {
         await supabase
           .from('custom_sprites')
           .upsert({
             sprite_key: key,
             data_url: dataUrl,
+            category: this.currentCategory || (this.isMultiFrame ? 'character' : 'tile'),
+            is_solid: !!this.currentIsSolid,
             updated_at: new Date().toISOString()
           });
       }
@@ -538,7 +658,7 @@ class SpriteEditorApp {
       // Atualizar o cache de sprites do jogo
       spriteGen.init();
 
-      alert(`🚀 SPRITE '${key}' APLICADO COM SUCESSO E SALVO NO BANCO DE DADOS GLOBAL!\n\nTodos os jogadores que entrarem no jogo verão este sprite customizado!`);
+      alert(`🚀 SPRITE '${key}' APLICADO COM SUCESSO E SALVO NO BANCO DE DADOS GLOBAL!\n\nEle já está liberado no jogo e no Editor de Mapas para todos os jogadores!`);
     } catch (e) {
       console.error('Erro ao salvar sprite customizado:', e);
       alert('Erro ao salvar sprite no jogo.');
