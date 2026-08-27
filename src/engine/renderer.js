@@ -428,7 +428,7 @@ export class Renderer {
 
     const dirCols = { south: 0, north: 1, east: 2, west: 3 };
     const colIndex = dirCols[player.direction] !== undefined ? dirCols[player.direction] : 0;
-    const rowIndex = player.animFrame;
+    const rowIndex = Math.max(0, Math.min(2, Number(player.animFrame) || 0));
 
     const srcX = colIndex * tileSize;
     const srcY = rowIndex * tileSize;

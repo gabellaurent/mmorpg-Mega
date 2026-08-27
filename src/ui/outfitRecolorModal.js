@@ -377,8 +377,9 @@ export class OutfitRecolorModal {
     const frameWidth = Math.floor(this.fullCanvas.width / 4);
     const frameHeight = Math.floor(this.fullCanvas.height / 3);
 
-    const srcX = this.selectedCol * frameWidth;
-    const srcY = this.previewFrameIndex * frameHeight;
+    const safeRow = Math.max(0, Math.min(2, Number(this.previewFrameIndex) || 0));
+    const srcX = (this.selectedCol || 0) * frameWidth;
+    const srcY = safeRow * frameHeight;
 
     this.previewCtx.drawImage(this.fullCanvas, srcX, srcY, frameWidth, frameHeight, 0, 0, 64, 64);
   }
