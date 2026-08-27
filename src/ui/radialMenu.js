@@ -41,6 +41,12 @@ export class RadialMenu {
           <span class="radial-icon">💬</span>
           <span class="radial-label">Chat</span>
         </button>
+
+        <!-- Slot Outfit: Personalizar Cores -->
+        <button class="radial-item item-outfit" data-action="outfit" title="Personalizar Outfit (O)">
+          <span class="radial-icon">🎨</span>
+          <span class="radial-label">Outfit</span>
+        </button>
       </div>
     `;
 

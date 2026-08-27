@@ -12,6 +12,7 @@ import { CONFIG } from './config.js';
 import { RadialMenu } from './ui/radialMenu.js';
 import { Pathfinder } from './engine/pathfinder.js';
 import { CorpseManager } from './engine/corpseManager.js';
+import { OutfitRecolorModal } from './ui/outfitRecolorModal.js';
 
 class GameEngine {
   constructor() {
@@ -79,6 +80,8 @@ class GameEngine {
         this.hud.toggleChat(true);
         const input = document.getElementById('chat-input');
         if (input) input.focus();
+      } else if (action === 'outfit') {
+        if (this.outfitModal) this.outfitModal.open(this.localPlayer);
       }
     });
 
@@ -96,6 +99,9 @@ class GameEngine {
     this.network.onCorpseMove = (payload) => this.corpseManager.moveCorpse(payload.corpseId, payload.gridX, payload.gridY);
     this.network.onMonsterMove = (payload) => this.monsterManager.handleRemoteMonsterMove(payload);
     this.network.onPlayerDamage = (payload) => this.handleRemotePlayerDamage(payload);
+
+    this.outfitModal = new OutfitRecolorModal(this.network);
+
     this.currentMapId = 'map-1';
     this.network.connect('map-1');
     this.hydrateWorldState('map-1');
@@ -417,6 +423,14 @@ class GameEngine {
         e.preventDefault();
         if (this.radialMenu) {
           this.radialMenu.toggle();
+        }
+        return;
+      }
+
+      if (e.key === 'o' || e.key === 'O') {
+        e.preventDefault();
+        if (this.outfitModal) {
+          this.outfitModal.open(this.localPlayer);
         }
         return;
       }

@@ -164,11 +164,17 @@ export class AuthUI {
       if (this.onLoginAccount) {
         const result = await this.onLoginAccount(username, password);
         if (result && result.success) {
+          if (result.playerData.outfit_colors && result.playerData.outfit_colors.data_url) {
+            const customKey = `char_${result.playerData.sprite_id || 'knight'}_custom_${result.playerData.id}`;
+            spriteGen.applyDataUriToCache(customKey, result.playerData.outfit_colors.data_url);
+          }
+
           this.hide();
           this.onStartGame({
             dbId: result.playerData.id,
             name: result.playerData.username,
             spriteId: result.playerData.sprite_id || 'knight',
+            customSpriteKey: result.playerData.outfit_colors && result.playerData.outfit_colors.data_url ? `char_${result.playerData.sprite_id || 'knight'}_custom_${result.playerData.id}` : null,
             level: result.playerData.level || 1,
             xp: Number(result.playerData.experience || 0),
             hp: result.playerData.hp || 100,

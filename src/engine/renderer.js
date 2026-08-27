@@ -422,7 +422,8 @@ export class Renderer {
       ctx.fill();
     }
 
-    const spritesheet = spriteGen.get(`char_${player.spriteId}`);
+    const customKey = player.customSpriteKey || `char_${player.spriteId}_custom_${player.id}`;
+    const spritesheet = spriteGen.get(customKey) || spriteGen.get(`char_${player.spriteId}`);
     if (!spritesheet) return;
 
     const dirCols = { south: 0, north: 1, east: 2, west: 3 };
