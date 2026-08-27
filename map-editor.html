@@ -277,6 +277,7 @@
         <button id="tool-paint" class="btn-tool active">🖌️ Pincel</button>
         <button id="tool-fill" class="btn-tool">🪣 Preencher</button>
         <button id="tool-erase" class="btn-tool">🧹 Limpar</button>
+        <button id="tool-select" class="btn-tool" style="background-color: #2b6cb0; border-color: #4299e1;">🔍 Seleção</button>
       </div>
 
       <div class="card-title">🎨 Paleta de Elementos:</div>
@@ -287,36 +288,72 @@
 
     <!-- Canvas Principal do Editor de Mapa -->
     <section class="canvas-wrapper">
-      <canvas id="map-canvas" width="600" height="600"></canvas>
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
+        <div style="font-size: 0.85rem; font-weight: bold; color: #8b949e;">🔍 Controles de Zoom:</div>
+        <div style="display: flex; gap: 6px;">
+          <button id="btn-zoom-out" class="btn-nav" style="padding: 4px 10px;">🔍- Zoom Out</button>
+          <span id="zoom-level-text" style="font-size: 0.85rem; font-weight: bold; color: #ecc94b; align-self: center; min-width: 45px; text-align: center;">100%</span>
+          <button id="btn-zoom-in" class="btn-nav" style="padding: 4px 10px;">🔍+ Zoom In</button>
+          <button id="btn-zoom-reset" class="btn-nav" style="padding: 4px 10px;">↺ 100%</button>
+        </div>
+      </div>
+
+      <div id="canvas-scroll-container" style="max-width: 100%; max-height: 600px; overflow: auto; border: 2px solid #30363d; border-radius: 8px;">
+        <canvas id="map-canvas" width="600" height="600"></canvas>
+      </div>
+
       <div style="font-size: 0.8rem; color: #8b949e; margin-top: 8px;">
-        Clique e arraste para desenhar no mapa. Coordenada: <span id="hover-coords">X: 0, Y: 0</span>
+        Clique para desenhar ou selecione 🔍 <strong>Seleção</strong> para inspecionar e definir colisões/teleportes. <span id="hover-coords">X: 0, Y: 0</span>
       </div>
     </section>
 
-    <!-- Painel 3: Ações & Estatísticas de Spawns -->
+    <!-- Painel 3: Inspetor de Propriedades & Ações -->
     <aside class="editor-card">
-      <div class="card-title">🌀 Configurar Teleporte da Porta:</div>
-      <div id="teleport-config-box" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; background-color: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #30363d;">
-        <div style="font-weight: bold; color: #4299e1;">Tile Ativo: <span id="teleport-selected-pos">Nenhum</span></div>
-        <label style="font-size: 0.75rem; color: #8b949e;">Mapa de Destino:</label>
-        <select id="teleport-target-map">
-          <option value="map-1">Vila Principal (map-1)</option>
-          <option value="map-2">Floresta do Sul (map-2)</option>
-          <option value="map-cave-1">Caverna dos Rotworms (map-cave-1)</option>
-          <option value="map-cave-2">Abismo Vulcânico (map-cave-2)</option>
-          <option value="map-house-1">Casinha da Vila (map-house-1)</option>
-        </select>
-        <div style="display: flex; gap: 8px;">
-          <div style="flex: 1;">
-            <label style="font-size: 0.75rem; color: #8b949e;">Destino X:</label>
-            <input type="number" id="teleport-target-x" value="15" min="0" max="31" style="width: 100%; background: #161b22; color: #fff; border: 1px solid #30363d; padding: 6px; border-radius: 4px;">
+      <div class="card-title">🔍 Inspetor de Propriedades do Tile:</div>
+      <div id="inspector-box" style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem; background-color: #0d1117; padding: 12px; border-radius: 8px; border: 1px solid #30363d;">
+        <div style="font-weight: bold; color: #ecc94b; font-size: 0.9rem; border-bottom: 1px solid #21262d; padding-bottom: 4px;">
+          📍 Tile Selecionado: <span id="inspector-coords" style="color: #68d391;">Clique em um tile</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: #8b949e;">Elemento Atual:</span>
+          <span id="inspector-sprite" style="font-weight: bold; color: #fff;">-</span>
+        </div>
+
+        <!-- Checkbox de Colisão Sólida -->
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: bold; cursor: pointer; background: #161b22; padding: 8px; border-radius: 6px; border: 1px solid #30363d; margin-top: 2px;">
+          <input type="checkbox" id="inspector-is-solid" style="width: 18px; height: 18px; accent-color: #e53e3e;">
+          <span style="color: #fc8181;">🔒 Parede Sólida (Bloquear)</span>
+        </label>
+
+        <!-- Configuração de Teleporte Customizado -->
+        <div style="border-top: 1px dashed #30363d; padding-top: 8px; margin-top: 2px;">
+          <div style="font-weight: bold; color: #4299e1; margin-bottom: 6px;">🌀 Configurar Teleporte:</div>
+          <label style="font-size: 0.75rem; color: #8b949e;">Mapa de Destino:</label>
+          <select id="teleport-target-map">
+            <option value="map-1">Vila Principal (map-1)</option>
+            <option value="map-2">Floresta do Sul (map-2)</option>
+            <option value="map-cave-1">Caverna dos Rotworms (map-cave-1)</option>
+            <option value="map-cave-2">Abismo Vulcânico (map-cave-2)</option>
+            <option value="map-house-1">Casinha da Vila (map-house-1)</option>
+          </select>
+
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <div style="flex: 1;">
+              <label style="font-size: 0.75rem; color: #8b949e;">Destino X:</label>
+              <input type="number" id="teleport-target-x" value="15" min="0" max="31" style="width: 100%; background: #161b22; color: #fff; border: 1px solid #30363d; padding: 6px; border-radius: 4px;">
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 0.75rem; color: #8b949e;">Destino Y:</label>
+              <input type="number" id="teleport-target-y" value="30" min="0" max="31" style="width: 100%; background: #161b22; color: #fff; border: 1px solid #30363d; padding: 6px; border-radius: 4px;">
+            </div>
           </div>
-          <div style="flex: 1;">
-            <label style="font-size: 0.75rem; color: #8b949e;">Destino Y:</label>
-            <input type="number" id="teleport-target-y" value="30" min="0" max="31" style="width: 100%; background: #161b22; color: #fff; border: 1px solid #30363d; padding: 6px; border-radius: 4px;">
+
+          <div style="display: flex; gap: 6px; margin-top: 8px;">
+            <button id="btn-save-teleport" class="btn-tool" style="flex: 1; background-color: #3182ce; color: #fff; font-weight: bold;">💾 Salvar TP</button>
+            <button id="btn-remove-teleport" class="btn-tool" style="background-color: #742a2a; color: #feb2b2;">🗑️ Remover TP</button>
           </div>
         </div>
-        <button id="btn-save-teleport" class="btn-tool" style="background-color: #3182ce; color: #fff; margin-top: 4px; font-weight: bold;">💾 Salvar Teleporte na Porta</button>
       </div>
 
       <div class="card-title">🚀 Ações de Salvamento:</div>

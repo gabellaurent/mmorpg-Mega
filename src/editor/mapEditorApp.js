@@ -74,16 +74,27 @@ class MapEditorApp {
     this.btnPaint = document.getElementById('tool-paint');
     this.btnFill = document.getElementById('tool-fill');
     this.btnErase = document.getElementById('tool-erase');
+    this.btnSelect = document.getElementById('tool-select');
 
     this.btnApplyMap = document.getElementById('btn-apply-map');
     this.btnResetMap = document.getElementById('btn-reset-map');
 
-    this.teleportSelectedPos = document.getElementById('teleport-selected-pos');
+    this.inspectorCoords = document.getElementById('inspector-coords');
+    this.inspectorSprite = document.getElementById('inspector-sprite');
+    this.inspectorIsSolid = document.getElementById('inspector-is-solid');
+
     this.teleportTargetMap = document.getElementById('teleport-target-map');
     this.teleportTargetX = document.getElementById('teleport-target-x');
     this.teleportTargetY = document.getElementById('teleport-target-y');
     this.btnSaveTeleport = document.getElementById('btn-save-teleport');
+    this.btnRemoveTeleport = document.getElementById('btn-remove-teleport');
 
+    this.btnZoomIn = document.getElementById('btn-zoom-in');
+    this.btnZoomOut = document.getElementById('btn-zoom-out');
+    this.btnZoomReset = document.getElementById('btn-zoom-reset');
+    this.zoomLevelText = document.getElementById('zoom-level-text');
+
+    this.zoomLevel = 1.0;
     this.activeTileCoords = null;
     this.teleports = {};
   }
@@ -131,6 +142,31 @@ class MapEditorApp {
     this.btnPaint.addEventListener('click', () => this.setTool('paint'));
     this.btnFill.addEventListener('click', () => this.setTool('fill'));
     this.btnErase.addEventListener('click', () => this.setTool('erase'));
+    if (this.btnSelect) {
+      this.btnSelect.addEventListener('click', () => this.setTool('select'));
+    }
+
+    if (this.inspectorIsSolid) {
+      this.inspectorIsSolid.addEventListener('change', (e) => {
+        if (this.activeTileCoords) {
+          const tile = this.gameMap.getTile(this.activeTileCoords.x, this.activeTileCoords.y);
+          if (tile) {
+            tile.isSolid = e.target.checked;
+            this.render();
+          }
+        }
+      });
+    }
+
+    if (this.btnZoomIn) this.btnZoomIn.addEventListener('click', () => this.adjustZoom(0.2));
+    if (this.btnZoomOut) this.btnZoomOut.addEventListener('click', () => this.adjustZoom(-0.2));
+    if (this.btnZoomReset) this.btnZoomReset.addEventListener('click', () => this.setZoom(1.0));
+
+    this.canvas.parentElement.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      this.adjustZoom(delta);
+    }, { passive: false });
 
     this.canvas.addEventListener('mousedown', (e) => {
       this.isMouseDown = true;
@@ -155,11 +191,29 @@ class MapEditorApp {
     if (this.btnSaveTeleport) {
       this.btnSaveTeleport.addEventListener('click', () => this.saveTeleportForTile());
     }
+
+    if (this.btnRemoveTeleport) {
+      this.btnRemoveTeleport.addEventListener('click', () => this.removeTeleportForTile());
+    }
+  }
+
+  adjustZoom(delta) {
+    this.setZoom(Math.max(0.5, Math.min(2.5, this.zoomLevel + delta)));
+  }
+
+  setZoom(level) {
+    this.zoomLevel = Math.round(level * 10) / 10;
+    if (this.zoomLevelText) {
+      this.zoomLevelText.innerText = `${Math.round(this.zoomLevel * 100)}%`;
+    }
+    const displaySize = 600 * this.zoomLevel;
+    this.canvas.style.width = `${displaySize}px`;
+    this.canvas.style.height = `${displaySize}px`;
   }
 
   saveTeleportForTile() {
     if (!this.activeTileCoords) {
-      alert('Clique em um tile no mapa primeiro para selecionar onde colocar o teleporte!');
+      alert('Selecione um tile no mapa primeiro usando a ferramenta 🔍 Seleção!');
       return;
     }
     const posKey = `${this.activeTileCoords.x},${this.activeTileCoords.y}`;
@@ -169,15 +223,30 @@ class MapEditorApp {
 
     this.teleports[posKey] = { targetMapId, targetX, targetY };
     this.render();
-    alert(`🌀 Teleporte salvo no tile (${this.activeTileCoords.x}, ${this.activeTileCoords.y})!\n\nLeva o jogador para o mapa '${targetMapId}' na posição (X: ${targetX}, Y: ${targetY}).`);
+    alert(`🌀 Teleporte configurado no tile (${this.activeTileCoords.x}, ${this.activeTileCoords.y})!\n\nLeva o jogador para o mapa '${targetMapId}' na posição (X: ${targetX}, Y: ${targetY}).`);
+  }
+
+  removeTeleportForTile() {
+    if (!this.activeTileCoords) return;
+    const posKey = `${this.activeTileCoords.x},${this.activeTileCoords.y}`;
+    if (this.teleports[posKey]) {
+      delete this.teleports[posKey];
+      this.render();
+      alert(`🗑️ Teleporte removido do tile (${this.activeTileCoords.x}, ${this.activeTileCoords.y}).`);
+    } else {
+      alert('Não há teleporte configurado neste tile.');
+    }
   }
 
   setTool(toolName) {
     this.selectedTool = toolName;
-    [this.btnPaint, this.btnFill, this.btnErase].forEach(btn => btn.classList.remove('active'));
-    if (toolName === 'paint') this.btnPaint.classList.add('active');
-    if (toolName === 'fill') this.btnFill.classList.add('active');
-    if (toolName === 'erase') this.btnErase.classList.add('active');
+    [this.btnPaint, this.btnFill, this.btnErase, this.btnSelect].forEach(btn => {
+      if (btn) btn.classList.remove('active');
+    });
+    if (toolName === 'paint' && this.btnPaint) this.btnPaint.classList.add('active');
+    if (toolName === 'fill' && this.btnFill) this.btnFill.classList.add('active');
+    if (toolName === 'erase' && this.btnErase) this.btnErase.classList.add('active');
+    if (toolName === 'select' && this.btnSelect) this.btnSelect.classList.add('active');
   }
 
   loadMap(mapId) {
@@ -268,8 +337,14 @@ class MapEditorApp {
     const currentTile = this.gameMap.getTile(x, y);
     const posKey = `${x},${y}`;
 
-    if (this.teleportSelectedPos) {
-      this.teleportSelectedPos.innerText = `X: ${x}, Y: ${y} (${currentTile ? currentTile.spriteKey : 'grass_0'})`;
+    if (this.inspectorCoords) {
+      this.inspectorCoords.innerText = `X: ${x}, Y: ${y}`;
+    }
+    if (this.inspectorSprite) {
+      this.inspectorSprite.innerText = currentTile ? currentTile.spriteKey : 'grass_0';
+    }
+    if (this.inspectorIsSolid) {
+      this.inspectorIsSolid.checked = currentTile ? !!currentTile.isSolid : false;
     }
 
     if (this.teleports[posKey]) {
@@ -277,6 +352,12 @@ class MapEditorApp {
       if (this.teleportTargetMap) this.teleportTargetMap.value = existingTp.targetMapId;
       if (this.teleportTargetX) this.teleportTargetX.value = existingTp.targetX;
       if (this.teleportTargetY) this.teleportTargetY.value = existingTp.targetY;
+    }
+
+    // Se estiver no modo SELEÇÃO, apenas inspeciona o tile sem alterar sua pintura
+    if (this.selectedTool === 'select') {
+      this.render();
+      return;
     }
 
     if (this.selectedTool === 'erase') {
