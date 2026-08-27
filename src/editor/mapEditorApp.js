@@ -474,9 +474,20 @@ class MapEditorApp {
     if (elem.category === 'terrain') {
       const tile = this.gameMap.getTile(x, y);
       if (tile) {
+        const isBaseGround = ['grass_0', 'grass_dry', 'grass_dark', 'grass_moss', 'cobble', 'dirt', 'cave_floor', 'magma_floor', 'wood_floor'].includes(elem.key);
+        
+        if (isBaseGround) {
+          tile.baseKey = elem.key;
+          tile.spriteKey = elem.key;
+        } else {
+          if (!tile.baseKey || tile.baseKey === tile.spriteKey) {
+            tile.baseKey = tile.baseKey || 'grass_0';
+          }
+          tile.spriteKey = elem.key;
+        }
+
         tile.type = elem.type;
         tile.isSolid = elem.isSolid;
-        tile.spriteKey = elem.key;
         tile.canopyKey = elem.canopyKey || null;
       }
     } else if (elem.category === 'spawn') {
@@ -508,14 +519,27 @@ class MapEditorApp {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.imageSmoothingEnabled = false;
 
-    // 1. Renderizar Tiles do Mapa
+    // 1. Renderizar Tiles do Mapa em Camadas (Base Ground + Overlay Sprite Transparente)
+    const mapId = this.currentMapId || 'map-1';
+    const defaultGroundKey = (mapId === 'map-cave-1' ? 'cave_floor' : (mapId === 'map-cave-2' ? 'magma_floor' : (mapId === 'map-house-1' ? 'wood_floor' : 'grass_0')));
+
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const tile = this.gameMap.getTile(x, y);
         const sprKey = tile ? tile.spriteKey : 'grass_0';
-        const spr = spriteGen.get(sprKey) || spriteGen.get('grass_0');
 
-        this.ctx.drawImage(spr, x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+        // 1.1 Desenhar Terreno Base de Fundo (Grama, Terra, Piso)
+        const baseKey = (tile && tile.baseKey) || (['cave_wall', 'cave_floor'].includes(sprKey) ? 'cave_floor' : (['obsidian_wall', 'magma_floor'].includes(sprKey) ? 'magma_floor' : (sprKey === 'wood_floor' ? 'wood_floor' : defaultGroundKey)));
+        const baseSpr = spriteGen.get(baseKey) || spriteGen.get('grass_0');
+        this.ctx.drawImage(baseSpr, x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+
+        // 1.2 Desenhar Elemento / Sprite Transparente Sobreposto (Cerca, Flores, Árvores, Móveis, Cerca de Madeira)
+        if (sprKey && sprKey !== baseKey) {
+          const overlaySpr = spriteGen.get(sprKey);
+          if (overlaySpr) {
+            this.ctx.drawImage(overlaySpr, x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+          }
+        }
 
         if (tile && tile.isSolid) {
           this.ctx.fillStyle = 'rgba(229, 62, 62, 0.15)';

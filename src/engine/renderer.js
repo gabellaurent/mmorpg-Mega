@@ -75,14 +75,27 @@ export class Renderer {
     const startRow = Math.max(0, Math.floor(this.cameraY / tileSize));
     const endRow = Math.min(CONFIG.GRID_HEIGHT - 1, Math.ceil((this.cameraY + viewHeight) / tileSize));
 
-    // PASSO 1: Terrenos Base
+    // PASSO 1: Terrenos Base e Objetos Sobrepostos (Empilhamento em Camadas)
+    const mapId = gameMap.mapId || 'map-1';
+    const defaultGroundKey = (mapId === 'map-cave-1' ? 'cave_floor' : (mapId === 'map-cave-2' ? 'magma_floor' : (mapId === 'map-house-1' ? 'wood_floor' : 'grass_0')));
+
     for (let y = startRow; y <= endRow; y++) {
       for (let x = startCol; x <= endCol; x++) {
         const tile = gameMap.getTile(x, y);
         if (!tile) continue;
 
-        const tileImg = spriteGen.get(tile.spriteKey);
-        ctx.drawImage(tileImg, x * tileSize, y * tileSize, tileSize, tileSize);
+        // 1. Desenhar Terreno Base de Fundo
+        const baseKey = tile.baseKey || (['cave_wall', 'cave_floor'].includes(tile.spriteKey) ? 'cave_floor' : (['obsidian_wall', 'magma_floor'].includes(tile.spriteKey) ? 'magma_floor' : (tile.spriteKey === 'wood_floor' ? 'wood_floor' : defaultGroundKey)));
+        const baseSpr = spriteGen.get(baseKey) || spriteGen.get('grass_0');
+        ctx.drawImage(baseSpr, x * tileSize, y * tileSize, tileSize, tileSize);
+
+        // 2. Desenhar Elemento / Item Sobreposto (Cerca, Flores, Árvores, Móveis, Sprites Transparentes)
+        if (tile.spriteKey && tile.spriteKey !== baseKey) {
+          const overlaySpr = spriteGen.get(tile.spriteKey);
+          if (overlaySpr) {
+            ctx.drawImage(overlaySpr, x * tileSize, y * tileSize, tileSize, tileSize);
+          }
+        }
       }
     }
 
