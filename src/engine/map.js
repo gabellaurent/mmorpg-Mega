@@ -36,16 +36,20 @@ export class GameMap {
   }
 
   loadCustomMapOverrides() {
+    this.customTeleports = {};
     try {
       const saved = localStorage.getItem('mmorpg_custom_maps');
       if (!saved) return;
       const dict = JSON.parse(saved);
       const customData = dict[this.mapId];
-      if (customData && customData.grid) {
-        this.grid = customData.grid;
-        if (customData.grid.length > 0) {
+      if (customData) {
+        if (customData.grid && customData.grid.length > 0) {
+          this.grid = customData.grid;
           this.height = customData.grid.length;
           this.width = customData.grid[0].length;
+        }
+        if (customData.teleports) {
+          this.customTeleports = customData.teleports;
         }
       }
     } catch (e) {
@@ -53,7 +57,6 @@ export class GameMap {
     }
   }
 
-  // Gera o layout do Mapa 1: Vila Principal (32x32)
   generateTownMap() {
     const { TILE_TYPES } = CONFIG;
     this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
@@ -459,6 +462,17 @@ export class GameMap {
   getTransition(x, y) {
     const tile = this.getTile(x, y);
     if (!tile) return null;
+
+    // 1. Checar se há um teleporte customizado configurado no MapEditor para esta coordenada
+    const posKey = `${x},${y}`;
+    if (this.customTeleports && this.customTeleports[posKey]) {
+      const cTp = this.customTeleports[posKey];
+      return {
+        targetMapId: cTp.targetMapId,
+        targetX: Number(cTp.targetX),
+        targetY: Number(cTp.targetY)
+      };
+    }
 
     const { TILE_TYPES } = CONFIG;
 

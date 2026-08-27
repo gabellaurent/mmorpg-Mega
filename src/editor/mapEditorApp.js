@@ -77,6 +77,15 @@ class MapEditorApp {
 
     this.btnApplyMap = document.getElementById('btn-apply-map');
     this.btnResetMap = document.getElementById('btn-reset-map');
+
+    this.teleportSelectedPos = document.getElementById('teleport-selected-pos');
+    this.teleportTargetMap = document.getElementById('teleport-target-map');
+    this.teleportTargetX = document.getElementById('teleport-target-x');
+    this.teleportTargetY = document.getElementById('teleport-target-y');
+    this.btnSaveTeleport = document.getElementById('btn-save-teleport');
+
+    this.activeTileCoords = null;
+    this.teleports = {};
   }
 
   initPalette() {
@@ -142,6 +151,25 @@ class MapEditorApp {
 
     this.btnApplyMap.addEventListener('click', () => this.saveCustomMap());
     this.btnResetMap.addEventListener('click', () => this.resetCustomMap());
+
+    if (this.btnSaveTeleport) {
+      this.btnSaveTeleport.addEventListener('click', () => this.saveTeleportForTile());
+    }
+  }
+
+  saveTeleportForTile() {
+    if (!this.activeTileCoords) {
+      alert('Clique em um tile no mapa primeiro para selecionar onde colocar o teleporte!');
+      return;
+    }
+    const posKey = `${this.activeTileCoords.x},${this.activeTileCoords.y}`;
+    const targetMapId = this.teleportTargetMap.value;
+    const targetX = Number(this.teleportTargetX.value);
+    const targetY = Number(this.teleportTargetY.value);
+
+    this.teleports[posKey] = { targetMapId, targetX, targetY };
+    this.render();
+    alert(`🌀 Teleporte salvo no tile (${this.activeTileCoords.x}, ${this.activeTileCoords.y})!\n\nLeva o jogador para o mapa '${targetMapId}' na posição (X: ${targetX}, Y: ${targetY}).`);
   }
 
   setTool(toolName) {
@@ -161,6 +189,11 @@ class MapEditorApp {
     this.canvas.width = this.width * this.tileSize;
     this.canvas.height = this.height * this.tileSize;
 
+    this.activeTileCoords = null;
+    if (this.teleportSelectedPos) {
+      this.teleportSelectedPos.innerText = 'Nenhum';
+    }
+
     // Carregar customizações salvas
     const customData = this.getCustomMapData(mapId);
     if (customData) {
@@ -169,9 +202,11 @@ class MapEditorApp {
       }
       this.spawns = customData.spawns || [];
       this.npcs = customData.npcs || [];
+      this.teleports = customData.teleports || {};
     } else {
       this.spawns = this.getDefaultSpawns(mapId);
       this.npcs = this.getDefaultNpcs(mapId);
+      this.teleports = {};
     }
 
     this.render();
@@ -229,10 +264,26 @@ class MapEditorApp {
     const { x, y } = this.getGridCoords(e);
     const elem = this.selectedElement;
 
+    this.activeTileCoords = { x, y };
+    const currentTile = this.gameMap.getTile(x, y);
+    const posKey = `${x},${y}`;
+
+    if (this.teleportSelectedPos) {
+      this.teleportSelectedPos.innerText = `X: ${x}, Y: ${y} (${currentTile ? currentTile.spriteKey : 'grass_0'})`;
+    }
+
+    if (this.teleports[posKey]) {
+      const existingTp = this.teleports[posKey];
+      if (this.teleportTargetMap) this.teleportTargetMap.value = existingTp.targetMapId;
+      if (this.teleportTargetX) this.teleportTargetX.value = existingTp.targetX;
+      if (this.teleportTargetY) this.teleportTargetY.value = existingTp.targetY;
+    }
+
     if (this.selectedTool === 'erase') {
-      // Remover Spawns ou NPCs na posição
+      // Remover Spawns, NPCs ou Teleporte na posição
       this.spawns = this.spawns.filter(s => !(s.x === x && s.y === y));
       this.npcs = this.npcs.filter(n => !(n.x === x && n.y === y));
+      delete this.teleports[posKey];
       this.render();
       return;
     }
@@ -304,7 +355,21 @@ class MapEditorApp {
       }
     }
 
-    // 3. Renderizar Spawns de Monstros (Indicador de Caldeira de Criaturas)
+    // 3. Renderizar Teleportes Customizados (Destaque Azul)
+    Object.keys(this.teleports).forEach(posKey => {
+      const [tx, ty] = posKey.split(',').map(Number);
+      this.ctx.fillStyle = 'rgba(66, 153, 225, 0.35)';
+      this.ctx.fillRect(tx * this.tileSize, ty * this.tileSize, this.tileSize, this.tileSize);
+      this.ctx.strokeStyle = '#3182ce';
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(tx * this.tileSize, ty * this.tileSize, this.tileSize, this.tileSize);
+
+      this.ctx.font = 'bold 11px Inter, sans-serif';
+      this.ctx.fillStyle = '#63b3ed';
+      this.ctx.fillText('🌀 TP', tx * this.tileSize + 2, ty * this.tileSize + 12);
+    });
+
+    // 4. Renderizar Spawns de Monstros (Indicador Vermelho)
     this.spawns.forEach(s => {
       const spr = spriteGen.get(s.key) || spriteGen.get('rat');
       this.ctx.drawImage(spr, s.x * this.tileSize, s.y * this.tileSize, this.tileSize, this.tileSize);
@@ -313,7 +378,7 @@ class MapEditorApp {
       this.ctx.strokeRect(s.x * this.tileSize, s.y * this.tileSize, this.tileSize, this.tileSize);
     });
 
-    // 4. Renderizar NPCs
+    // 5. Renderizar NPCs (Indicador Amarelo)
     this.npcs.forEach(n => {
       const spr = spriteGen.get(n.key) || spriteGen.get('npc_guard');
       this.ctx.drawImage(spr, n.x * this.tileSize, n.y * this.tileSize, this.tileSize, this.tileSize);
@@ -322,7 +387,15 @@ class MapEditorApp {
       this.ctx.strokeRect(n.x * this.tileSize, n.y * this.tileSize, this.tileSize, this.tileSize);
     });
 
-    // 5. Linhas da Grade do Mapa
+    // 6. Highlight do Tile Ativo
+    if (this.activeTileCoords) {
+      const { x, y } = this.activeTileCoords;
+      this.ctx.strokeStyle = '#4299e1';
+      this.ctx.lineWidth = 3;
+      this.ctx.strokeRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+    }
+
+    // 7. Linhas da Grade do Mapa
     this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     this.ctx.lineWidth = 1;
     for (let i = 0; i <= this.width; i++) {
@@ -342,10 +415,12 @@ class MapEditorApp {
   }
 
   updateStats() {
+    const tpCount = Object.keys(this.teleports).length;
     this.mapStats.innerHTML = `
       <strong>Dimensões:</strong> ${this.width}x${this.height}<br>
       <strong>Spawns Monstros:</strong> ${this.spawns.length}<br>
-      <strong>NPCs Posicionados:</strong> ${this.npcs.length}
+      <strong>NPCs Posicionados:</strong> ${this.npcs.length}<br>
+      <strong>Teleportes Ativos:</strong> ${tpCount}
     `;
   }
 
@@ -367,10 +442,11 @@ class MapEditorApp {
       dict[this.currentMapId] = {
         grid: this.gameMap.grid,
         spawns: this.spawns,
-        npcs: this.npcs
+        npcs: this.npcs,
+        teleports: this.teleports
       };
       localStorage.setItem('mmorpg_custom_maps', JSON.stringify(dict));
-      alert(`🚀 Mapa '${this.gameMap.name}' SALVO COM SUCESSO!\n\nAs alterações de terreno, relevo, árvores e spawns já estão aplicadas no seu jogo!`);
+      alert(`🚀 Mapa '${this.gameMap.name}' SALVO COM SUCESSO!\n\nAs alterações de terreno, relevo, árvores, spawns e TELEPORTES CUSTOMIZADOS já estão aplicadas no seu jogo!`);
     } catch (e) {
       console.error('Erro ao salvar mapa:', e);
     }

@@ -295,11 +295,28 @@
 
     <!-- Painel 3: Ações & Estatísticas de Spawns -->
     <aside class="editor-card">
-      <div class="card-title">📊 Estatísticas do Mapa:</div>
-      <div class="info-badge" id="map-stats">
-        Dimensões: 32x32<br>
-        Ratos / Spawns: 4<br>
-        NPCs: 2
+      <div class="card-title">🌀 Configurar Teleporte da Porta:</div>
+      <div id="teleport-config-box" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; background-color: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #30363d;">
+        <div style="font-weight: bold; color: #4299e1;">Tile Ativo: <span id="teleport-selected-pos">Nenhum</span></div>
+        <label style="font-size: 0.75rem; color: #8b949e;">Mapa de Destino:</label>
+        <select id="teleport-target-map">
+          <option value="map-1">Vila Principal (map-1)</option>
+          <option value="map-2">Floresta do Sul (map-2)</option>
+          <option value="map-cave-1">Caverna dos Rotworms (map-cave-1)</option>
+          <option value="map-cave-2">Abismo Vulcânico (map-cave-2)</option>
+          <option value="map-house-1">Casinha da Vila (map-house-1)</option>
+        </select>
+        <div style="display: flex; gap: 8px;">
+          <div style="flex: 1;">
+            <label style="font-size: 0.75rem; color: #8b949e;">Destino X:</label>
+            <input type="number" id="teleport-target-x" value="15" min="0" max="31" style="width: 100%; background: #161b22; color: #fff; border: 1px solid #30363d; padding: 6px; border-radius: 4px;">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size: 0.75rem; color: #8b949e;">Destino Y:</label>
+            <input type="number" id="teleport-target-y" value="30" min="0" max="31" style="width: 100%; background: #161b22; color: #fff; border: 1px solid #30363d; padding: 6px; border-radius: 4px;">
+          </div>
+        </div>
+        <button id="btn-save-teleport" class="btn-tool" style="background-color: #3182ce; color: #fff; margin-top: 4px; font-weight: bold;">💾 Salvar Teleporte na Porta</button>
       </div>
 
       <div class="card-title">🚀 Ações de Salvamento:</div>
