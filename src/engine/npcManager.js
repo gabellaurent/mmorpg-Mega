@@ -47,7 +47,35 @@ export class NpcManager {
     this.npcs.clear();
     const mapId = this.gameMap ? this.gameMap.mapId : 'map-1';
 
-    if (mapId === 'map-2') {
+    let customLoaded = false;
+    try {
+      const saved = localStorage.getItem('mmorpg_custom_maps');
+      if (saved) {
+        const dict = JSON.parse(saved);
+        if (dict[mapId] && Array.isArray(dict[mapId].npcs) && dict[mapId].npcs.length > 0) {
+          dict[mapId].npcs.forEach(n => {
+            const isGuard = n.key === 'npc_guard';
+            this.addNpc(new Npc({
+              id: n.id,
+              name: n.name,
+              title: isGuard ? 'Guardião Real' : 'Comerciante',
+              type: isGuard ? 'guard' : 'merchant',
+              gridX: n.x,
+              gridY: n.y,
+              direction: 'south',
+              badgeText: isGuard ? '🛡️ GUARDA' : '🛒 LOJA',
+              badgeColor: isGuard ? '#4299e1' : '#ecc94b'
+            }));
+          });
+          customLoaded = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar NPCs customizados do localStorage:', e);
+    }
+
+    if (!customLoaded) {
+      if (mapId === 'map-2') {
       // Patrulheiro da Floresta no Portão Norte
       this.addNpc(new Npc({
         id: 'ranger_forest',
@@ -109,6 +137,7 @@ export class NpcManager {
         badgeText: '⚔️ ARMAS & ESCUDOS',
         badgeColor: '#ed8936'
       }));
+    }
     }
   }
 

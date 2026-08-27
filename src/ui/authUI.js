@@ -79,7 +79,10 @@ export class AuthUI {
           </div>
         </div>
 
-        <a href="./sprite-editor.html" style="display: block; text-align: center; text-decoration: none; margin-top: 16px; padding: 10px; font-weight: bold; background-color: #1a202c; color: #ecc94b; border-radius: 6px; border: 1px solid #d69e2e;">🎨 Abrir Editor de Sprites & Pixel Art</a>
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <a href="./sprite-editor.html" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; font-weight: bold; background-color: #1a202c; color: #ecc94b; border-radius: 6px; border: 1px solid #d69e2e; font-size: 0.85rem;">🎨 Editor de Sprites</a>
+          <a href="./map-editor.html" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; font-weight: bold; background-color: #1a202c; color: #68d391; border-radius: 6px; border: 1px solid #2f855a; font-size: 0.85rem;">🗺️ Editor de Mapas</a>
+        </div>
       </div>
     `;
 

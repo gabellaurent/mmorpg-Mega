@@ -31,6 +31,26 @@ export class GameMap {
       this.name = 'Vila Principal';
       this.generateTownMap();
     }
+
+    this.loadCustomMapOverrides();
+  }
+
+  loadCustomMapOverrides() {
+    try {
+      const saved = localStorage.getItem('mmorpg_custom_maps');
+      if (!saved) return;
+      const dict = JSON.parse(saved);
+      const customData = dict[this.mapId];
+      if (customData && customData.grid) {
+        this.grid = customData.grid;
+        if (customData.grid.length > 0) {
+          this.height = customData.grid.length;
+          this.width = customData.grid[0].length;
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar mapa customizado do localStorage:', e);
+    }
   }
 
   // Gera o layout do Mapa 1: Vila Principal (32x32)

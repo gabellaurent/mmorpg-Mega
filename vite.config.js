@@ -10,7 +10,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname || '.', 'index.html'),
-        editor: resolve(import.meta.dirname || '.', 'sprite-editor.html')
+        editor: resolve(import.meta.dirname || '.', 'sprite-editor.html'),
+        mapEditor: resolve(import.meta.dirname || '.', 'map-editor.html')
       }
     }
   }

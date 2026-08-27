@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🗺️ Editor de Mapas, Geometria e Spawns - MMORPG 2D</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Folha de Estilos CSS -->
+  <link rel="stylesheet" href="./style.css" />
+
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #f0f6fc;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .editor-header {
+      text-align: center;
+      margin-bottom: 16px;
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #21262d;
+      padding-bottom: 12px;
+    }
+
+    .editor-header h1 {
+      font-family: 'Cinzel', serif;
+      color: #ecc94b;
+      font-size: 1.8rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-links {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-nav {
+      background-color: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .btn-nav:hover {
+      background-color: #30363d;
+      color: #fff;
+    }
+
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr 280px;
+      gap: 16px;
+      width: 100%;
+      max-width: 1300px;
+    }
+
+    @media (max-width: 1024px) {
+      .editor-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .editor-card {
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b949e;
+      border-bottom: 1px solid #21262d;
+      padding-bottom: 6px;
+    }
+
+    select {
+      background-color: #0d1117;
+      border: 1px solid #30363d;
+      color: #f0f6fc;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      width: 100%;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-height: 440px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .tile-option {
+      background-color: #0d1117;
+      border: 2px solid #30363d;
+      border-radius: 8px;
+      padding: 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .tile-option:hover {
+      border-color: #ecc94b;
+      transform: scale(1.05);
+    }
+
+    .tile-option.selected {
+      border-color: #2ea043;
+      background-color: #1c2d20;
+    }
+
+    .tile-option canvas {
+      width: 36px;
+      height: 36px;
+      image-rendering: pixelated;
+    }
+
+    .tile-option span {
+      font-size: 0.7rem;
+      color: #8b949e;
+      word-break: break-word;
+      line-height: 1.1;
+    }
+
+    .canvas-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #090d16;
+      border-radius: 10px;
+      border: 1px solid #30363d;
+      padding: 12px;
+      overflow: auto;
+    }
+
+    #map-canvas {
+      background-color: #000;
+      border: 2px solid #30363d;
+      cursor: crosshair;
+      image-rendering: pixelated;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    }
+
+    .tool-bar {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-tool {
+      flex: 1;
+      background-color: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .btn-tool.active {
+      background-color: #238636;
+      border-color: #2ea043;
+      color: #fff;
+    }
+
+    .btn-action {
+      background-color: #ecc94b;
+      color: #000;
+      border: 2px solid #b7791f;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+      width: 100%;
+    }
+
+    .btn-action:hover {
+      background-color: #f6e05e;
+    }
+
+    .btn-secondary {
+      background-color: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+    }
+
+    .btn-secondary:hover {
+      background-color: #30363d;
+      color: #fff;
+    }
+
+    .info-badge {
+      font-size: 0.8rem;
+      background-color: #0d1117;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #21262d;
+      color: #8b949e;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="editor-header">
+    <h1>🗺️ Editor de Mapas & Spawns</h1>
+    <div class="header-links">
+      <a href="./sprite-editor.html" class="btn-nav">🎨 Editor de Sprites</a>
+      <a href="./index.html" class="btn-nav">⬅️ Voltar ao Jogo</a>
+    </div>
+  </header>
+
+  <main class="editor-layout">
+
+    <!-- Painel 1: Seleção de Mapa & Ferramentas -->
+    <aside class="editor-card">
+      <div class="card-title">🗺️ Mapa Ativo:</div>
+      <select id="map-select">
+        <option value="map-1">Vila Principal (32x32)</option>
+        <option value="map-2">Floresta do Sul (32x32)</option>
+        <option value="map-cave-1">Sub-1: Caverna dos Rotworms (24x24)</option>
+        <option value="map-cave-2">Sub-2: Abismo Vulcânico (24x24)</option>
+        <option value="map-house-1">Casinha da Vila (12x12)</option>
+      </select>
+
+      <div class="card-title">🛠️ Modo de Edição:</div>
+      <div class="tool-bar">
+        <button id="tool-paint" class="btn-tool active">🖌️ Pincel</button>
+        <button id="tool-fill" class="btn-tool">🪣 Preencher</button>
+        <button id="tool-erase" class="btn-tool">🧹 Limpar</button>
+      </div>
+
+      <div class="card-title">🎨 Paleta de Elementos:</div>
+      <div class="palette-grid" id="palette-grid">
+        <!-- Ícones e Tiles gerados via JS -->
+      </div>
+    </aside>
+
+    <!-- Canvas Principal do Editor de Mapa -->
+    <section class="canvas-wrapper">
+      <canvas id="map-canvas" width="600" height="600"></canvas>
+      <div style="font-size: 0.8rem; color: #8b949e; margin-top: 8px;">
+        Clique e arraste para desenhar no mapa. Coordenada: <span id="hover-coords">X: 0, Y: 0</span>
+      </div>
+    </section>
+
+    <!-- Painel 3: Ações & Estatísticas de Spawns -->
+    <aside class="editor-card">
+      <div class="card-title">📊 Estatísticas do Mapa:</div>
+      <div class="info-badge" id="map-stats">
+        Dimensões: 32x32<br>
+        Ratos / Spawns: 4<br>
+        NPCs: 2
+      </div>
+
+      <div class="card-title">🚀 Ações de Salvamento:</div>
+      <button id="btn-apply-map" class="btn-action">🚀 APLICAR E SALVAR MAPA NO JOGO</button>
+      <button id="btn-reset-map" class="btn-action btn-secondary">↺ Restaurar Mapa Padrão</button>
+
+      <div class="info-badge" style="margin-top: auto;">
+        💡 <strong>Dica:</strong> Qualquer alteração no relevo, árvores, construções ou spawns de monstros será refletida automaticamente no seu jogo ao salvar!
+      </div>
+    </aside>
+
+  </main>
+
+  <script type="module" src="./src/editor/mapEditorApp.js"></script>
+</body>
+</html>
