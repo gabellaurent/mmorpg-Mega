@@ -23,47 +23,55 @@ class SpriteGenerator {
 
     const size = CONFIG.TILE_SIZE;
 
-    // 1. Sprites de Terreno (Pisos, Grama, Caverna e Vulcano)
+    // 1. Tiles de Terreno
     this.cache['grass_0'] = this.drawGrassTile(size, 0);
     this.cache['grass_1'] = this.drawGrassTile(size, 1);
     this.cache['grass_2'] = this.drawGrassTile(size, 2);
-    this.cache['grass_dry'] = this.drawGrassDryTile(size);
-    this.cache['grass_dark'] = this.drawGrassDarkTile(size);
-    this.cache['grass_moss'] = this.drawGrassMossTile(size);
+    this.cache['grass_dry'] = this.drawGrassTile(size, 'dry');
+    this.cache['grass_dark'] = this.drawGrassTile(size, 'dark');
+    this.cache['grass_moss'] = this.drawGrassTile(size, 'moss');
     this.cache['cobble'] = this.drawCobbleTile(size);
     this.cache['dirt'] = this.drawDirtTile(size);
-    this.cache['cave_floor'] = this.drawCaveFloorTile(size);
-    this.cache['magma_floor'] = this.drawMagmaFloorTile(size);
-    this.cache['wood_floor'] = this.drawWoodFloorTile(size);
-    this.cache['void'] = this.drawVoidTile(size);
+    this.cache['water_0'] = this.drawWaterTile(size, 0);
+    this.cache['water_1'] = this.drawWaterTile(size, 1);
 
-    // 2. Elementos de Vegetação, Flores e Árvores
-    this.cache['tree_trunk'] = this.drawTreeTrunkTile(size);
-    this.cache['tree_canopy'] = this.drawTreeCanopyTile(Math.round(size * 1.6));
-    this.cache['tree_pine_trunk'] = this.drawPineTrunkTile(size);
-    this.cache['tree_pine_canopy'] = this.drawPineCanopyTile(Math.round(size * 1.6));
+    // 2. Obstáculos, Plantas e Estruturas
+    this.cache['tree_trunk'] = this.drawTreeTrunk(size);
+    this.cache['tree_canopy'] = this.drawTreeCanopy(size * 1.6);
+
+    // Modelos de Árvores Especiais (Pinheiros Coníferas)
+    this.cache['tree_pine_trunk'] = this.drawTreeTrunk(size);
+    this.cache['tree_pine_canopy'] = this.drawTreePineCanopy(size * 1.6);
+
     this.cache['rock'] = this.drawRockTile(size);
-    this.cache['cave_wall'] = this.drawCaveWallTile(size);
-    this.cache['obsidian_wall'] = this.drawObsidianWallTile(size);
+    this.cache['flowers'] = this.drawFlowersTile(size);
+    this.cache['flowers_red'] = this.drawFlowersTileVariant(size, '#f56565', '#e53e3e');
+    this.cache['flowers_blue'] = this.drawFlowersTileVariant(size, '#4299e1', '#63b3ed');
+    this.cache['flowers_purple'] = this.drawFlowersTileVariant(size, '#9f7aea', '#b794f4');
+    this.cache['bush_berry'] = this.drawBerryBushTile(size);
+    this.cache['bush_large'] = this.drawBigBushTile(size);
+    this.cache['tall_grass'] = this.drawTallGrassTile(size);
+
+    this.cache['portal'] = this.drawPortalTile(size);
+    this.cache['gate_pillar'] = this.drawGatePillarTile(size);
     this.cache['wall_wood'] = this.drawWallWoodTile(size);
+    this.cache['wood_floor'] = this.drawWoodFloorTile(size);
     this.cache['house_door'] = this.drawHouseDoorTile(size);
     this.cache['house_bed'] = this.drawHouseBedTile(size);
     this.cache['house_table'] = this.drawHouseTableTile(size);
     this.cache['house_fireplace'] = this.drawHouseFireplaceTile(size);
     this.cache['house_chest'] = this.drawHouseChestTile(size);
-    this.cache['flowers_red'] = this.drawFlowersTile(size, '#e53e3e');
-    this.cache['flowers_blue'] = this.drawFlowersTile(size, '#3182ce');
-    this.cache['flowers_purple'] = this.drawFlowersTile(size, '#805ad5');
-    this.cache['bush_berry'] = this.drawBushBerryTile(size);
-    this.cache['bush_large'] = this.drawBushLargeTile(size);
-    this.cache['tall_grass'] = this.drawTallGrassTile(size);
-    this.cache['gate_pillar'] = this.drawGatePillarTile(size);
+    this.cache['void'] = this.drawVoidTile(size);
+
+    // Tiles de Caverna & Magma (Sub-níveis 1 e 2)
+    this.cache['cave_floor'] = this.drawCaveFloorTile(size);
+    this.cache['cave_wall'] = this.drawCaveWallTile(size);
     this.cache['cave_hole'] = this.drawCaveHoleTile(size);
     this.cache['cave_stairs'] = this.drawCaveStairsTile(size);
-    this.cache['portal'] = this.drawPortalTile(size);
-    this.cache['water_0'] = this.drawWaterTile(size, 0);
+    this.cache['magma_floor'] = this.drawMagmaFloorTile(size);
+    this.cache['obsidian_wall'] = this.drawObsidianWallTile(size);
 
-    // 3. Monstros
+    // 3. Monstros: Rat, Rotworm e Guardião de Magma (Boss)
     this.cache['rat'] = this.drawRatSprite(size);
     this.cache['rotworm'] = this.drawRotwormSprite(size);
     this.cache['demon_boss'] = this.drawDemonBossSprite(size);
