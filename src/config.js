@@ -43,11 +43,17 @@ export const CONFIG = {
     FENCE_CORNER_BL: 27,
     FENCE_CORNER_BR: 28,
     FENCE_END_L: 29,
-    FENCE_END_R: 30
+    FENCE_END_R: 30,
+    RAMP_UP: 31,
+    STAIRS_WOOD: 32,
+    STAIRS_STONE: 33,
+    LADDER: 34,
+    HILL_WALL: 35,
+    HILL_CORNER: 36
   },
 
   // Flags de Colisão por tipo de Tile
-  SOLID_TILES: [2, 3, 4, 8, 9, 12, 13, 14, 15, 18, 22, 23, 24, 25, 26, 27, 28, 29, 30], // TREE, ROCK, WATER, GATE, WALL_WOOD, BED, TABLE, FIREPLACE, CHEST, FENCES são sólidos
+  SOLID_TILES: [2, 3, 4, 8, 9, 12, 13, 14, 15, 18, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 36], // HILL_WALL e HILL_CORNER são sólidos
 
   // Outfits de Personagens disponíveis
   CLASSES: [

@@ -56,6 +56,14 @@ class MapEditorApp {
       { category: 'terrain', key: 'fence_end_l', label: 'Cerca Ponta Esquerda', type: CONFIG.TILE_TYPES.FENCE_END_L, isSolid: true },
       { category: 'terrain', key: 'fence_end_r', label: 'Cerca Ponta Direita', type: CONFIG.TILE_TYPES.FENCE_END_R, isSolid: true },
 
+      // ⛰️ Elevação & Escadas (Tibia Style)
+      { category: 'terrain', key: 'ramp_up', label: 'Rampa de Elevação', type: CONFIG.TILE_TYPES.RAMP_UP, isSolid: false },
+      { category: 'terrain', key: 'stairs_wood', label: 'Escada Madeira Sobrado', type: CONFIG.TILE_TYPES.STAIRS_WOOD, isSolid: false },
+      { category: 'terrain', key: 'stairs_stone', label: 'Escada Pedra Castelo', type: CONFIG.TILE_TYPES.STAIRS_STONE, isSolid: false },
+      { category: 'terrain', key: 'ladder', label: 'Escada de Mão', type: CONFIG.TILE_TYPES.LADDER, isSolid: false },
+      { category: 'terrain', key: 'hill_wall', label: 'Paredão de Montanha', type: CONFIG.TILE_TYPES.HILL_WALL, isSolid: true },
+      { category: 'terrain', key: 'hill_corner', label: 'Canto de Montanha', type: CONFIG.TILE_TYPES.HILL_CORNER, isSolid: true },
+
       // 🛋️ Casinha & Mobília
       { category: 'terrain', key: 'house_door', label: 'Porta da Casa', type: CONFIG.TILE_TYPES.HOUSE_DOOR, isSolid: false },
       { category: 'terrain', key: 'house_bed', label: 'Cama Casinha', type: CONFIG.TILE_TYPES.HOUSE_BED, isSolid: true },

@@ -82,6 +82,14 @@ class SpriteGenerator {
     this.cache['fence_end_l'] = this.drawFenceEndLSprite(size);
     this.cache['fence_end_r'] = this.drawFenceEndRSprite(size);
 
+    // Sprites de Elevação & Escadas Estilo Tibia (Rampa, Escadas, Montanha)
+    this.cache['ramp_up'] = this.drawRampUpSprite(size);
+    this.cache['stairs_wood'] = this.drawStairsWoodSprite(size);
+    this.cache['stairs_stone'] = this.drawStairsStoneSprite(size);
+    this.cache['ladder'] = this.drawLadderSprite(size);
+    this.cache['hill_wall'] = this.drawHillWallSprite(size);
+    this.cache['hill_corner'] = this.drawHillCornerSprite(size);
+
     // 3. Monstros: Rat, Rotworm, Lobo, Aranha, Goblin e Guardião de Magma (Boss)
     this.cache['rat'] = this.drawRatSprite(size);
     this.cache['rotworm'] = this.drawRotwormSprite(size);
@@ -1811,6 +1819,174 @@ class SpriteGenerator {
     ctx.fillRect(size - 10, cy - 13, 4, 25);
     ctx.fillStyle = '#b88349';
     ctx.fillRect(size - 10, cy - 14, 3, 2);
+
+    return canvas;
+  }
+
+  // --- RENDERIZADORES DE ELEVAÇÃO, ESCADAS E MONTANHA ESTILO TIBIA ---
+
+  drawRampUpSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Base de grama
+    ctx.fillStyle = '#38a169';
+    ctx.fillRect(0, 0, size, size);
+
+    // Rampa inclinada de terra e pedras
+    ctx.fillStyle = '#4a3728'; // Sombra inferior
+    ctx.fillRect(4, 4, size - 8, size - 4);
+
+    // Degraus da Rampa
+    const steps = 5;
+    const stepH = (size - 8) / steps;
+    for (let i = 0; i < steps; i++) {
+      const y = 4 + i * stepH;
+      ctx.fillStyle = (i % 2 === 0) ? '#795548' : '#8d6e63';
+      ctx.fillRect(6, y, size - 12, stepH - 1);
+      ctx.fillStyle = '#d7ccc8'; // Iluminação do degrau
+      ctx.fillRect(6, y, size - 12, 1);
+    }
+
+    // Bordas de montanha laterais
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(2, 2, 4, size - 4);
+    ctx.fillRect(size - 6, 2, 4, size - 4);
+
+    return canvas;
+  }
+
+  drawStairsWoodSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Fundo de piso de madeira escuro
+    ctx.fillStyle = '#3e2723';
+    ctx.fillRect(0, 0, size, size);
+
+    // Degraus da Escada de Madeira de Sobrado (Tibia Style)
+    const numSteps = 6;
+    const h = size / numSteps;
+    for (let i = 0; i < numSteps; i++) {
+      const y = i * h;
+      ctx.fillStyle = '#4e342e'; // Sombra espelho
+      ctx.fillRect(4, y, size - 8, h);
+
+      ctx.fillStyle = '#8d6e63'; // Pisada do degrau
+      ctx.fillRect(4, y + 2, size - 8, h - 2);
+
+      ctx.fillStyle = '#bcaaa4'; // Quina iluminada
+      ctx.fillRect(4, y + 2, size - 8, 1);
+    }
+
+    // Corrimão Lateral de Madeira
+    ctx.fillStyle = '#3e2723';
+    ctx.fillRect(2, 0, 3, size);
+    ctx.fillRect(size - 5, 0, 3, size);
+
+    return canvas;
+  }
+
+  drawStairsStoneSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Base de paralelepípedo
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(0, 0, size, size);
+
+    // Degraus de Pedra Trabalhada
+    const numSteps = 5;
+    const h = size / numSteps;
+    for (let i = 0; i < numSteps; i++) {
+      const y = i * h;
+      ctx.fillStyle = '#1a202c'; // Sombra
+      ctx.fillRect(4, y, size - 8, h);
+
+      ctx.fillStyle = '#4a5568'; // Pedra cinza
+      ctx.fillRect(4, y + 2, size - 8, h - 2);
+
+      ctx.fillStyle = '#cbd5e0'; // Quina iluminada
+      ctx.fillRect(4, y + 2, size - 8, 1);
+    }
+
+    return canvas;
+  }
+
+  drawLadderSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Grama / Piso no fundo
+    ctx.fillStyle = '#2f855a';
+    ctx.fillRect(0, 0, size, size);
+
+    // Escada de Mão de Madeira sobre o chão
+    const lx1 = size / 2 - 10;
+    const lx2 = size / 2 + 7;
+
+    // Sombra
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(lx1 + 2, 2, 3, size - 4);
+    ctx.fillRect(lx2 + 2, 2, 3, size - 4);
+
+    // Hastes Verticais
+    ctx.fillStyle = '#5d4037';
+    ctx.fillRect(lx1, 2, 4, size - 4);
+    ctx.fillRect(lx2, 2, 4, size - 4);
+    ctx.fillStyle = '#8d6e63';
+    ctx.fillRect(lx1 + 1, 2, 2, size - 4);
+    ctx.fillRect(lx2 + 1, 2, 2, size - 4);
+
+    // Degraus Horizontais da Escada de Mão
+    for (let y = 8; y < size - 6; y += 8) {
+      ctx.fillStyle = '#3e2723';
+      ctx.fillRect(lx1, y - 1, 20, 3);
+      ctx.fillStyle = '#8d6e63';
+      ctx.fillRect(lx1, y, 20, 2);
+      ctx.fillStyle = '#d7ccc8';
+      ctx.fillRect(lx1, y, 20, 1);
+    }
+
+    return canvas;
+  }
+
+  drawHillWallSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Parede de Rocha de Montanha estilo Tibia (Muralha Rústica)
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(0, 0, size, size);
+
+    // Blocos de Pedra sobrepostos com textura
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(2, 2, size - 4, size / 2 - 2);
+    ctx.fillRect(4, size / 2 + 2, size - 8, size / 2 - 4);
+
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(4, 4, size - 8, size / 2 - 6);
+    ctx.fillRect(6, size / 2 + 4, size - 12, size / 2 - 8);
+
+    ctx.fillStyle = '#718096'; // Brilho de topo da montanha
+    ctx.fillRect(2, 2, size - 4, 2);
+
+    return canvas;
+  }
+
+  drawHillCornerSprite(size) {
+    const { canvas, ctx } = this.createCanvas(size, size);
+    // Canto de Rocha de Montanha
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.fillStyle = '#2d3748';
+    ctx.beginPath();
+    ctx.moveTo(2, 2);
+    ctx.lineTo(size - 2, 2);
+    ctx.lineTo(size - 2, size - 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#4a5568';
+    ctx.beginPath();
+    ctx.moveTo(6, 6);
+    ctx.lineTo(size - 6, 6);
+    ctx.lineTo(size - 6, size - 6);
+    ctx.fill();
+
+    ctx.fillStyle = '#718096';
+    ctx.fillRect(2, 2, size - 4, 2);
+    ctx.fillRect(size - 4, 2, 2, size - 4);
 
     return canvas;
   }

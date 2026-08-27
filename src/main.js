@@ -855,7 +855,9 @@ class GameEngine {
       } else if (targetMapId === 'map-cave-2') {
         this.hud.addChatMessage('Sistema', '🔥 Você desceu para o <strong>Abismo Vulcânico (Sub-2)</strong>! Alerta: O imponente Guardião de Magma habita este abismo!', true);
       } else if (targetMapId === 'map-house-1') {
-        this.hud.addChatMessage('Sistema', '🏠 Você entrou na <strong>Casinha da Vila</strong>!', true);
+        this.hud.addChatMessage('Sistema', '🏠 Você entrou na <strong>Casinha da Vila (Térreo)</strong>!', true);
+      } else if (targetMapId === 'map-house-1-f2') {
+        this.hud.addChatMessage('Sistema', '🏠 Você subiu a escada para o <strong>2º Andar da Casinha (Sobrado)</strong>!', true);
       } else {
         this.hud.addChatMessage('Sistema', '🏰 Você retornou à <strong>Vila Principal</strong>!', true);
       }

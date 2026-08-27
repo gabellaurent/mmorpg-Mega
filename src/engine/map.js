@@ -32,10 +32,15 @@ export class GameMap {
       this.height = 24;
       this.generateCaveSublevel2();
     } else if (mapId === 'map-house-1') {
-      this.name = 'Interior da Casinha';
+      this.name = 'Interior da Casinha (Térreo)';
       this.width = 12;
       this.height = 12;
       this.generateHouseInteriorMap();
+    } else if (mapId === 'map-house-1-f2') {
+      this.name = 'Sobrado da Casinha (2º Andar)';
+      this.width = 12;
+      this.height = 12;
+      this.generateHouseSecondFloorMap();
     } else {
       this.mapId = 'map-1';
       this.name = 'Vila Principal';
@@ -585,6 +590,64 @@ export class GameMap {
           isSolid = true;
           spriteKey = 'house_chest';
         }
+        // 5. Escada de Madeira para subir ao 2º Andar (Sobrado)
+        else if (x === 3 && y === 8) {
+          type = TILE_TYPES.STAIRS_WOOD;
+          isSolid = false;
+          spriteKey = 'stairs_wood';
+        }
+
+        this.grid[y][x] = { x, y, type, isSolid, spriteKey };
+      }
+    }
+  }
+
+  // Gera o layout do 2º Andar / Sobrado da Casinha (12x12)
+  generateHouseSecondFloorMap() {
+    const { TILE_TYPES } = CONFIG;
+    this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(null));
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        let type = TILE_TYPES.WOOD_FLOOR;
+        let isSolid = false;
+        let spriteKey = 'wood_floor';
+
+        // 1. Escada para descer ao Térreo (Grid X: 3, Y: 8)
+        if (x === 3 && y === 8) {
+          type = TILE_TYPES.STAIRS_WOOD;
+          isSolid = false;
+          spriteKey = 'stairs_wood';
+        }
+        // 2. Varanda com Cerca de Madeira estilo Tibia (Grid X: 4..7, Y: 9)
+        else if (y === 9 && x >= 4 && x <= 7) {
+          type = TILE_TYPES.FENCE_H;
+          isSolid = true;
+          spriteKey = 'fence_h';
+        }
+        // 3. Paredes de Madeira do Sobrado
+        else if (y === 1 || x === 1 || x === 10 || (y === 9 && (x < 4 || x > 7))) {
+          type = TILE_TYPES.WALL_WOOD;
+          isSolid = true;
+          spriteKey = 'wall_wood';
+        }
+        // 4. Vazio em Volta da Casa
+        else if (x === 0 || y === 0 || x === 11 || y === 10 || y === 11) {
+          type = TILE_TYPES.TREE;
+          isSolid = true;
+          spriteKey = 'void';
+        }
+        // 5. Quarto do Sobrado (Cama de Casal e Baú de Tesouros)
+        else if (x === 8 && y === 3) {
+          type = TILE_TYPES.HOUSE_BED;
+          isSolid = true;
+          spriteKey = 'house_bed';
+        }
+        else if (x === 9 && y === 3) {
+          type = TILE_TYPES.HOUSE_CHEST;
+          isSolid = true;
+          spriteKey = 'house_chest';
+        }
 
         this.grid[y][x] = { x, y, type, isSolid, spriteKey };
       }
@@ -781,6 +844,15 @@ export class GameMap {
       // Porta de Saída da Casinha
       if (tile.type === TILE_TYPES.HOUSE_DOOR) {
         return { targetMapId: 'map-1', targetX: 24, targetY: 9 };
+      }
+      // Escada para subir ao 2º Andar (Sobrado)
+      if (tile.type === TILE_TYPES.STAIRS_WOOD || (x === 3 && y === 8)) {
+        return { targetMapId: 'map-house-1-f2', targetX: 3, targetY: 8 };
+      }
+    } else if (this.mapId === 'map-house-1-f2') {
+      // Escada para descer ao Térreo
+      if (tile.type === TILE_TYPES.STAIRS_WOOD || (x === 3 && y === 8)) {
+        return { targetMapId: 'map-house-1', targetX: 3, targetY: 7 };
       }
     }
     return null;
