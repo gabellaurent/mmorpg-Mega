@@ -167,14 +167,40 @@ export class OutfitRecolorModal {
     this.colorHex.style.color = hex;
   }
 
+  getDirectCanvas(key) {
+    if (spriteGen.cache && spriteGen.cache[key]) {
+      return spriteGen.cache[key];
+    }
+    return null;
+  }
+
   open(player) {
     this.localPlayer = player;
     this.isOpen = true;
     this.element.style.display = 'flex';
 
-    // Carregar a Spritesheet do Personagem Atual
-    const customKey = player.customSpriteKey || `char_${player.spriteId}_custom_${player.id}`;
-    const baseCanvas = spriteGen.get(customKey) || spriteGen.get(`char_${player.spriteId}`);
+    // Garante que o SpriteGenerator foi inicializado
+    if (!spriteGen.initialized) {
+      spriteGen.init();
+    }
+
+    // 1. Resolver a chave correta da classe do personagem (ex: 'char_knight', 'char_mage', 'char_paladin')
+    let baseKey = player.spriteId || 'knight';
+    if (!baseKey.startsWith('char_')) {
+      baseKey = `char_${baseKey}`;
+    }
+
+    // 2. Tentar usar canvas customizado existente, ou fallback para a classe base
+    let baseCanvas = null;
+    if (player.customSpriteKey) {
+      baseCanvas = this.getDirectCanvas(player.customSpriteKey);
+    }
+    if (!baseCanvas) {
+      baseCanvas = this.getDirectCanvas(baseKey);
+    }
+    if (!baseCanvas) {
+      baseCanvas = this.getDirectCanvas('char_knight');
+    }
 
     if (baseCanvas) {
       this.fullCanvas.width = baseCanvas.width;
@@ -207,7 +233,7 @@ export class OutfitRecolorModal {
                 const hex = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`;
                 this.framesData[c][r][y][x] = hex;
               } else {
-                this.framesData[c][r][y][x] = null; // Protegido contra pintura
+                this.framesData[c][r][y][x] = null; // Protegido contra pintura vazada
               }
             }
           }
@@ -357,6 +383,9 @@ export class OutfitRecolorModal {
 
   resetToOriginal() {
     if (confirm('Deseja restaurar as cores originais da classe do seu personagem?')) {
+      if (this.localPlayer) {
+        this.localPlayer.customSpriteKey = null;
+      }
       this.open(this.localPlayer);
     }
   }
